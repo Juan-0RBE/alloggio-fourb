@@ -1,0 +1,286 @@
+<div class="contenedor-principal">
+  <div class="columna-formulario">
+    <div class="contenido-interno">
+      <div class="cabecera-auth">
+        <div class="logotipo">
+          <i class="pi pi-building text-dorado"></i>
+          <span>Aloggio</span>
+        </div>
+      </div>
+
+      <div class="caja-formulario">
+        <div class="indicador-pasos mb-4">
+          <div class="paso" [class.activo]="pasoActual === 1" [class.completado]="pasoActual > 1">
+            <span class="numero-paso">1</span>
+            <span class="texto-paso">Cuenta</span>
+          </div>
+          <div class="linea-conector"></div>
+          <div class="paso" [class.activo]="pasoActual === 2">
+            <span class="numero-paso">2</span>
+            <span class="texto-paso">Perfil</span>
+          </div>
+        </div>
+
+        <form (ngSubmit)="alRegistrar()" class="formulario">
+          <div *ngIf="pasoActual === 1" class="d-flex flex-column gap-3">
+            <div class="mb-2">
+              <h1 class="titulo-principal">Crea tu cuenta gratis</h1>
+              <p class="texto-secundario">Configura tus credenciales de acceso a Aloggio.</p>
+            </div>
+
+            <div class="campo-formulario">
+              <label for="nombreUsuario" class="etiqueta-campo">Nombre de Usuario</label>
+              <div class="grupo-input">
+                <span class="icono-input"><i class="pi pi-at"></i></span>
+                <input
+                  id="nombreUsuario"
+                  [(ngModel)]="formulario.nombreUsuario"
+                  name="nombreUsuario"
+                  type="text"
+                  class="entrada-control"
+                  placeholder="usuario123"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="campo-formulario">
+              <label for="correoUsuario" class="etiqueta-campo">Correo Electrónico</label>
+              <div class="grupo-input">
+                <span class="icono-input"><i class="pi pi-envelope"></i></span>
+                <input
+                  id="correoUsuario"
+                  [(ngModel)]="formulario.correoUsuario"
+                  name="correoUsuario"
+                  type="email"
+                  class="entrada-control"
+                  placeholder="nombre@correo.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-6 campo-formulario">
+                <label for="claveUsuario" class="etiqueta-campo">Contraseña</label>
+                <div class="grupo-input">
+                  <input
+                    id="claveUsuario"
+                    [(ngModel)]="formulario.claveUsuario"
+                    name="claveUsuario"
+                    [type]="mostrarClavePrincipal ? 'text' : 'password'"
+                    class="entrada-control ps-3"
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="boton-peek"
+                    (click)="mostrarClavePrincipal = !mostrarClavePrincipal"
+                  >
+                    <i class="pi {{ mostrarClavePrincipal ? 'pi-eye-slash' : 'pi-eye' }}"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-6 campo-formulario">
+                <label for="confirmarClave" class="etiqueta-campo">Confirmar</label>
+                <div class="grupo-input">
+                  <input
+                    id="confirmarClave"
+                    [(ngModel)]="formulario.confirmarClave"
+                    name="confirmarClave"
+                    [type]="mostrarClaveConfirmar ? 'text' : 'password'"
+                    class="entrada-control ps-3"
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="boton-peek"
+                    (click)="mostrarClaveConfirmar = !mostrarClaveConfirmar"
+                  >
+                    <i class="pi {{ mostrarClaveConfirmar ? 'pi-eye-slash' : 'pi-eye' }}"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="boton-dorado mt-3" (click)="siguientePaso()">
+              Siguiente: Datos Personales &rarr;
+            </button>
+          </div>
+
+          <div *ngIf="pasoActual === 2" class="d-flex flex-column gap-3">
+            <div class="mb-2">
+              <h1 class="titulo-principal">Información Personal</h1>
+              <p class="texto-secundario">Requerida para validar tus reservas o publicaciones.</p>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-6 campo-formulario">
+                <label for="primerNombre" class="etiqueta-campo">Primer Nombre</label>
+                <input
+                  id="primerNombre"
+                  [(ngModel)]="formulario.primerNombre"
+                  name="primerNombre"
+                  type="text"
+                  class="entrada-control"
+                  placeholder="Carlos"
+                  required
+                />
+              </div>
+              <div class="col-6 campo-formulario">
+                <label for="segundoNombre" class="etiqueta-campo"
+                  >Segundo Nombre <span class="opcional">(Opcional)</span></label
+                >
+                <input
+                  id="segundoNombre"
+                  [(ngModel)]="formulario.segundoNombre"
+                  name="segundoNombre"
+                  type="text"
+                  class="entrada-control"
+                  placeholder="Andrés"
+                />
+              </div>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-6 campo-formulario">
+                <label for="primerApellido" class="etiqueta-campo">Primer Apellido</label>
+                <input
+                  id="primerApellido"
+                  [(ngModel)]="formulario.primerApellido"
+                  name="primerApellido"
+                  type="text"
+                  class="entrada-control"
+                  placeholder="Pérez"
+                  required
+                />
+              </div>
+              <div class="col-6 campo-formulario">
+                <label for="segundoApellido" class="etiqueta-campo"
+                  >Segundo Apellido <span class="opcional">(Opcional)</span></label
+                >
+                <input
+                  id="segundoApellido"
+                  [(ngModel)]="formulario.segundoApellido"
+                  name="segundoApellido"
+                  type="text"
+                  class="entrada-control"
+                  placeholder="Gómez"
+                />
+              </div>
+            </div>
+
+            <div class="campo-formulario">
+              <label for="documentoIdentidad" class="etiqueta-campo">Documento de Identidad</label>
+              <div class="grupo-input">
+                <span class="icono-input"><i class="pi pi-id-card"></i></span>
+                <input
+                  id="documentoIdentidad"
+                  [(ngModel)]="formulario.documentoIdentidad"
+                  name="documentoIdentidad"
+                  type="text"
+                  class="entrada-control"
+                  placeholder="1098765432"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-6 campo-formulario">
+                <label for="numeroTelefono" class="etiqueta-campo">Teléfono</label>
+                <div class="grupo-input">
+                  <span class="icono-input"><i class="pi pi-phone"></i></span>
+                  <input
+                    id="numeroTelefono"
+                    [(ngModel)]="formulario.numeroTelefono"
+                    name="numeroTelefono"
+                    type="tel"
+                    class="entrada-control"
+                    placeholder="3001234567"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="campo-formulario">
+                <label for="fechaNacimiento" class="etiqueta-campo">Nacimiento</label>
+                <div class="grupo-input">
+                  <span class="icono-input"><i class="pi pi-calendar"></i></span>
+                  <input
+                    id="fechaNacimiento"
+                    [(ngModel)]="formulario.fechaNacimiento"
+                    name="fechaNacimiento"
+                    type="date"
+                    class="entrada-control border-0 ps-0"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="d-flex gap-2 mt-3">
+              <button type="button" class="boton-secundario w-50" (click)="pasoActual = 1">
+                &larr; Volver
+              </button>
+              <button type="submit" class="boton-dorado w-50">Finalizar Registro</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="pie-pagina" align="center">
+        <span class="texto-secundario">¿Ya tienes cuenta?</span>
+        <a routerLink="/login" class="enlace-dorado">Inicia sesión &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="columna-decorativa">
+    <div class="ilustracion-viaje" aria-hidden="true">
+      <svg
+        class="linea-trayectoria"
+        viewBox="0 0 500 600"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M -50,550 C 150,500 100,250 300,200 C 400,170 450,80 550,50"
+          stroke="#31363e"
+          stroke-width="2"
+          stroke-dasharray="6 6"
+        />
+      </svg>
+      <div class="icono-vehiculo carro"><i class="pi pi-car"></i></div>
+      <div class="icono-vehiculo avion"><i class="pi pi-send"></i></div>
+    </div>
+
+    <div class="contenido-decorativo text-start">
+      <h2 class="titulo-decorativo mb-4">Únete a la comunidad de Aloggio</h2>
+
+      <div class="lista-beneficios d-flex flex-column gap-3">
+        <div class="item-beneficio d-flex align-items-center gap-3">
+          <div class="icono-beneficio"><i class="pi pi-lock"></i></div>
+          <div>
+            <h3 class="titulo-item">Alojamientos Verificados</h3>
+            <p class="texto-secundario mb-0">
+              Reservas seguras con garantía de calidad y soporte continuo en cada destino.
+            </p>
+          </div>
+        </div>
+
+        <div class="item-beneficio d-flex align-items-center gap-3">
+          <div class="icono-beneficio"><i class="pi pi-check-circle"></i></div>
+          <div>
+            <h3 class="titulo-item">Herramientas para Anfitriones</h3>
+            <p class="texto-secundario mb-0">
+              Reservas seguras con garantía de calidad y soporte continuo en cada destino.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
