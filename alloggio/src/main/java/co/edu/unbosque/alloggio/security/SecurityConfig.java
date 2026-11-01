@@ -46,7 +46,7 @@ public class SecurityConfig {
                         // Rutas públicas
                         .requestMatchers("/auth/**", "/restablecimiento/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/politica-cancelacion/obtener/**").permitAll()
+                        .requestMatchers("/politica-cancelacion/obtener/**", "/disponibilidad/**").permitAll()
 
                         // Rutas que exigen autenticación
                         .requestMatchers("/usuario/perfil", "/usuario/desactivar").authenticated()

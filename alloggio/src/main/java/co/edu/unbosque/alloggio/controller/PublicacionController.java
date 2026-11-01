@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -317,6 +318,66 @@ public class PublicacionController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(imagenes, HttpStatus.OK);
+    }
+
+    // Endpoints de activacion de publicación
+
+    /**
+     * Activa una publicación, permitiendo que esté disponible en búsquedas y
+     * reservas.
+     * 
+     * @param authentication
+     * @param id
+     * @return
+     */
+    @Operation(summary = "Activar una publicación (queda disponible en búsquedas y reservas)")
+    @PutMapping("/activar/{id}")
+    public ResponseEntity<String> activarPublicacion(Authentication authentication, @PathVariable Long id) {
+        int status = publicacionServ.activarPublicacion(authentication.getName(), id);
+
+        if (status == 0) {
+            return new ResponseEntity<>("Publicación activada exitosamente", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
+        } else if (status == 3) {
+            return new ResponseEntity<>("Solo se pueden activar publicaciones en borrador o pausadas",
+                    HttpStatus.CONFLICT);
+        } else if (status == 4) {
+            List<String> faltantes = publicacionServ.obtenerDatosFaltantes(id);
+            String detalle = (faltantes == null) ? "" : String.join(", ", faltantes);
+            return new ResponseEntity<>("La publicación no cumple la información mínima. Faltan: " + detalle,
+                    HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Pausa una publicación activa, impidiendo que esté disponible en búsquedas y
+     * reservas.
+     * 
+     * @param authentication
+     * @param id
+     * @return
+     */
+    @Operation(summary = "Pausar una publicación activa (deja de aparecer en búsquedas y de recibir reservas)")
+    @PutMapping("/pausar/{id}")
+    public ResponseEntity<String> pausarPublicacion(Authentication authentication, @PathVariable Long id) {
+        int status = publicacionServ.pausarPublicacion(authentication.getName(), id);
+
+        if (status == 0) {
+            return new ResponseEntity<>("Publicación pausada exitosamente", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
+        } else if (status == 3) {
+            return new ResponseEntity<>("Solo se pueden pausar publicaciones activas", HttpStatus.CONFLICT);
+        } else {
+            return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }
