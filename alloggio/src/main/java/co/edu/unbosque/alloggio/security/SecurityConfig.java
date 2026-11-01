@@ -43,13 +43,27 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Públicas: autenticación (login, registro, reactivar), recuperación y Swagger
+                        // Rutas públicas
                         .requestMatchers("/auth/**", "/restablecimiento/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/politica-cancelacion/obtener/**").permitAll()
 
-                        // Nuevas de este paso: cualquier usuario autenticado
+                        // Rutas que exigen autenticación
                         .requestMatchers("/usuario/perfil", "/usuario/desactivar").authenticated()
+                        .requestMatchers("/publicacion/**").authenticated()
 
+                        .anyRequest().authenticated()
+
+                /*
+                 * // Públicas: autenticación (login, registro, reactivar), recuperación y
+                 * Swagger
+                 * .requestMatchers("/auth/**", "/restablecimiento/**").permitAll()
+                 * .requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
+                 * "/swagger-ui.html").permitAll()
+                 * 
+                 * // Nuevas de este paso: cualquier usuario autenticado
+                 * .requestMatchers("/usuario/perfil", "/usuario/desactivar").authenticated()
+                 */
                 )
 
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
