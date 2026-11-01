@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -172,7 +173,7 @@ public class UsuarioController {
      * @return
      */
     @Operation(summary = "Verificar cuenta de usuario")
-    @PutMapping("/verificar/{id}")
+    @PutMapping("/verificar/{correo}")
     public ResponseEntity<String> verifyUser(@PathVariable String correo) {
         UsuarioDTO usuario = usuarioServ.getByCorreo(correo);
         if (usuario == null) {
@@ -211,6 +212,82 @@ public class UsuarioController {
             return new ResponseEntity<>(found.getCorreoUsuario(), HttpStatus.OK);
         }
         return new ResponseEntity<>("Usuario no encontrado", HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Consulta el perfil del usuario autenticado (CU-004).
+     * 
+     * @param authentication usuario autenticado, tomado del token
+     * @return
+     */
+    @Operation(summary = "Consultar el perfil del usuario autenticado")
+    @GetMapping("/perfil")
+    public ResponseEntity<UsuarioDTO> getPerfil(Authentication authentication) {
+        UsuarioDTO perfil = usuarioServ.getPerfil(authentication.getName());
+        if (perfil != null) {
+            return new ResponseEntity<>(perfil, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Actualiza los datos básicos del perfil del usuario autenticado.
+     * 
+     * @param authentication usuario autenticado, tomado del token
+     * @param newData        primerNombre, segundoNombre, primerApellido,
+     *                       segundoApellido y numeroTelefono
+     * @return
+     */
+    @Operation(summary = "Actualizar el perfil del usuario autenticado")
+    @PutMapping("/perfil")
+    public ResponseEntity<String> updatePerfil(Authentication authentication, @RequestBody UsuarioDTO newData) {
+        int status = usuarioServ.updatePerfil(authentication.getName(), newData);
+
+        if (status == 0) {
+            return new ResponseEntity<>("Perfil actualizado exitosamente", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Usuario no encontrado", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("El primer nombre es obligatorio y solo admite letras (máximo 50)",
+                    HttpStatus.BAD_REQUEST);
+        } else if (status == 3) {
+            return new ResponseEntity<>("El segundo nombre solo admite letras (máximo 50)", HttpStatus.BAD_REQUEST);
+        } else if (status == 4) {
+            return new ResponseEntity<>("El primer apellido es obligatorio y solo admite letras (máximo 50)",
+                    HttpStatus.BAD_REQUEST);
+        } else if (status == 5) {
+            return new ResponseEntity<>("El segundo apellido solo admite letras (máximo 50)", HttpStatus.BAD_REQUEST);
+        } else if (status == 6) {
+            return new ResponseEntity<>("El número de teléfono no es válido (de 7 a 15 dígitos)",
+                    HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Desactiva la cuenta del usuario autenticado.
+     * 
+     * @param authentication usuario autenticado, tomado del token
+     * @param datos          JSON con el campo confirmar
+     * @return
+     */
+    @Operation(summary = "Desactivar la cuenta del usuario autenticado")
+    @PostMapping("/desactivar")
+    public ResponseEntity<String> desactivarCuenta(Authentication authentication, @RequestBody UsuarioDTO datos) {
+        int status = usuarioServ.desactivarCuenta(authentication.getName(), datos);
+
+        if (status == 0) {
+            return new ResponseEntity<>("Cuenta desactivada exitosamente", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Usuario no encontrado", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La cuenta ya está inactiva", HttpStatus.CONFLICT);
+        } else if (status == 3) {
+            return new ResponseEntity<>("Operación cancelada: la cuenta continúa activa", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

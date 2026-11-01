@@ -30,6 +30,8 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    private static final String REGEX_TELEFONO = "^\\+?\\d{7,15}$";
+
     public UsuarioService() {
     }
 
@@ -61,6 +63,8 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
         entity.setEdad(edad);
         entity.setRole(Usuario.Role.USUARIO);
         entity.setIsVerified(true);
+        entity.setEstaActivo(true);
+        entity.setEstadoCuenta("ACTIVA");
         if (newData.getRole() != null) {
             entity.setRole(newData.getRole());
         }
@@ -339,6 +343,163 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
         }
 
         return 1;
+    }
+
+    // Lógica de actualización de usuario y de activación de cuenta
+
+    /**
+     * Consulta el perfil del usuario autenticado (CU-004, flujo principal). La
+     * clave no se incluye en el resultado.
+     * 
+     * @param nombreUsuario nombre del usuario autenticado
+     * @return el DTO del perfil sin clave, o null si no se encuentra
+     */
+    public UsuarioDTO getPerfil(String nombreUsuario) {
+        Optional<Usuario> found = usuarioRepo.findByNombreUsuario(nombreUsuario);
+        if (found.isPresent()) {
+            UsuarioDTO dto = modelMapper.map(found.get(), UsuarioDTO.class);
+            dto.setClaveUsuario(null);
+            return dto;
+        }
+        return null; // Usuario no encontrado
+    }
+
+    /**
+     * Valida un nombre o apellido.
+     * 
+     * @param valor       texto a validar
+     * @param obligatorio true si no puede venir vacío
+     * @return true si es válido
+     */
+    private boolean nombreValido(String valor, boolean obligatorio) {
+        if (valor == null || valor.trim().isEmpty()) {
+            return !obligatorio;
+        }
+        return valor.trim().matches("^\\p{L}[\\p{L} '\\-]{0,49}$"); //
+    }
+
+    /**
+     * Convierte un texto vacío en null y recorta los espacios.
+     * 
+     * @param valor texto a normalizar
+     * @return el texto recortado o null si está vacío
+     */
+    private String vacioANulo(String valor) {
+        if (valor == null || valor.trim().isEmpty()) {
+            return null;
+        }
+        return valor.trim();
+    }
+
+    /**
+     * Actualiza los datos básicos del perfil del usuario autenticado.
+     * Solo se modifican primer y segundo nombre, primer y segundo apellido y
+     * teléfono. El nombre de usuario, el correo, el documento, la clave y el rol
+     * no se tocan.
+     * 
+     * @param nombreUsuario nombre del usuario autenticado
+     * @param newData       datos nuevos del perfil
+     * @return 0 si es exitoso, 1 si el usuario no se encuentra, 2 si el primer
+     *         nombre es inválido, 3 si el segundo nombre es inválido, 4 si el
+     *         primer apellido es inválido, 5 si el segundo apellido es inválido,
+     *         6 si el teléfono es inválido
+     */
+    public int updatePerfil(String nombreUsuario, UsuarioDTO newData) {
+        Optional<Usuario> found = usuarioRepo.findByNombreUsuario(nombreUsuario);
+
+        if (!found.isPresent()) {
+            return 1; // Usuario no encontrado
+        }
+        if (!nombreValido(newData.getPrimerNombre(), true)) {
+            return 2; // Primer nombre inválido
+        }
+        if (!nombreValido(newData.getSegundoNombre(), false)) {
+            return 3; // Segundo nombre inválido
+        }
+        if (!nombreValido(newData.getPrimerApellido(), true)) {
+            return 4; // Primer apellido inválido
+        }
+        if (!nombreValido(newData.getSegundoApellido(), false)) {
+            return 5; // Segundo apellido inválido
+        }
+        if (newData.getNumeroTelefono() == null || !newData.getNumeroTelefono().trim().matches(REGEX_TELEFONO)) {
+            return 6; // Teléfono inválido
+        }
+
+        Usuario temp = found.get();
+        temp.setPrimerNombre(newData.getPrimerNombre().trim());
+        temp.setSegundoNombre(vacioANulo(newData.getSegundoNombre()));
+        temp.setPrimerApellido(newData.getPrimerApellido().trim());
+        temp.setSegundoApellido(vacioANulo(newData.getSegundoApellido()));
+        temp.setNumeroTelefono(newData.getNumeroTelefono().trim());
+
+        usuarioRepo.save(temp);
+        return 0; // Perfil actualizado exitosamente
+    }
+
+    /**
+     * Desactiva la cuenta del usuario autenticado (CU-005).
+     * 
+     * @param nombreUsuario nombre del usuario autenticado
+     * @param datos         DTO que trae el campo confirmar
+     * @return 0 si es exitoso, 1 si el usuario no se encuentra, 2 si la cuenta ya
+     *         está inactiva, 3 si el usuario no confirmó (no se modifica nada)
+     */
+    public int desactivarCuenta(String nombreUsuario, UsuarioDTO datos) {
+        Optional<Usuario> found = usuarioRepo.findByNombreUsuario(nombreUsuario);
+
+        if (!found.isPresent()) {
+            return 1; // Usuario no encontrado
+        }
+
+        Usuario temp = found.get();
+        if (Boolean.FALSE.equals(temp.getEstaActivo())) {
+            return 2; // La cuenta ya está inactiva
+        }
+        if (!Boolean.TRUE.equals(datos.getConfirmar())) {
+            return 3; // El usuario no confirmó
+        }
+
+        temp.setEstaActivo(false);
+        usuarioRepo.save(temp);
+        // RN-15: registrar el evento de auditoría (se conecta en el paso de auditoría)
+        return 0; // Cuenta desactivada exitosamente
+    }
+
+    /**
+     * Reactiva la cuenta de un usuario inactivo (CU-006). Es pública porque el
+     * usuario inactivo no puede iniciar sesión; por eso exige las credenciales.
+     * 
+     * @param datos DTO con nombreUsuario, claveUsuario y confirmar
+     * @return 0 si es exitoso, 1 si las credenciales son incorrectas, 2 si la
+     *         cuenta está restringida por un administrador, 3 si la cuenta ya está
+     *         activa, 4 si el usuario no confirmó (no se modifica nada)
+     */
+    public int reactivarCuenta(UsuarioDTO datos) {
+        if (datos.getNombreUsuario() == null || datos.getClaveUsuario() == null) {
+            return 1; // Credenciales incorrectas
+        }
+
+        Optional<Usuario> found = usuarioRepo.findByNombreUsuario(datos.getNombreUsuario());
+        if (!found.isPresent() || !passwordEncoder.matches(datos.getClaveUsuario(), found.get().getClaveUsuario())) {
+            return 1; // Credenciales incorrectas
+        }
+
+        Usuario temp = found.get();
+        if (Usuario.ESTADO_RESTRINGIDA.equals(temp.getEstadoCuenta())) {
+            return 2; // Cuenta restringida: solo la levanta un administrador
+        }
+        if (!Boolean.FALSE.equals(temp.getEstaActivo())) {
+            return 3; // La cuenta ya está activa
+        }
+        if (!Boolean.TRUE.equals(datos.getConfirmar())) {
+            return 4; // El usuario no confirmó
+        }
+
+        temp.setEstaActivo(true);
+        usuarioRepo.save(temp);
+
+        return 0; // Cuenta reactivada exitosamente
     }
 
 }
