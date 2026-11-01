@@ -26,6 +26,12 @@ public class UsuarioDTO {
     private Boolean isVerified;
     private Role role;
 
+    /**
+     * Campo solo de entrada: confirma la acción solicitada (desactivar o
+     * reactivar cuenta). No pertenece a la entidad.
+     */
+    private Boolean confirmar;
+
     public UsuarioDTO() {
     }
 
@@ -195,6 +201,14 @@ public class UsuarioDTO {
         this.role = role;
     }
 
+    public Boolean getConfirmar() {
+        return confirmar;
+    }
+
+    public void setConfirmar(Boolean confirmar) {
+        this.confirmar = confirmar;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -299,8 +313,8 @@ public class UsuarioDTO {
      */
     @Override
     public String toString() {
-        return "UsuarioDTO [correoUsuario=" + correoUsuario + ", nombreUsuario=" + nombreUsuario + ", claveUsuario="
-                + claveUsuario + ", documentoIdentidad=" + documentoIdentidad + ", primerNombre=" + primerNombre
+        return "UsuarioDTO [correoUsuario=" + correoUsuario + ", nombreUsuario=" + nombreUsuario
+                + ", documentoIdentidad=" + documentoIdentidad + ", primerNombre=" + primerNombre
                 + ", segundoNombre=" + segundoNombre + ", primerApellido=" + primerApellido + ", segundoApellido="
                 + segundoApellido + ", fechaNacimiento=" + fechaNacimiento + ", edad=" + edad + ", numeroTelefono="
                 + numeroTelefono + ", estadoCuenta=" + estadoCuenta + ", estaActivo=" + estaActivo + ", isVerified="

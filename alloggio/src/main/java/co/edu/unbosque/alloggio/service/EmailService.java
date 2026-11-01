@@ -72,4 +72,39 @@ public class EmailService {
         }
     }
 
+    /**
+     * Envía el código de recuperación de contraseña al correo indicado.
+     *
+     * @return true si el correo se envió, false si falló
+     */
+    public boolean enviarEmailDeRecuperacion(String correo, String codigo, int minutosVigencia) {
+        try {
+            String asunto = "Alloggio - Código para restablecer tu contraseña";
+
+            String contenido = """
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; background-color: #f9f9f9; text-align: center;">
+                        <h2 style="color: #333;">%s</h2>
+                        <p style="font-size: 16px; color: #555;">Usa este código para restablecer tu contraseña. Vence en %d minutos.</p>
+                        <p style="font-size: 32px; letter-spacing: 8px; font-weight: bold; color: #007bff;">%s</p>
+                        <p style="font-size: 14px; color: #777;">Si no solicitaste este cambio, ignora este mensaje.</p>
+                        <p style="font-size: 12px; color: #aaa;">Este ha sido un mensaje autogenerado. Por favor no responder.</p>
+                    </div>
+                    """
+                    .formatted(asunto, minutosVigencia, codigo);
+
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+            helper.setTo(correo);
+            helper.setSubject(asunto);
+            helper.setFrom(from);
+            helper.setText(contenido, true);
+            mailSender.send(mimeMessage);
+            return true;
+
+        } catch (Exception e) {
+            System.out.println("Error en el envío de email de recuperación: " + e.getMessage());
+            return false;
+        }
+    }
+
 }
