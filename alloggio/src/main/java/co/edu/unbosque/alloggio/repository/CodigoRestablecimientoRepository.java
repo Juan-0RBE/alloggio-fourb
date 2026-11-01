@@ -10,6 +10,11 @@ import org.springframework.data.repository.query.Param;
 import co.edu.unbosque.alloggio.entity.CodigoRestablecimiento;
 import co.edu.unbosque.alloggio.entity.Usuario;
 
+/**
+ * Interface de repositorio para la entidad CodigoRestablecimiento.
+ * 
+ * CodigoRestablecimientoRepository
+ */
 public interface CodigoRestablecimientoRepository extends JpaRepository<CodigoRestablecimiento, Long> {
 
     /**
