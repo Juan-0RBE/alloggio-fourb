@@ -215,7 +215,7 @@ public class UsuarioController {
     }
 
     /**
-     * Consulta el perfil del usuario autenticado (CU-004).
+     * Consulta el perfil del usuario autenticado.
      * 
      * @param authentication usuario autenticado, tomado del token
      * @return

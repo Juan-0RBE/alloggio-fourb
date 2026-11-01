@@ -138,9 +138,7 @@ public class AuthController {
     }
 
     /**
-     * Reactiva la cuenta de un usuario que la había desactivado (CU-006). Es un
-     * endpoint público: el usuario inactivo no puede iniciar sesión, por lo que
-     * se identifica con sus credenciales.
+     * Reactiva la cuenta de un usuario que la había desactivado.
      *
      * @param datos JSON con nombreUsuario, claveUsuario y confirmar
      * @return ResponseEntity con el resultado de la operación
