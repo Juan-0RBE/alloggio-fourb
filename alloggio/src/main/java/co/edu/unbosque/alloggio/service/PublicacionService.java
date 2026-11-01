@@ -364,4 +364,142 @@ public class PublicacionService {
         }
         return dtos;
     }
+
+    // Gestión de activación de publicación
+
+    /**
+     * Activa una publicación, cambiando su estado a ACTIVA si cumple con los
+     * requisitos.
+     * 
+     * @param nombreUsuario
+     * @param idPublicacion
+     * @return
+     */
+    @Transactional
+    public int activarPublicacion(String nombreUsuario, Long idPublicacion) {
+        Optional<Publicacion> pubOpt = publicacionRepo.findById(idPublicacion);
+        if (!pubOpt.isPresent()) {
+            return 1; // Publicación no encontrada
+        }
+
+        Publicacion pub = pubOpt.get();
+        if (!esPropietario(pub, nombreUsuario)) {
+            return 2; // La publicación no pertenece al usuario
+        }
+        if (pub.getEstado() != EstadoPublicacion.BORRADOR && pub.getEstado() != EstadoPublicacion.PAUSADA) {
+            return 3; // Solo se activan publicaciones en borrador o pausadas
+        }
+        if (!calcularDatosFaltantes(pub).isEmpty()) {
+            return 4; // No cumple la información mínima (RN-05)
+        }
+
+        pub.setEstado(EstadoPublicacion.ACTIVA);
+        publicacionRepo.save(pub);
+        // RN-15: registrar el evento de auditoría (se conecta en el paso de auditoría)
+        return 0; // Publicación activada exitosamente
+    }
+
+    /**
+     * Pausa una publicación, cambiando su estado a PAUSADA si cumple con los
+     * requisitos.
+     * 
+     * @param nombreUsuario
+     * @param idPublicacion
+     * @return
+     */
+    @Transactional
+    public int pausarPublicacion(String nombreUsuario, Long idPublicacion) {
+        Optional<Publicacion> pubOpt = publicacionRepo.findById(idPublicacion);
+        if (!pubOpt.isPresent()) {
+            return 1; // Publicación no encontrada
+        }
+
+        Publicacion pub = pubOpt.get();
+        if (!esPropietario(pub, nombreUsuario)) {
+            return 2; // La publicación no pertenece al usuario
+        }
+        if (pub.getEstado() != EstadoPublicacion.ACTIVA) {
+            return 3; // Solo se pausan publicaciones activas
+        }
+
+        pub.setEstado(EstadoPublicacion.PAUSADA);
+        publicacionRepo.save(pub);
+        return 0; // Publicación pausada exitosamente
+    }
+
+    /**
+     * Indica si la publicación pertenece al usuario autenticado.
+     * 
+     * @param pub
+     * @param nombreUsuario
+     * @return
+     */
+    private boolean esPropietario(Publicacion pub, String nombreUsuario) {
+        return pub.getAnfitrion().getNombreUsuario().equals(nombreUsuario);
+    }
+
+    /**
+     * Obtiene los datos faltantes para cumplir la información mínima de una
+     * publicación.
+     * 
+     * @param idPublicacion
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<String> obtenerDatosFaltantes(Long idPublicacion) {
+        Optional<Publicacion> pubOpt = publicacionRepo.findById(idPublicacion);
+        if (!pubOpt.isPresent()) {
+            return null; // Publicación no existe
+        }
+        return calcularDatosFaltantes(pubOpt.get());
+    }
+
+    /**
+     * Calcula los datos que no cumplen la información mínima para activar una
+     * publicación:
+     * textos básicos, tipo, capacidad mayor que cero,
+     * precio positivo y al menos una imagen.
+     * 
+     * @param publicacion
+     * @return
+     */
+    private List<String> calcularDatosFaltantes(Publicacion publicacion) {
+        List<String> faltantes = new ArrayList<>();
+
+        if (textoVacio(publicacion.getTitulo())) {
+            faltantes.add("título");
+        }
+        if (textoVacio(publicacion.getDescripcion())) {
+            faltantes.add("descripción");
+        }
+        if (textoVacio(publicacion.getUbicacion())) {
+            faltantes.add("ubicación");
+        }
+        if (textoVacio(publicacion.getCiudad())) {
+            faltantes.add("ciudad");
+        }
+        if (publicacion.getTipo() == null) {
+            faltantes.add("tipo de alojamiento");
+        }
+        if (publicacion.getCapacidad() == null || publicacion.getCapacidad() <= 0) {
+            faltantes.add("capacidad (mayor que cero)");
+        }
+        if (publicacion.getPrecioNoche() == null || publicacion.getPrecioNoche() <= 0) {
+            faltantes.add("precio por noche (positivo)");
+        }
+        if (imagenRepo.findByPublicacionIdPublicacionOrderByOrdenAsc(publicacion.getIdPublicacion()).isEmpty()) {
+            faltantes.add("al menos una imagen");
+        }
+        return faltantes;
+    }
+
+    /**
+     * Indica si un texto es nulo o vacío.
+     * 
+     * @param valor
+     * @return
+     */
+    private boolean textoVacio(String valor) {
+        return valor == null || valor.trim().isEmpty();
+    }
 }
