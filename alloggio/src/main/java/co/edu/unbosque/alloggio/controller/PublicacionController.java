@@ -43,15 +43,17 @@ public class PublicacionController {
     }
 
     /**
-     * Crea una nueva publicación de alojamiento.
+     * Crea una nueva publicación de alojamiento. El anfitrión es el usuario
+     * autenticado.
      * 
-     * @param dto Datos de la publicación
-     * @return ResponseEntity con el resultado de la operación
+     * @param authentication
+     * @param dto
+     * @return
      */
-    @Operation(summary = "Crear una nueva publicación de alojamiento")
+    @Operation(summary = "Crear una nueva publicación de alojamiento (el anfitrión es el usuario autenticado)")
     @PostMapping("/crear")
-    public ResponseEntity<String> crearPublicacion(@RequestBody PublicacionDTO dto) {
-        int status = publicacionServ.crearPublicacion(dto);
+    public ResponseEntity<String> crearPublicacion(Authentication authentication, @RequestBody PublicacionDTO dto) {
+        int status = publicacionServ.crearPublicacion(authentication.getName(), dto);
 
         if (status == 0) {
             return new ResponseEntity<>("Publicación creada exitosamente", HttpStatus.CREATED);
@@ -59,6 +61,10 @@ public class PublicacionController {
             return new ResponseEntity<>("El anfitrión no existe", HttpStatus.NOT_FOUND);
         } else if (status == 2) {
             return new ResponseEntity<>("La política de cancelación no existe", HttpStatus.NOT_FOUND);
+        } else if (status == 3) {
+            String detalle = String.join(", ", publicacionServ.validarDatos(dto));
+            return new ResponseEntity<>("Faltan campos obligatorios o son inválidos: " + detalle,
+                    HttpStatus.BAD_REQUEST);
         } else {
             return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -67,7 +73,7 @@ public class PublicacionController {
     /**
      * Obtiene todas las publicaciones registradas.
      * 
-     * @return Lista de publicaciones
+     * @return
      */
     @Operation(summary = "Obtener todas las publicaciones")
     @GetMapping("/obtener/todas")
@@ -82,8 +88,8 @@ public class PublicacionController {
     /**
      * Obtiene las publicaciones asociadas a un anfitrión específico.
      * 
-     * @param idAnfitrion ID del anfitrión
-     * @return Lista de publicaciones del anfitrión
+     * @param idAnfitrion
+     * @return
      */
     @Operation(summary = "Obtener publicaciones por ID de anfitrión")
     @GetMapping("/anfitrion/{idAnfitrion}")
@@ -98,8 +104,8 @@ public class PublicacionController {
     /**
      * Obtiene una publicación por su ID.
      * 
-     * @param id ID de la publicación
-     * @return DTO de la publicación
+     * @param id
+     * @return
      */
     @Operation(summary = "Obtener una publicación por su ID")
     @GetMapping("/obtener/{id}")
@@ -112,16 +118,18 @@ public class PublicacionController {
     }
 
     /**
-     * Actualiza una publicación existente.
+     * Actualiza una publicación existente. Solo el propietario o un administrador.
      * 
-     * @param id  ID de la publicación a actualizar
-     * @param dto Nuevos datos
-     * @return ResponseEntity con el resultado
+     * @param authentication
+     * @param id
+     * @param dto
+     * @return
      */
-    @Operation(summary = "Actualizar una publicación existente")
+    @Operation(summary = "Actualizar una publicación existente (propietario o administrador)")
     @PutMapping("/actualizar/{id}")
-    public ResponseEntity<String> actualizarPublicacion(@PathVariable Long id, @RequestBody PublicacionDTO dto) {
-        int status = publicacionServ.actualizarPublicacion(id, dto);
+    public ResponseEntity<String> actualizarPublicacion(Authentication authentication, @PathVariable Long id,
+            @RequestBody PublicacionDTO dto) {
+        int status = publicacionServ.actualizarPublicacion(authentication.getName(), id, dto);
 
         if (status == 0) {
             return new ResponseEntity<>("Publicación actualizada exitosamente", HttpStatus.OK);
@@ -129,26 +137,35 @@ public class PublicacionController {
             return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
         } else if (status == 2) {
             return new ResponseEntity<>("La política de cancelación no existe", HttpStatus.NOT_FOUND);
+        } else if (status == 3) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
+        } else if (status == 4) {
+            String detalle = String.join(", ", publicacionServ.validarDatos(dto));
+            return new ResponseEntity<>("Faltan campos obligatorios o son inválidos: " + detalle,
+                    HttpStatus.BAD_REQUEST);
         } else {
             return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
-     * Elimina una publicación por su ID.
+     * Elimina una publicación por su ID. Solo el propietario o un administrador.
      * 
-     * @param id ID de la publicación
-     * @return ResponseEntity con el resultado
+     * @param authentication
+     * @param id
+     * @return
      */
-    @Operation(summary = "Eliminar una publicación por su ID")
+    @Operation(summary = "Eliminar una publicación por su ID (propietario o administrador)")
     @DeleteMapping("/eliminar/{id}")
-    public ResponseEntity<String> eliminarPublicacion(@PathVariable Long id) {
-        int status = publicacionServ.eliminarPublicacion(id);
+    public ResponseEntity<String> eliminarPublicacion(Authentication authentication, @PathVariable Long id) {
+        int status = publicacionServ.eliminarPublicacion(authentication.getName(), id);
 
         if (status == 0) {
             return new ResponseEntity<>("Publicación eliminada exitosamente", HttpStatus.OK);
         } else if (status == 1) {
             return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
         } else {
             return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -159,35 +176,45 @@ public class PublicacionController {
     /**
      * Agrega un servicio a una publicación existente.
      * 
+     * @param authentication
      * @param idPublicacion
      * @param dto
      * @return
      */
     @Operation(summary = "Agregar un servicio a una publicación existente")
     @PostMapping("/{idPublicacion}/servicios/crear")
-    public ResponseEntity<String> agregarServicio(@PathVariable Long idPublicacion,
+    public ResponseEntity<String> agregarServicio(Authentication authentication, @PathVariable Long idPublicacion,
             @RequestBody ServicioAlojamientoDTO dto) {
-        int status = publicacionServ.agregarServicioAPublicacion(idPublicacion, dto);
+        int status = publicacionServ.agregarServicioAPublicacion(authentication.getName(), idPublicacion, dto);
         if (status == 0) {
             return new ResponseEntity<>("Servicio agregado exitosamente", HttpStatus.CREATED);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
      * Elimina un servicio de alojamiento por su ID.
      * 
+     * @param authentication
      * @param idServicio
      * @return
      */
     @Operation(summary = "Eliminar un servicio de alojamiento por su ID")
     @DeleteMapping("/servicios/eliminar/{idServicio}")
-    public ResponseEntity<String> eliminarServicio(@PathVariable Long idServicio) {
-        int status = publicacionServ.eliminarServicio(idServicio);
+    public ResponseEntity<String> eliminarServicio(Authentication authentication, @PathVariable Long idServicio) {
+        int status = publicacionServ.eliminarServicio(authentication.getName(), idServicio);
         if (status == 0) {
             return new ResponseEntity<>("Servicio eliminado exitosamente", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Servicio no encontrado", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>("Servicio no encontrado", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
@@ -215,34 +242,45 @@ public class PublicacionController {
     /**
      * Agrega una regla a una publicación existente.
      * 
+     * @param authentication
      * @param idPublicacion
      * @param dto
      * @return
      */
     @Operation(summary = "Agregar una regla a una publicación existente")
     @PostMapping("/{idPublicacion}/reglas/crear")
-    public ResponseEntity<String> agregarRegla(@PathVariable Long idPublicacion, @RequestBody ReglaAlojamientoDTO dto) {
-        int status = publicacionServ.agregarReglaAPublicacion(idPublicacion, dto);
+    public ResponseEntity<String> agregarRegla(Authentication authentication, @PathVariable Long idPublicacion,
+            @RequestBody ReglaAlojamientoDTO dto) {
+        int status = publicacionServ.agregarReglaAPublicacion(authentication.getName(), idPublicacion, dto);
         if (status == 0) {
             return new ResponseEntity<>("Regla agregada exitosamente", HttpStatus.CREATED);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
      * Elimina una regla de alojamiento por su ID.
      * 
+     * @param authentication
      * @param idRegla
      * @return
      */
     @Operation(summary = "Eliminar una regla de alojamiento por su ID")
     @DeleteMapping("/reglas/eliminar/{idRegla}")
-    public ResponseEntity<String> eliminarRegla(@PathVariable Long idRegla) {
-        int status = publicacionServ.eliminarRegla(idRegla);
+    public ResponseEntity<String> eliminarRegla(Authentication authentication, @PathVariable Long idRegla) {
+        int status = publicacionServ.eliminarRegla(authentication.getName(), idRegla);
         if (status == 0) {
             return new ResponseEntity<>("Regla eliminada exitosamente", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Regla no encontrada", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>("Regla no encontrada", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
@@ -269,35 +307,45 @@ public class PublicacionController {
     /**
      * Agrega una imagen a una publicación existente.
      * 
+     * @param authentication
      * @param idPublicacion
      * @param dto
      * @return
      */
     @Operation(summary = "Agregar una imagen a una publicación existente")
     @PostMapping("/{idPublicacion}/imagenes/crear")
-    public ResponseEntity<String> agregarImagen(@PathVariable Long idPublicacion,
+    public ResponseEntity<String> agregarImagen(Authentication authentication, @PathVariable Long idPublicacion,
             @RequestBody ImagenAlojamientoDTO dto) {
-        int status = publicacionServ.agregarImagenAPublicacion(idPublicacion, dto);
+        int status = publicacionServ.agregarImagenAPublicacion(authentication.getName(), idPublicacion, dto);
         if (status == 0) {
             return new ResponseEntity<>("Imagen agregada exitosamente", HttpStatus.CREATED);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
      * Elimina una imagen de alojamiento por su ID.
      * 
+     * @param authentication
      * @param idImagen
      * @return
      */
     @Operation(summary = "Eliminar una imagen de alojamiento por su ID")
     @DeleteMapping("/imagenes/eliminar/{idImagen}")
-    public ResponseEntity<String> eliminarImagen(@PathVariable Long idImagen) {
-        int status = publicacionServ.eliminarImagen(idImagen);
+    public ResponseEntity<String> eliminarImagen(Authentication authentication, @PathVariable Long idImagen) {
+        int status = publicacionServ.eliminarImagen(authentication.getName(), idImagen);
         if (status == 0) {
             return new ResponseEntity<>("Imagen eliminada exitosamente", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Imagen no encontrada", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>("Imagen no encontrada", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**

@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.alloggio.dto.UsuarioDTO;
+import co.edu.unbosque.alloggio.entity.EventoAuditoria.Accion;
+import co.edu.unbosque.alloggio.entity.EventoAuditoria.TipoEntidad;
 import co.edu.unbosque.alloggio.entity.Usuario;
 import co.edu.unbosque.alloggio.repository.UsuarioRepository;
 
@@ -29,6 +31,9 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EventoAuditoriaService auditoriaService;
 
     private static final String REGEX_TELEFONO = "^\\+?\\d{7,15}$";
 
@@ -462,15 +467,18 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 
         temp.setEstaActivo(false);
         usuarioRepo.save(temp);
-        // RN-15: registrar el evento de auditoría (se conecta en el paso de auditoría)
+        auditoriaService.registrarExito(nombreUsuario, Accion.DESACTIVAR_CUENTA, TipoEntidad.USUARIO,
+                temp.getIdUsuario(), "El usuario desactivó su cuenta");
+
+        // Registro en auditoria
         return 0; // Cuenta desactivada exitosamente
     }
 
     /**
-     * Reactiva la cuenta de un usuario inactivo (CU-006). Es pública porque el
+     * Reactiva la cuenta de un usuario inactivo. Es pública porque el
      * usuario inactivo no puede iniciar sesión; por eso exige las credenciales.
      * 
-     * @param datos DTO con nombreUsuario, claveUsuario y confirmar
+     * @param datos
      * @return 0 si es exitoso, 1 si las credenciales son incorrectas, 2 si la
      *         cuenta está restringida por un administrador, 3 si la cuenta ya está
      *         activa, 4 si el usuario no confirmó (no se modifica nada)
@@ -498,6 +506,8 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 
         temp.setEstaActivo(true);
         usuarioRepo.save(temp);
+        auditoriaService.registrarExito(temp.getNombreUsuario(), Accion.ACTIVAR_CUENTA, TipoEntidad.USUARIO,
+                temp.getIdUsuario(), "El usuario reactivó su cuenta");
 
         return 0; // Cuenta reactivada exitosamente
     }

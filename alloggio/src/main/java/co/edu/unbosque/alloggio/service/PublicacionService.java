@@ -13,6 +13,8 @@ import co.edu.unbosque.alloggio.dto.ImagenAlojamientoDTO;
 import co.edu.unbosque.alloggio.dto.PublicacionDTO;
 import co.edu.unbosque.alloggio.dto.ReglaAlojamientoDTO;
 import co.edu.unbosque.alloggio.dto.ServicioAlojamientoDTO;
+import co.edu.unbosque.alloggio.entity.EventoAuditoria.Accion;
+import co.edu.unbosque.alloggio.entity.EventoAuditoria.TipoEntidad;
 import co.edu.unbosque.alloggio.entity.ImagenAlojamiento;
 import co.edu.unbosque.alloggio.entity.PoliticaCancelacion;
 import co.edu.unbosque.alloggio.entity.Publicacion;
@@ -53,23 +55,33 @@ public class PublicacionService {
     private ImagenAlojamientoRepository imagenRepo;
 
     @Autowired
+    private EventoAuditoriaService auditoriaService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     public PublicacionService() {
     }
 
     /**
-     * Crea una nueva publicación para un anfitrión.
+     * Crea una nueva publicación para el anfitrión autenticado. El anfitrión se
+     * toma de la sesión, no del cuerpo de la petición.
      * 
-     * @param dto Datos de la publicación
-     * @return 0 si es exitoso, 1 si el anfitrión no existe, 2 si la política de
-     *         cancelación no existe
+     * @param nombreUsuario
+     * @param dto
+     * @return 0 si es exitoso, 1 si el usuario no existe, 2 si la política de
+     *         cancelación no existe, 3 si faltan campos obligatorios o son
+     *         inválidos (ver validarDatos)
      */
     @Transactional
-    public int crearPublicacion(PublicacionDTO dto) {
-        Optional<Usuario> anfitrionOpt = usuarioRepo.findById(dto.getIdAnfitrion());
+    public int crearPublicacion(String nombreUsuario, PublicacionDTO dto) {
+        Optional<Usuario> anfitrionOpt = usuarioRepo.findByNombreUsuario(nombreUsuario);
         if (!anfitrionOpt.isPresent()) {
             return 1; // El anfitrión no existe
+        }
+
+        if (!validarDatos(dto).isEmpty()) {
+            return 3; // Faltan campos obligatorios o son inválidos (RN-06)
         }
 
         Optional<PoliticaCancelacion> politicaOpt = politicaRepo.findById(dto.getIdPoliticaCancelacion());
@@ -78,11 +90,16 @@ public class PublicacionService {
         }
 
         Publicacion publicacion = modelMapper.map(dto, Publicacion.class);
+        publicacion.setIdPublicacion(null); // Evita que un id enviado en el cuerpo sobrescriba otra publicación
         publicacion.setAnfitrion(anfitrionOpt.get());
         publicacion.setPoliticaCancelacion(politicaOpt.get());
         publicacion.setEstado(EstadoPublicacion.BORRADOR); // Por defecto se crea como borrador
 
-        publicacionRepo.save(publicacion);
+        Publicacion guardada = publicacionRepo.save(publicacion);
+
+        auditoriaService.registrarExito(nombreUsuario, Accion.CREAR_PUBLICACION, TipoEntidad.PUBLICACION,
+                guardada.getIdPublicacion(), "El anfitrión creó la publicación: " + guardada.getTitulo());
+
         return 0; // Publicación creada exitosamente
     }
 
@@ -107,8 +124,8 @@ public class PublicacionService {
     /**
      * Obtiene las publicaciones asociadas a un anfitrión específico.
      * 
-     * @param idAnfitrion ID del anfitrión
-     * @return Lista de publicaciones del anfitrión
+     * @param idAnfitrion
+     * @return
      */
     public List<PublicacionDTO> obtenerPorAnfitrion(Long idAnfitrion) {
         List<Publicacion> publicaciones = publicacionRepo.findByAnfitrionIdUsuario(idAnfitrion);
@@ -126,8 +143,8 @@ public class PublicacionService {
     /**
      * Obtiene una publicación por su ID.
      * 
-     * @param id ID de la publicación
-     * @return El DTO de la publicación si se encuentra, o null
+     * @param id
+     * @return
      */
     public PublicacionDTO obtenerPorId(Long id) {
         Optional<Publicacion> found = publicacionRepo.findById(id);
@@ -142,18 +159,31 @@ public class PublicacionService {
     }
 
     /**
-     * Actualiza una publicación existente.
+     * Actualiza una publicación existente. Solo el propietario o un administrador
+     * pueden hacerlo
      * 
-     * @param id  ID de la publicación a actualizar
-     * @param dto Nuevos datos
+     * @param nombreUsuario
+     * @param id
+     * @param dto
      * @return 0 si es exitoso, 1 si no se encuentra la publicación, 2 si la
-     *         política no existe
+     *         política no existe, 3 si el usuario no es propietario ni
+     *         administrador, 4 si faltan campos obligatorios o son inválidos (ver
+     *         validarDatos)
      */
     @Transactional
-    public int actualizarPublicacion(Long id, PublicacionDTO dto) {
+    public int actualizarPublicacion(String nombreUsuario, Long id, PublicacionDTO dto) {
         Optional<Publicacion> found = publicacionRepo.findById(id);
         if (!found.isPresent()) {
             return 1; // Publicación no encontrada
+        }
+
+        Publicacion pub = found.get();
+        if (!puedeModificar(pub, nombreUsuario)) {
+            registrarIntentoAjeno(nombreUsuario, id, "Intento de editar una publicación ajena");
+            return 3; // La publicación no pertenece al usuario
+        }
+        if (!validarDatos(dto).isEmpty()) {
+            return 4; // Faltan campos obligatorios o son inválidos
         }
 
         Optional<PoliticaCancelacion> politicaOpt = politicaRepo.findById(dto.getIdPoliticaCancelacion());
@@ -161,7 +191,6 @@ public class PublicacionService {
             return 2; // Política de cancelación no encontrada
         }
 
-        Publicacion pub = found.get();
         pub.setTitulo(dto.getTitulo());
         pub.setDescripcion(dto.getDescripcion());
         pub.setUbicacion(dto.getUbicacion());
@@ -172,23 +201,41 @@ public class PublicacionService {
         pub.setPoliticaCancelacion(politicaOpt.get());
 
         publicacionRepo.save(pub);
+
+        auditoriaService.registrarExito(nombreUsuario, Accion.ACTUALIZAR_PUBLICACION, TipoEntidad.PUBLICACION, id,
+                "Se actualizó la publicación: " + pub.getTitulo());
+
         return 0; // Actualizado exitosamente
     }
 
     /**
      * Elimina una publicación por su ID.
      * 
-     * @param id ID de la publicación
-     * @return 0 si es exitoso, 1 si no se encuentra
+     * @param nombreUsuario nombre del usuario autenticado
+     * @param id            ID de la publicación
+     * @return 0 si es exitoso, 1 si no se encuentra, 2 si el usuario no es
+     *         propietario ni administrador
      */
     @Transactional
-    public int eliminarPublicacion(Long id) {
+    public int eliminarPublicacion(String nombreUsuario, Long id) {
         Optional<Publicacion> found = publicacionRepo.findById(id);
-        if (found.isPresent()) {
-            publicacionRepo.delete(found.get());
-            return 0;
+        if (!found.isPresent()) {
+            return 1; // No encontrada
         }
-        return 1; // No encontrada
+
+        Publicacion pub = found.get();
+        if (!puedeModificar(pub, nombreUsuario)) {
+            registrarIntentoAjeno(nombreUsuario, id, "Intento de eliminar una publicación ajena");
+            return 2; // La publicación no pertenece al usuario
+        }
+
+        String titulo = pub.getTitulo();
+        publicacionRepo.delete(pub);
+
+        auditoriaService.registrarExito(nombreUsuario, Accion.ELIMINAR_PUBLICACION, TipoEntidad.PUBLICACION, id,
+                "Se eliminó la publicación: " + titulo);
+
+        return 0;
     }
 
     // Gestion de servicios.
@@ -196,15 +243,22 @@ public class PublicacionService {
     /**
      * Agrega un servicio a una publicación existente.
      * 
+     * @param nombreUsuario nombre del usuario autenticado
      * @param idPublicacion
      * @param dto
-     * @return
+     * @return 0 si es exitoso, 1 si la publicación no existe, 2 si el usuario no
+     *         es propietario ni administrador
      */
     @Transactional
-    public int agregarServicioAPublicacion(Long idPublicacion, ServicioAlojamientoDTO dto) {
+    public int agregarServicioAPublicacion(String nombreUsuario, Long idPublicacion, ServicioAlojamientoDTO dto) {
         Optional<Publicacion> pubOpt = publicacionRepo.findById(idPublicacion);
         if (!pubOpt.isPresent()) {
             return 1; // Publicación no encontrada
+        }
+        if (!puedeModificar(pubOpt.get(), nombreUsuario)) {
+            registrarIntentoAjeno(nombreUsuario, idPublicacion,
+                    "Intento de agregar un servicio a una publicación ajena");
+            return 2; // La publicación no pertenece al usuario
         }
         ServicioAlojamiento servicio = modelMapper.map(dto, ServicioAlojamiento.class);
         servicio.setPublicacion(pubOpt.get()); // Asocia la llave foránea
@@ -215,16 +269,25 @@ public class PublicacionService {
     /**
      * Elimina un servicio por su ID.
      * 
+     * @param nombreUsuario nombre del usuario autenticado
      * @param idServicio
-     * @return
+     * @return 0 si es exitoso, 1 si no se encuentra, 2 si el usuario no es
+     *         propietario ni administrador de la publicación
      */
     @Transactional
-    public int eliminarServicio(Long idServicio) {
-        if (servicioRepo.existsById(idServicio)) {
-            servicioRepo.deleteById(idServicio);
-            return 0;
+    public int eliminarServicio(String nombreUsuario, Long idServicio) {
+        Optional<ServicioAlojamiento> servicioOpt = servicioRepo.findById(idServicio);
+        if (!servicioOpt.isPresent()) {
+            return 1; // No encontrado
         }
-        return 1; // No encontrado
+        Publicacion pub = servicioOpt.get().getPublicacion();
+        if (!puedeModificar(pub, nombreUsuario)) {
+            registrarIntentoAjeno(nombreUsuario, pub.getIdPublicacion(),
+                    "Intento de eliminar un servicio de una publicación ajena");
+            return 2;
+        }
+        servicioRepo.delete(servicioOpt.get());
+        return 0;
     }
 
     /**
@@ -254,15 +317,21 @@ public class PublicacionService {
     /**
      * Agrega una regla a una publicación existente.
      * 
+     * @param nombreUsuario nombre del usuario autenticado
      * @param idPublicacion
      * @param dto
-     * @return
+     * @return 0 si es exitoso, 1 si la publicación no existe, 2 si el usuario no
+     *         es propietario ni administrador
      */
     @Transactional
-    public int agregarReglaAPublicacion(Long idPublicacion, ReglaAlojamientoDTO dto) {
+    public int agregarReglaAPublicacion(String nombreUsuario, Long idPublicacion, ReglaAlojamientoDTO dto) {
         Optional<Publicacion> pubOpt = publicacionRepo.findById(idPublicacion);
         if (!pubOpt.isPresent()) {
             return 1;
+        }
+        if (!puedeModificar(pubOpt.get(), nombreUsuario)) {
+            registrarIntentoAjeno(nombreUsuario, idPublicacion, "Intento de agregar una regla a una publicación ajena");
+            return 2;
         }
         ReglaAlojamiento regla = modelMapper.map(dto, ReglaAlojamiento.class);
         regla.setPublicacion(pubOpt.get());
@@ -273,16 +342,25 @@ public class PublicacionService {
     /**
      * Elimina una regla por su ID.
      * 
+     * @param nombreUsuario nombre del usuario autenticado
      * @param idRegla
-     * @return
+     * @return 0 si es exitoso, 1 si no se encuentra, 2 si el usuario no es
+     *         propietario ni administrador de la publicación
      */
     @Transactional
-    public int eliminarRegla(Long idRegla) {
-        if (reglaRepo.existsById(idRegla)) {
-            reglaRepo.deleteById(idRegla);
-            return 0;
+    public int eliminarRegla(String nombreUsuario, Long idRegla) {
+        Optional<ReglaAlojamiento> reglaOpt = reglaRepo.findById(idRegla);
+        if (!reglaOpt.isPresent()) {
+            return 1;
         }
-        return 1;
+        Publicacion pub = reglaOpt.get().getPublicacion();
+        if (!puedeModificar(pub, nombreUsuario)) {
+            registrarIntentoAjeno(nombreUsuario, pub.getIdPublicacion(),
+                    "Intento de eliminar una regla de una publicación ajena");
+            return 2;
+        }
+        reglaRepo.delete(reglaOpt.get());
+        return 0;
     }
 
     /**
@@ -312,15 +390,22 @@ public class PublicacionService {
     /**
      * Agrega una imagen a una publicación existente.
      * 
+     * @param nombreUsuario nombre del usuario autenticado
      * @param idPublicacion
      * @param dto
-     * @return
+     * @return 0 si es exitoso, 1 si la publicación no existe, 2 si el usuario no
+     *         es propietario ni administrador
      */
     @Transactional
-    public int agregarImagenAPublicacion(Long idPublicacion, ImagenAlojamientoDTO dto) {
+    public int agregarImagenAPublicacion(String nombreUsuario, Long idPublicacion, ImagenAlojamientoDTO dto) {
         Optional<Publicacion> pubOpt = publicacionRepo.findById(idPublicacion);
         if (!pubOpt.isPresent()) {
             return 1;
+        }
+        if (!puedeModificar(pubOpt.get(), nombreUsuario)) {
+            registrarIntentoAjeno(nombreUsuario, idPublicacion,
+                    "Intento de agregar una imagen a una publicación ajena");
+            return 2;
         }
         ImagenAlojamiento imagen = modelMapper.map(dto, ImagenAlojamiento.class);
         imagen.setPublicacion(pubOpt.get());
@@ -331,16 +416,25 @@ public class PublicacionService {
     /**
      * Elimina una imagen por su ID.
      * 
+     * @param nombreUsuario nombre del usuario autenticado
      * @param idImagen
-     * @return
+     * @return 0 si es exitoso, 1 si no se encuentra, 2 si el usuario no es
+     *         propietario ni administrador de la publicación
      */
     @Transactional
-    public int eliminarImagen(Long idImagen) {
-        if (imagenRepo.existsById(idImagen)) {
-            imagenRepo.deleteById(idImagen);
-            return 0;
+    public int eliminarImagen(String nombreUsuario, Long idImagen) {
+        Optional<ImagenAlojamiento> imagenOpt = imagenRepo.findById(idImagen);
+        if (!imagenOpt.isPresent()) {
+            return 1;
         }
-        return 1;
+        Publicacion pub = imagenOpt.get().getPublicacion();
+        if (!puedeModificar(pub, nombreUsuario)) {
+            registrarIntentoAjeno(nombreUsuario, pub.getIdPublicacion(),
+                    "Intento de eliminar una imagen de una publicación ajena");
+            return 2;
+        }
+        imagenRepo.delete(imagenOpt.get());
+        return 0;
     }
 
     /**
@@ -355,7 +449,6 @@ public class PublicacionService {
         if (!publicacionRepo.existsById(idPublicacion)) {
             return null;
         }
-        // Usamos la consulta ordenada que ya tienes en ImagenAlojamientoRepository
         List<ImagenAlojamiento> entidades = imagenRepo.findByPublicacionIdPublicacionOrderByOrdenAsc(idPublicacion);
 
         List<ImagenAlojamientoDTO> dtos = new ArrayList<>();
@@ -373,7 +466,8 @@ public class PublicacionService {
      * 
      * @param nombreUsuario
      * @param idPublicacion
-     * @return
+     * @return 0 si es exitoso, 1 si no existe, 2 si no pertenece al usuario, 3 si
+     *         no está en borrador o pausada, 4 si no cumple la información mínima
      */
     @Transactional
     public int activarPublicacion(String nombreUsuario, Long idPublicacion) {
@@ -384,18 +478,23 @@ public class PublicacionService {
 
         Publicacion pub = pubOpt.get();
         if (!esPropietario(pub, nombreUsuario)) {
+            auditoriaService.registrarDenegado(nombreUsuario, Accion.ACTIVAR_PUBLICACION, TipoEntidad.PUBLICACION,
+                    idPublicacion, "Intento de activar una publicación ajena");
             return 2; // La publicación no pertenece al usuario
         }
         if (pub.getEstado() != EstadoPublicacion.BORRADOR && pub.getEstado() != EstadoPublicacion.PAUSADA) {
             return 3; // Solo se activan publicaciones en borrador o pausadas
         }
         if (!calcularDatosFaltantes(pub).isEmpty()) {
-            return 4; // No cumple la información mínima (RN-05)
+            return 4; // No cumple la información mínima
         }
 
         pub.setEstado(EstadoPublicacion.ACTIVA);
         publicacionRepo.save(pub);
-        // RN-15: registrar el evento de auditoría (se conecta en el paso de auditoría)
+
+        auditoriaService.registrarExito(nombreUsuario, Accion.ACTIVAR_PUBLICACION, TipoEntidad.PUBLICACION,
+                idPublicacion, "El anfitrión activó la publicación: " + pub.getTitulo());
+
         return 0; // Publicación activada exitosamente
     }
 
@@ -405,7 +504,8 @@ public class PublicacionService {
      * 
      * @param nombreUsuario
      * @param idPublicacion
-     * @return
+     * @return 0 si es exitoso, 1 si no existe, 2 si no pertenece al usuario, 3 si
+     *         no está activa
      */
     @Transactional
     public int pausarPublicacion(String nombreUsuario, Long idPublicacion) {
@@ -416,6 +516,8 @@ public class PublicacionService {
 
         Publicacion pub = pubOpt.get();
         if (!esPropietario(pub, nombreUsuario)) {
+            auditoriaService.registrarDenegado(nombreUsuario, Accion.PAUSAR_PUBLICACION, TipoEntidad.PUBLICACION,
+                    idPublicacion, "Intento de pausar una publicación ajena");
             return 2; // La publicación no pertenece al usuario
         }
         if (pub.getEstado() != EstadoPublicacion.ACTIVA) {
@@ -424,6 +526,10 @@ public class PublicacionService {
 
         pub.setEstado(EstadoPublicacion.PAUSADA);
         publicacionRepo.save(pub);
+
+        auditoriaService.registrarExito(nombreUsuario, Accion.PAUSAR_PUBLICACION, TipoEntidad.PUBLICACION,
+                idPublicacion, "El anfitrión pausó la publicación: " + pub.getTitulo());
+
         return 0; // Publicación pausada exitosamente
     }
 
@@ -436,6 +542,79 @@ public class PublicacionService {
      */
     private boolean esPropietario(Publicacion pub, String nombreUsuario) {
         return pub.getAnfitrion().getNombreUsuario().equals(nombreUsuario);
+    }
+
+    /**
+     * Indica si el usuario puede modificar la publicación: es su propietario o un
+     * administrador.
+     * 
+     * @param pub
+     * @param nombreUsuario
+     * @return
+     */
+    private boolean puedeModificar(Publicacion pub, String nombreUsuario) {
+        return esPropietario(pub, nombreUsuario);
+    }
+
+    /**
+     * Indica si el usuario autenticado tiene rol de administrador.
+     * 
+     * @param nombreUsuario
+     * @return
+     */
+    private boolean esAdministrador(String nombreUsuario) {
+        Optional<Usuario> usuarioOpt = usuarioRepo.findByNombreUsuario(nombreUsuario);
+        return usuarioOpt.isPresent() && usuarioOpt.get().getRole() == Usuario.Role.ADMINISTRADOR;
+    }
+
+    /**
+     * Registra en auditoría un intento de modificar una publicación ajena.
+     * 
+     * @param nombreUsuario
+     * @param idPublicacion
+     * @param detalle
+     */
+    private void registrarIntentoAjeno(String nombreUsuario, Long idPublicacion, String detalle) {
+        auditoriaService.registrarDenegado(nombreUsuario, Accion.ACTUALIZAR_PUBLICACION, TipoEntidad.PUBLICACION,
+                idPublicacion, detalle);
+    }
+
+    /**
+     * Valida los campos obligatorios al crear o actualizar una publicación: textos
+     * básicos, tipo, capacidad mayor que cero, precio positivo y
+     * política de cancelación.
+     * 
+     * @param dto
+     * @return
+     */
+    public List<String> validarDatos(PublicacionDTO dto) {
+        List<String> invalidos = new ArrayList<>();
+
+        if (textoVacio(dto.getTitulo())) {
+            invalidos.add("título");
+        }
+        if (textoVacio(dto.getDescripcion())) {
+            invalidos.add("descripción");
+        }
+        if (textoVacio(dto.getUbicacion())) {
+            invalidos.add("ubicación");
+        }
+        if (textoVacio(dto.getCiudad())) {
+            invalidos.add("ciudad");
+        }
+        if (dto.getTipo() == null) {
+            invalidos.add("tipo de alojamiento");
+        }
+        if (dto.getCapacidad() == null || dto.getCapacidad() <= 0) {
+            invalidos.add("capacidad (mayor que cero)");
+        }
+        if (dto.getPrecioNoche() == null || dto.getPrecioNoche() <= 0) {
+            invalidos.add("precio por noche (positivo)");
+        }
+        if (dto.getIdPoliticaCancelacion() == null) {
+            invalidos.add("política de cancelación");
+        }
+        return invalidos;
     }
 
     /**
@@ -456,9 +635,7 @@ public class PublicacionService {
 
     /**
      * Calcula los datos que no cumplen la información mínima para activar una
-     * publicación:
-     * textos básicos, tipo, capacidad mayor que cero,
-     * precio positivo y al menos una imagen.
+     * publicación.
      * 
      * @param publicacion
      * @return
