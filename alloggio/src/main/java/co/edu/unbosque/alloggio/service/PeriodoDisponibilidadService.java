@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.alloggio.dto.PeriodoDisponibilidadDTO;
+import co.edu.unbosque.alloggio.entity.EventoAuditoria.Accion;
+import co.edu.unbosque.alloggio.entity.EventoAuditoria.TipoEntidad;
 import co.edu.unbosque.alloggio.entity.PeriodoDisponibilidad;
 import co.edu.unbosque.alloggio.entity.PeriodoDisponibilidad.TipoPeriodo;
 import co.edu.unbosque.alloggio.entity.Publicacion;
@@ -31,6 +33,9 @@ public class PeriodoDisponibilidadService {
 
     @Autowired
     private PublicacionRepository publicacionRepo;
+
+    @Autowired
+    private EventoAuditoriaService auditoriaService;
 
     public PeriodoDisponibilidadService() {
     }
@@ -77,6 +82,8 @@ public class PeriodoDisponibilidadService {
 
         Publicacion pub = pubOpt.get();
         if (!esPropietario(pub, nombreUsuario)) {
+            auditoriaService.registrarDenegado(nombreUsuario, Accion.BLOQUEAR_RANGO, TipoEntidad.PUBLICACION,
+                    pub.getIdPublicacion(), "Intento de bloquear fechas de una publicación ajena");
             return 2; // La publicación no pertenece al usuario
         }
         if (!rangoOrdenado(dto.getFechaInicio(), dto.getFechaFin())) {
@@ -102,7 +109,16 @@ public class PeriodoDisponibilidadService {
         periodo.setFechaFin(dto.getFechaFin());
         periodo.setTipo(TipoPeriodo.BLOQUEADO);
         periodo.setPublicacion(pub);
-        periodoRepo.save(periodo);
+        // periodoRepo.save(periodo);
+
+        // Guarda en la base de datos y recupera la entidad persistida con su ID
+        // generado
+        PeriodoDisponibilidad guardado = periodoRepo.save(periodo);
+
+        // Registro en auditoria
+        auditoriaService.registrarExito(nombreUsuario, Accion.BLOQUEAR_RANGO, TipoEntidad.PERIODO_DISPONIBILIDAD,
+                guardado.getIdPeriodoDisponibilidad(), "Rango bloqueado del " + dto.getFechaInicio() + " al "
+                        + dto.getFechaFin() + " en la publicación " + pub.getIdPublicacion());
         return 0; // Rango bloqueado exitosamente
     }
 
@@ -123,13 +139,22 @@ public class PeriodoDisponibilidadService {
 
         PeriodoDisponibilidad periodo = periodoOpt.get();
         if (!esPropietario(periodo.getPublicacion(), nombreUsuario)) {
+            auditoriaService.registrarDenegado(nombreUsuario, Accion.DESBLOQUEAR_RANGO,
+                    TipoEntidad.PERIODO_DISPONIBILIDAD, idPeriodo,
+                    "Intento de desbloquear fechas de una publicación ajena");
             return 2; // La publicación no pertenece al usuario
         }
         if (periodo.getTipo() != TipoPeriodo.BLOQUEADO) {
             return 3; // Solo se desbloquean los bloqueos del anfitrión
         }
 
+        String detalle = "Bloqueo eliminado del " + periodo.getFechaInicio() + " al " + periodo.getFechaFin()
+                + " en la publicación " + periodo.getPublicacion().getIdPublicacion();
         periodoRepo.delete(periodo);
+
+        // Registro en auditoria
+        auditoriaService.registrarExito(nombreUsuario, Accion.DESBLOQUEAR_RANGO, TipoEntidad.PERIODO_DISPONIBILIDAD,
+                idPeriodo, detalle);
         return 0; // Rango desbloqueado exitosamente
     }
 

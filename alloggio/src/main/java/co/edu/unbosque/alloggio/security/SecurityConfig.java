@@ -44,12 +44,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // Rutas públicas
-                        .requestMatchers("/auth/**", "/restablecimiento/**").permitAll()
+                        .requestMatchers("/auth/**", "/restablecimiento/**", "/error").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/politica-cancelacion/obtener/**", "/disponibilidad/**").permitAll()
 
+                        // Solo administrador (debe ir antes de las generales)
+                        .requestMatchers("/auditoria/**").hasRole("ADMINISTRADOR")
+
                         // Rutas que exigen autenticación
                         .requestMatchers("/usuario/perfil", "/usuario/desactivar").authenticated()
+                        .requestMatchers("/notificacion/**").authenticated()
                         .requestMatchers("/publicacion/**").authenticated()
 
                         .anyRequest().authenticated()
