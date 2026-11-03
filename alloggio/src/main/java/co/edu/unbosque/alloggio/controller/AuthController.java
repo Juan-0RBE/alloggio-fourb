@@ -99,45 +99,77 @@ public class AuthController {
                     """)) @RequestBody UsuarioDTO loginRequest) {
         try {
             UsuarioDTO found = userService.getByNombreUsuario(loginRequest.getNombreUsuario());
-            System.out.println(found.toString());
 
-            if (found != null) {
-                if (found.isVerified()) {
-                    System.out.println("entró");
-
-                    Authentication authentication = authenticationManager
-                            .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getNombreUsuario(),
-                                    loginRequest.getClaveUsuario()));
-
-                    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-                    String jwt = jwtUtil.generateToken(userDetails);
-
-                    // Obtener el rol de userDetails si es nuestra clase User
-                    String role = "";
-                    if (userDetails instanceof Usuario) {
-                        System.out.println("entró");
-                        Usuario user = (Usuario) userDetails;
-                        role = user.getRole().name();
-                        System.out.println(role);
-                    }
-
-                    return ResponseEntity.ok(new AuthResponse(jwt, role));
-                } else {
-
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                            "Nombre de usuario o contraseña inválidos, usuario no encontrado o cuenta no verificada");
-                }
-
-            } else {
-
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Nombre de usuario o contraseña inválidos, usuario no encontrado o cuenta no verificada");
+            if (found == null || found.getIsVerified() == null || !found.getIsVerified()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                        "Nombre de usuario o contraseña inválidos, usuario no encontrado o cuenta no verificada");
             }
 
+            // Lanza AuthenticationException si la contraseña es incorrecta
+            Authentication authentication = authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getNombreUsuario(),
+                            loginRequest.getClaveUsuario()));
+
+            // Las credenciales son correctas: ahora se revisa el estado de la cuenta
+            if (found.getEstadoCuenta() != null && found.getEstadoCuenta() == Usuario.ESTADO_RESTRINGIDA) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("La cuenta está restringida y no puede iniciar sesión");
+            }
+            if (found.getEstaActivo() != null && found.getEstaActivo() == false) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("La cuenta está inactiva. Puedes reactivarla confirmando tus credenciales");
+            }
+
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String jwt = jwtUtil.generateToken(userDetails);
+
+            // Obtener el rol de userDetails si es nuestra clase Usuario
+            String role = "";
+            if (userDetails instanceof Usuario) {
+                role = ((Usuario) userDetails).getRole().name();
+            }
+
+            return ResponseEntity.ok(new AuthResponse(jwt, role));
+
         } catch (AuthenticationException e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Nombre de usuario o contraseña inválidos, usuario no encontrado o cuenta no verificada");
+        }
+    }
+
+    /**
+     * Reactiva la cuenta de un usuario que la había desactivado.
+     *
+     * @param datos JSON con nombreUsuario, claveUsuario y confirmar
+     * @return ResponseEntity con el resultado de la operación
+     */
+    @Operation(summary = "Reactivar cuenta de usuario", description = """
+                Permite a un usuario que desactivó su cuenta volver a activarla.
+
+                **Paso a paso:**
+
+                1. Envía tu nombre de usuario, tu contraseña y `confirmar: true`
+                2. Si las credenciales son correctas y la cuenta está inactiva, se reactiva
+                3. Luego puedes iniciar sesión normalmente
+
+                **Nota:** Una cuenta restringida por un administrador no puede reactivarse por este medio.
+            """)
+    @PostMapping("/reactivar")
+    public ResponseEntity<String> reactivar(@RequestBody UsuarioDTO datos) {
+        int status = userService.reactivarCuenta(datos);
+
+        if (status == 0) {
+            return new ResponseEntity<>("Cuenta reactivada exitosamente. Ya puedes iniciar sesión", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Nombre de usuario o contraseña inválidos", HttpStatus.UNAUTHORIZED);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La cuenta está restringida y no puede reactivarse", HttpStatus.FORBIDDEN);
+        } else if (status == 3) {
+            return new ResponseEntity<>("La cuenta ya está activa", HttpStatus.CONFLICT);
+        } else if (status == 4) {
+            return new ResponseEntity<>("Operación cancelada: la cuenta continúa inactiva", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

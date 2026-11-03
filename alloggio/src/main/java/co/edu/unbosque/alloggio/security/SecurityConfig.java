@@ -43,29 +43,33 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Público
-                        // GET públicos
-                        .requestMatchers(
-                                HttpMethod.GET, "/**")
-                        .permitAll()
+                        // Rutas públicas
+                        .requestMatchers("/auth/**", "/restablecimiento/**", "/error").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/politica-cancelacion/obtener/**", "/disponibilidad/**").permitAll()
+                        .requestMatchers("/politica-cancelacion/obtener/**", "/alojamiento/**").permitAll()
 
-                        // Auth
-                        .requestMatchers("/auth/**").permitAll()
+                        // Solo administrador (debe ir antes de las generales)
+                        .requestMatchers("/auditoria/**").hasRole("ADMINISTRADOR")
 
-                        // Usuario
-                        .requestMatchers("/venta/**", "/resena/**")
-                        .hasRole("USUARIO")
+                        // Rutas que exigen autenticación
+                        .requestMatchers("/usuario/perfil", "/usuario/desactivar").authenticated()
+                        .requestMatchers("/notificacion/**").authenticated()
+                        .requestMatchers("/publicacion/**").authenticated()
 
-                        // Admin
-                        .requestMatchers(HttpMethod.POST, "/**")
-                        .hasRole("ADMINISTRADOR")
+                        .anyRequest().authenticated()
 
-                        .requestMatchers(HttpMethod.PUT, "/**")
-                        .hasRole("ADMINISTRADOR")
-
-                        .requestMatchers(HttpMethod.DELETE, "/**")
-                        .hasRole("ADMINISTRADOR")
-                        .anyRequest().authenticated())
+                /*
+                 * // Públicas: autenticación (login, registro, reactivar), recuperación y
+                 * Swagger
+                 * .requestMatchers("/auth/**", "/restablecimiento/**").permitAll()
+                 * .requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
+                 * "/swagger-ui.html").permitAll()
+                 * 
+                 * // Nuevas de este paso: cualquier usuario autenticado
+                 * .requestMatchers("/usuario/perfil", "/usuario/desactivar").authenticated()
+                 */
+                )
 
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 

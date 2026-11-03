@@ -27,6 +27,15 @@ public class Usuario implements UserDetails {
 
     private static final long serialVersionUID = 1L;
 
+    /** Valor de estadoCuenta para una cuenta operativa. */
+    public static final String ESTADO_ACTIVA = "ACTIVA";
+
+    /**
+     * Valor de estadoCuenta para una cuenta restringida por un administrador
+     * (CU-027).
+     */
+    public static final String ESTADO_RESTRINGIDA = "RESTRINGIDA";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idUsuario;
@@ -100,6 +109,8 @@ public class Usuario implements UserDetails {
         this.credentialsNonExpired = true;
         this.enabled = true;
         this.role = Role.USUARIO;
+        this.estaActivo = true;
+        this.estadoCuenta = ESTADO_ACTIVA;
     }
 
     /**
