@@ -18,7 +18,6 @@
   overflow: hidden;
 }
 
-/* Fondo decorativo con SVG cruzando toda la pantalla */
 .ilustracion-fondo-total {
   position: absolute;
   top: 0;
@@ -55,7 +54,6 @@
   }
 }
 
-/* Tarjeta central limpia y elegante */
 .tarjeta-recuperacion {
   position: relative;
   z-index: 2;
@@ -86,7 +84,6 @@
   margin-bottom: 0.5rem;
 }
 
-/* Pie de página absoluto en la parte inferior */
 .pie-absoluto {
   position: absolute;
   bottom: 1.5rem;
@@ -95,7 +92,6 @@
   width: 100%;
 }
 
-// Reutilizamos la misma estructura de grupos de input y botones que ya tienes configurada
 .campo-formulario {
   display: flex;
   flex-direction: column;

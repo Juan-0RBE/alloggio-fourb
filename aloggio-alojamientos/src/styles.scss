@@ -1,5 +1,5 @@
-@import "primeicons/primeicons.css";
-@import "bootstrap/scss/bootstrap";
+@use 'primeicons/primeicons.css';
+@use 'bootstrap/scss/bootstrap';
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 $fondo-principal: #121417;
@@ -11,7 +11,8 @@ $texto-principal: #f4f5f7;
 $texto-secundario: #9ba3af;
 $borde-contenedor: #31363e;
 
-html, body {
+html,
+body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   margin: 0;
   padding: 0;
@@ -19,7 +20,8 @@ html, body {
   color: #f4f5f7;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -28,13 +30,15 @@ html, body {
   box-sizing: border-box;
 }
 
-*, *:before, *:after {
+*,
+*:before,
+*:after {
   box-sizing: inherit;
 }
 
-.p-inputtext, 
-.p-password-input, 
-.p-dropdown, 
+.p-inputtext,
+.p-password-input,
+.p-dropdown,
 .p-inputnumber-input {
   background-color: #272b30 !important;
   border: 1px solid #31363e !important;
@@ -48,11 +52,10 @@ html, body {
   }
 }
 
-.p-input-icon-left > i, 
+.p-input-icon-left > i,
 .p-input-icon-right > i {
   color: #9ba3af !important;
 }
-
 
 ::placeholder {
   color: #9ba3af !important;
