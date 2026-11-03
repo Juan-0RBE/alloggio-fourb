@@ -33,4 +33,12 @@ public interface ImagenAlojamientoRepository extends JpaRepository<ImagenAlojami
      */
     public void deleteByIdImagen(Long idImagen);
 
+    /**
+     * 
+     * 
+     * @param idPublicacion
+     * @return
+     */
+    Optional<ImagenAlojamiento> findFirstByPublicacionIdPublicacionOrderByOrdenAsc(Long idPublicacion);
+
 }

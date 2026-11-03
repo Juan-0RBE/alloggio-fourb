@@ -122,6 +122,24 @@ public class PublicacionService {
     }
 
     /**
+     * Obtiene todas las publicaciones ACTIVAS registradas en el sistema.
+     * 
+     * @return Lista de PublicacionDTO
+     */
+    public List<PublicacionDTO> obtenerActivas() {
+        List<Publicacion> publicaciones = publicacionRepo.findByEstado(Publicacion.EstadoPublicacion.ACTIVA);
+        List<PublicacionDTO> dtoList = new ArrayList<>();
+
+        for (Publicacion pub : publicaciones) {
+            PublicacionDTO dto = modelMapper.map(pub, PublicacionDTO.class);
+            dto.setIdAnfitrion(pub.getAnfitrion().getIdUsuario());
+            dto.setIdPoliticaCancelacion(pub.getPoliticaCancelacion().getIdPolitica());
+            dtoList.add(dto);
+        }
+        return dtoList;
+    }
+
+    /**
      * Obtiene las publicaciones asociadas a un anfitrión específico.
      * 
      * @param idAnfitrion
