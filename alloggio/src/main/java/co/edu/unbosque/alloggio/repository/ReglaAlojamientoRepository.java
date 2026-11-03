@@ -1,5 +1,6 @@
 package co.edu.unbosque.alloggio.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,5 +23,12 @@ public interface ReglaAlojamientoRepository extends JpaRepository<ReglaAlojamien
      * @param idRegla
      */
     public void deleteByIdRegla(Long idRegla);
+
+    /**
+     * 
+     * @param idPublicacion
+     * @return
+     */
+    List<ReglaAlojamiento> findByPublicacionIdPublicacion(Long idPublicacion);
 
 }

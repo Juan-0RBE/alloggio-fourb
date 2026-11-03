@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**", "/restablecimiento/**", "/error").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/politica-cancelacion/obtener/**", "/disponibilidad/**").permitAll()
+                        .requestMatchers("/politica-cancelacion/obtener/**", "/alojamiento/**").permitAll()
 
                         // Solo administrador (debe ir antes de las generales)
                         .requestMatchers("/auditoria/**").hasRole("ADMINISTRADOR")
