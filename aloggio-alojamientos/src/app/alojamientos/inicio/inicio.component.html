@@ -1,0 +1,149 @@
+<div class="aloggio-principal">
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </div>
+
+    <div class="barra-busqueda-central">
+      <div class="campo-busqueda">
+        <span class="etiqueta-busqueda">Ciudad</span>
+        <input type="text" placeholder="¿A dónde vas?" />
+      </div>
+      <div class="separador-vertical"></div>
+      <div class="campo-busqueda">
+        <span class="etiqueta-busqueda">Llegada</span>
+        <input type="text" placeholder="Agregar fecha" />
+      </div>
+      <div class="separador-vertical"></div>
+      <div class="campo-busqueda">
+        <span class="etiqueta-busqueda">Salida</span>
+        <input type="text" placeholder="Agregar fecha" />
+      </div>
+      <div class="separador-vertical"></div>
+      <div class="campo-busqueda">
+        <span class="etiqueta-busqueda">Huéspedes</span>
+        <input type="text" placeholder="¿Cuántos?" />
+      </div>
+      <button class="boton-buscar" type="button">
+        <i class="pi pi-search"></i>
+        <span>Buscar</span>
+      </button>
+    </div>
+
+    <div class="acciones-usuario">
+      <button class="boton-icono" title="Reservas" type="button">
+        <i class="pi pi-calendar"></i>
+      </button>
+      <button class="boton-icono" title="Notificaciones" type="button">
+        <i class="pi pi-bell"></i>
+      </button>
+      <button class="boton-anfitrion" type="button">Modo Anfitrión</button>
+      <div class="menu-perfil-contenedor">
+        <i class="pi pi-bars icono-menu"></i>
+        <div class="avatar-usuario">
+          <i class="pi pi-user"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="cuerpo-principal">
+    <aside class="barra-lateral-filtros">
+      <div class="encabezado-filtros">
+        <h2 class="titulo-seccion-filtros">Filtros</h2>
+        <button class="boton-limpiar-filtros" type="button">Limpiar</button>
+      </div>
+
+      <div class="grupo-filtro">
+        <h3 class="titulo-grupo">Tipo de alojamiento</h3>
+        <div class="opciones-checkbox">
+          <label class="etiqueta-checkbox">
+            <input type="checkbox" checked />
+            <span>Todos</span>
+          </label>
+          <label class="etiqueta-checkbox">
+            <input type="checkbox" />
+            <span>Apartamento</span>
+          </label>
+          <label class="etiqueta-checkbox">
+            <input type="checkbox" />
+            <span>Casa</span>
+          </label>
+          <label class="etiqueta-checkbox">
+            <input type="checkbox" />
+            <span>Finca</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="grupo-filtro">
+        <h3 class="titulo-grupo">Precio por noche (máx.)</h3>
+        <div class="contenedor-input-precio">
+          <span>$</span>
+          <input type="text" placeholder="0 - $Máx COP" />
+        </div>
+      </div>
+
+      <div class="grupo-filtro">
+        <h3 class="titulo-grupo">Servicios</h3>
+        <div class="opciones-checkbox">
+          <label class="etiqueta-checkbox">
+            <input type="checkbox" />
+            <span>Wi-Fi</span>
+          </label>
+          <label class="etiqueta-checkbox">
+            <input type="checkbox" />
+            <span>Parqueadero</span>
+          </label>
+          <label class="etiqueta-checkbox">
+            <input type="checkbox" />
+            <span>Piscina</span>
+          </label>
+        </div>
+      </div>
+    </aside>
+
+    <main class="contenedor-contenido">
+      <div class="barra-resultado-info">
+        <span class="contador-alojamientos"
+          >{{ alojamientos.length }} Alojamientos disponibles</span
+        >
+      </div>
+
+      <div class="contenedor-grid-alojamientos">
+        <article *ngFor="let alojamiento of alojamientos" class="tarjeta-alojamiento">
+          <div class="contenedor-imagen">
+            <img [src]="alojamiento.imagenUrl" [alt]="alojamiento.titulo" loading="lazy" />
+            <span *ngIf="alojamiento.etiqueta" class="badge-etiqueta">{{
+              alojamiento.etiqueta
+            }}</span>
+          </div>
+
+          <div class="detalles-alojamiento">
+            <div class="info-principal">
+              <h3 class="titulo-alojamiento">{{ alojamiento.titulo }}</h3>
+              <p class="ubicacion-alojamiento">
+                {{ alojamiento.ciudad }} · {{ alojamiento.tipo }}
+                {{ alojamiento.capacidad }} huéspedes
+              </p>
+
+              <div class="badge-servicio">
+                <i class="pi pi-check-circle"></i>
+                <span>{{ alojamiento.servicioDestacado }}</span>
+              </div>
+            </div>
+
+            <div class="pie-tarjeta">
+              <div class="contenedor-precio">
+                <span class="monto-precio">${{ alojamiento.precioNoche | number: '1.0-0' }}</span>
+                <span class="texto-periodo">/ noche</span>
+              </div>
+              <button class="boton-ver-detalle" type="button">Ver detalle</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+</div>
