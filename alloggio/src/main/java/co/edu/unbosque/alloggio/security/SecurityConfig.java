@@ -53,7 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/auditoria/**").hasRole("ADMINISTRADOR")
 
                         // Rutas que exigen autenticación
-                        .requestMatchers("/usuario/perfil", "/usuario/desactivar").authenticated()
+                        .requestMatchers("/usuario/perfil", "/usuario/desactivar", "/cotizacion/**").authenticated()
                         .requestMatchers("/notificacion/**").authenticated()
                         .requestMatchers("/publicacion/**").authenticated()
 
