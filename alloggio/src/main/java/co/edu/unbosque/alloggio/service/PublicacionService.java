@@ -216,6 +216,7 @@ public class PublicacionService {
         pub.setTipo(dto.getTipo());
         pub.setCapacidad(dto.getCapacidad());
         pub.setPrecioNoche(dto.getPrecioNoche());
+        pub.setTarifaLimpieza(dto.getTarifaLimpieza());
         pub.setPoliticaCancelacion(politicaOpt.get());
 
         publicacionRepo.save(pub);
@@ -628,6 +629,9 @@ public class PublicacionService {
         }
         if (dto.getPrecioNoche() == null || dto.getPrecioNoche() <= 0) {
             invalidos.add("precio por noche (positivo)");
+        }
+        if (dto.getTarifaLimpieza() == null || dto.getTarifaLimpieza() < 0) {
+            invalidos.add("tarifa de limpieza (cero o mayor)");
         }
         if (dto.getIdPoliticaCancelacion() == null) {
             invalidos.add("política de cancelación");

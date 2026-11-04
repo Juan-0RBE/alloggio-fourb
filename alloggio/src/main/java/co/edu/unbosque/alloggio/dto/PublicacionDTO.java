@@ -16,6 +16,7 @@ public class PublicacionDTO {
     private TipoAlojamiento tipo;
     private Integer capacidad;
     private Double precioNoche;
+    private Double tarifaLimpieza;
     private EstadoPublicacion estado;
     private String motivoBloqueo;
 
@@ -37,13 +38,15 @@ public class PublicacionDTO {
      * @param tipo
      * @param capacidad
      * @param precioNoche
+     * @param tarifaLimpieza
      * @param estado
      * @param motivoBloqueo
      * @param idAnfitrion
      * @param idPoliticaCancelacion
      */
     public PublicacionDTO(Long idPublicacion, String titulo, String descripcion, String ubicacion, String ciudad,
-            TipoAlojamiento tipo, Integer capacidad, Double precioNoche, EstadoPublicacion estado, String motivoBloqueo,
+            TipoAlojamiento tipo, Integer capacidad, Double precioNoche, Double tarifaLimpieza,
+            EstadoPublicacion estado, String motivoBloqueo,
             Long idAnfitrion, Long idPoliticaCancelacion) {
         this.idPublicacion = idPublicacion;
         this.titulo = titulo;
@@ -53,6 +56,7 @@ public class PublicacionDTO {
         this.tipo = tipo;
         this.capacidad = capacidad;
         this.precioNoche = precioNoche;
+        this.tarifaLimpieza = tarifaLimpieza;
         this.estado = estado;
         this.motivoBloqueo = motivoBloqueo;
         this.idAnfitrion = idAnfitrion;
@@ -122,6 +126,14 @@ public class PublicacionDTO {
 
     public void setPrecioNoche(Double precioNoche) {
         this.precioNoche = precioNoche;
+    }
+
+    public Double getTarifaLimpieza() {
+        return tarifaLimpieza;
+    }
+
+    public void setTarifaLimpieza(Double tarifaLimpieza) {
+        this.tarifaLimpieza = tarifaLimpieza;
     }
 
     public EstadoPublicacion getEstado() {

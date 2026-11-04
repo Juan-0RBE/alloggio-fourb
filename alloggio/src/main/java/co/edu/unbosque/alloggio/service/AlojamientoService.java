@@ -264,4 +264,13 @@ public class AlojamientoService {
         return new AlojamientoResumenDTO(pub.getIdPublicacion(), pub.getTitulo(), pub.getCiudad(), pub.getTipo(),
                 pub.getCapacidad(), pub.getPrecioNoche(), imagenPrincipal);
     }
+
+    /**
+     * Indica si una publicación está libre en el rango, ningún
+     * periodo debe cruzarlo.
+     */
+    @Transactional(readOnly = true)
+    public boolean estaDisponible(Long idPublicacion, LocalDate fechaLlegada, LocalDate fechaSalida) {
+        return periodoRepo.findIntersectingPeriods(idPublicacion, fechaLlegada, fechaSalida).isEmpty();
+    }
 }

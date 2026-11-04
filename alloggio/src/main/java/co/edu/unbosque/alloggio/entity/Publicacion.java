@@ -42,6 +42,9 @@ public class Publicacion {
     @Column(name = "Precio_Noche", nullable = false)
     private Double precioNoche;
 
+    @Column(name = "Tarifa_Limpieza", nullable = false, columnDefinition = "DOUBLE DEFAULT 0")
+    private Double tarifaLimpieza;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "Estado", nullable = false)
     private EstadoPublicacion estado;
@@ -70,6 +73,7 @@ public class Publicacion {
 
     public Publicacion() {
         this.estado = EstadoPublicacion.BORRADOR; // Valor por defecto común
+        this.tarifaLimpieza = 0.0; // Valor por defecto: sin cargo de limpieza
     }
 
     /**
@@ -83,13 +87,15 @@ public class Publicacion {
      * @param tipo
      * @param capacidad
      * @param precioNoche
+     * @param tarifaLimpieza
      * @param estado
      * @param motivoBloqueo
      * @param anfitrion
      * @param politicaCancelacion
      */
     public Publicacion(Long idPublicacion, String titulo, String descripcion, String ubicacion, String ciudad,
-            TipoAlojamiento tipo, Integer capacidad, Double precioNoche, EstadoPublicacion estado, String motivoBloqueo,
+            TipoAlojamiento tipo, Integer capacidad, Double precioNoche, Double tarifaLimpieza,
+            EstadoPublicacion estado, String motivoBloqueo,
             Usuario anfitrion, PoliticaCancelacion politicaCancelacion) {
         this.idPublicacion = idPublicacion;
         this.titulo = titulo;
@@ -99,6 +105,7 @@ public class Publicacion {
         this.tipo = tipo;
         this.capacidad = capacidad;
         this.precioNoche = precioNoche;
+        this.tarifaLimpieza = tarifaLimpieza;
         this.estado = estado;
         this.motivoBloqueo = motivoBloqueo;
         this.anfitrion = anfitrion;
@@ -169,6 +176,14 @@ public class Publicacion {
 
     public void setPrecioNoche(Double precioNoche) {
         this.precioNoche = precioNoche;
+    }
+
+    public Double getTarifaLimpieza() {
+        return tarifaLimpieza;
+    }
+
+    public void setTarifaLimpieza(Double tarifaLimpieza) {
+        this.tarifaLimpieza = tarifaLimpieza;
     }
 
     public EstadoPublicacion getEstado() {
