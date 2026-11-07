@@ -1,5 +1,7 @@
 package co.edu.unbosque.alloggio.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -32,8 +34,8 @@ import co.edu.unbosque.alloggio.repository.ServicioAlojamientoRepository;
 import co.edu.unbosque.alloggio.repository.UsuarioRepository;
 
 /**
- * Servicio para cotizar un alojamiento (CU-016) y agregar servicios adicionales
- * a la cotización (CU-017). La cotización no crea reservas ni bloquea fechas.
+ * Servicio para cotizar un alojamiento y agregar servicios adicionales
+ * a la cotización.
  */
 @Service
 public class CotizacionService {
@@ -67,13 +69,9 @@ public class CotizacionService {
      * huésped se toma de la sesión. Si es exitoso, el id de la cotización creada
      * queda en dto.idCotizacion.
      * 
-     * @param nombreUsuario nombre del usuario autenticado
-     * @param dto           debe traer idPublicacion, fechaLlegada y fechaSalida
-     * @return 0 si es exitoso, 1 si el usuario no existe, 2 si la publicación no
-     *         existe o no está ACTIVA, 3 si faltan fechas o la salida no es
-     *         posterior a la llegada (RN-07), 4 si la llegada es anterior a hoy, 5
-     *         si el alojamiento no está disponible en el rango (CU-016 E2), 6 si
-     *         las tarifas de la plataforma no están configuradas
+     * @param nombreUsuario
+     * @param dto
+     * @return
      */
     @Transactional
     public int cotizar(String nombreUsuario, CotizacionDTO dto) {
@@ -87,7 +85,7 @@ public class CotizacionService {
         }
         Optional<Publicacion> pubOpt = publicacionRepo.findById(dto.getIdPublicacion());
         if (!pubOpt.isPresent() || pubOpt.get().getEstado() != EstadoPublicacion.ACTIVA) {
-            return 2; // Solo se cotizan publicaciones ACTIVAS (RN-04)
+            return 2; // Solo se cotizan publicaciones ACTIVAS
         }
         Publicacion pub = pubOpt.get();
 
@@ -98,7 +96,7 @@ public class CotizacionService {
         }
         int criterio = alojamientoService.validarCriterios(llegada, salida, null, null, null);
         if (criterio == 2) {
-            return 3; // La salida debe ser posterior a la llegada (RN-07)
+            return 3; // La salida debe ser posterior a la llegada
         }
         if (criterio == 3) {
             return 4; // La llegada está en el pasado
@@ -115,12 +113,12 @@ public class CotizacionService {
         ParametroTarifa parametro = parametroOpt.get();
 
         int noches = (int) ChronoUnit.DAYS.between(llegada, salida);
-        double precioBase = redondear(pub.getPrecioNoche() * noches);
-        double limpieza = redondear(pub.getTarifaLimpieza());
-        double servicio = redondear(precioBase * parametro.getPorcentajeServicio() / 100.0);
-        double descuento = 0.0;
+        BigDecimal precioBase = redondear(aDecimal(pub.getPrecioNoche()).multiply(BigDecimal.valueOf(noches)));
+        BigDecimal limpieza = redondear(aDecimal(pub.getTarifaLimpieza()));
+        BigDecimal servicio = porcentaje(precioBase, parametro.getPorcentajeServicio());
+        BigDecimal descuento = BigDecimal.ZERO;
         if (noches >= parametro.getNochesMinimasDescuento()) {
-            descuento = redondear(precioBase * parametro.getPorcentajeDescuento() / 100.0);
+            descuento = porcentaje(precioBase, parametro.getPorcentajeDescuento());
         }
 
         Cotizacion cotizacion = new Cotizacion();
@@ -144,17 +142,11 @@ public class CotizacionService {
 
     /**
      * Agrega servicios adicionales a una cotización vigente y recalcula el total.
-     * El costo de cada servicio es por noche, así que se multiplica por las noches
-     * de la estadía. Los servicios ya agregados se ignoran; una lista vacía no
-     * cambia nada (CU-017 A1).
      * 
      * @param nombreUsuario nombre del usuario autenticado
      * @param idCotizacion
-     * @param idsServicios  ids de los servicios adicionales a agregar
-     * @return 0 si es exitoso, 1 si la cotización no existe, 2 si no pertenece al
-     *         huésped autenticado, 3 si la cotización ya no está vigente, 4 si el
-     *         alojamiento no ofrece servicios adicionales (CU-017 E1), 5 si algún
-     *         servicio no existe, no es adicional o no pertenece al alojamiento
+     * @param idsServicios
+     * @return
      */
     @Transactional
     public int agregarServicios(String nombreUsuario, Long idCotizacion, List<Long> idsServicios) {
@@ -202,10 +194,9 @@ public class CotizacionService {
                 continue;
             }
             ServicioAlojamiento servicio = adicionales.get(idServicio);
-            // El costo del servicio es por noche: se multiplica por las noches de la
-            // estadía
-            double costoPorNoche = servicio.getCosto() == null ? 0.0 : servicio.getCosto();
-            double costo = redondear(costoPorNoche * cotizacion.getNoches());
+            // El costo del servicio es por noche
+            BigDecimal costoPorNoche = aDecimal(servicio.getCosto());
+            BigDecimal costo = redondear(costoPorNoche.multiply(BigDecimal.valueOf(cotizacion.getNoches())));
             cotizacion.getServicios().add(new CotizacionServicio(null, costo, cotizacion, servicio));
         }
 
@@ -215,6 +206,14 @@ public class CotizacionService {
         return 0; // Servicios agregados y total recalculado
     }
 
+    /**
+     * Quita un servicio adicional de una cotización vigente y recalcula el total.
+     * 
+     * @param nombreUsuario nombre del usuario autenticado
+     * @param idCotizacion
+     * @param idServicio
+     * @return
+     */
     @Transactional
     public int quitarServicio(String nombreUsuario, Long idCotizacion, Long idServicio) {
         Optional<Cotizacion> cotOpt = cotizacionRepo.findById(idCotizacion);
@@ -248,7 +247,7 @@ public class CotizacionService {
      * adicionales.
      * 
      * @param idCotizacion
-     * @return CotizacionDTO, o null si no existe
+     * @return
      */
     @Transactional(readOnly = true)
     public CotizacionDTO obtenerPorId(Long idCotizacion) {
@@ -260,43 +259,71 @@ public class CotizacionService {
 
         // Las relaciones son LAZY: el DTO se arma a mano dentro de la transacción
         List<CotizacionServicioDTO> servicios = new ArrayList<>();
-        double extras = 0.0;
         for (CotizacionServicio cs : cotizacion.getServicios()) {
             servicios.add(new CotizacionServicioDTO(cs.getServicio().getIdServicio(), cs.getServicio().getNombre(),
                     cs.getCostoAplicado()));
-            extras += cs.getCostoAplicado();
         }
 
         return new CotizacionDTO(cotizacion.getIdCotizacion(), cotizacion.getPublicacion().getIdPublicacion(),
                 cotizacion.getFechaLlegada(), cotizacion.getFechaSalida(), cotizacion.getNoches(),
                 cotizacion.getPrecioBase(), cotizacion.getLimpieza(), cotizacion.getServicio(),
-                cotizacion.getDescuento(), redondear(extras), cotizacion.getTotal(), cotizacion.getVigencia(),
-                servicios);
+                cotizacion.getDescuento(), sumarExtras(cotizacion), cotizacion.getTotal(),
+                cotizacion.getVigencia(), servicios);
     }
 
     /**
      * Recalcula el total: precio base + limpieza + servicio + servicios adicionales
-     * - descuento. Usa los valores guardados en la cotización, no las tarifas
-     * actuales.
+     * - descuento.
      * 
      * @param cotizacion
      */
     private void recalcularTotal(Cotizacion cotizacion) {
-        double extras = 0.0;
-        for (CotizacionServicio cs : cotizacion.getServicios()) {
-            extras += cs.getCostoAplicado();
-        }
-        cotizacion.setTotal(redondear(cotizacion.getPrecioBase() + cotizacion.getLimpieza()
-                + cotizacion.getServicio() + extras - cotizacion.getDescuento()));
+        cotizacion.setTotal(redondear(cotizacion.getPrecioBase().add(cotizacion.getLimpieza())
+                .add(cotizacion.getServicio()).add(sumarExtras(cotizacion)).subtract(cotizacion.getDescuento())));
     }
 
     /**
-     * Redondea un valor monetario a dos decimales.
+     * Suma el costo aplicado de los servicios adicionales de la cotización.
      * 
-     * @param valor
+     * @param cotizacion
      * @return
      */
-    private double redondear(double valor) {
-        return Math.round(valor * 100.0) / 100.0;
+    private BigDecimal sumarExtras(Cotizacion cotizacion) {
+        BigDecimal extras = BigDecimal.ZERO;
+        for (CotizacionServicio cs : cotizacion.getServicios()) {
+            extras = extras.add(cs.getCostoAplicado());
+        }
+        return redondear(extras);
+    }
+
+    /**
+     * Calcula base × porcentaje / 100, redondeado a dos decimales.
+     * 
+     * @param base
+     * @param porcentaje
+     * @return el valor del porcentaje sobre la base
+     */
+    private BigDecimal porcentaje(BigDecimal base, Number porcentaje) {
+        return base.multiply(aDecimal(porcentaje)).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Convierte un número a BigDecimal sin arrastrar error binario; nulo vale cero.
+     * 
+     * @param valor
+     * @return el valor como BigDecimal
+     */
+    private BigDecimal aDecimal(Number valor) {
+        return valor == null ? BigDecimal.ZERO : new BigDecimal(valor.toString());
+    }
+
+    /**
+     * Redondea un valor monetario a dos decimales (mitad hacia arriba).
+     * 
+     * @param valor
+     * @return el valor redondeado
+     */
+    private BigDecimal redondear(BigDecimal valor) {
+        return valor.setScale(2, RoundingMode.HALF_UP);
     }
 }

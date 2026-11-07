@@ -1,5 +1,7 @@
 package co.edu.unbosque.alloggio.dto;
 
+import java.math.BigDecimal;
+
 /**
  * Representa un servicio adicional incluido en una cotización.
  */
@@ -7,7 +9,7 @@ public class CotizacionServicioDTO {
 
     private Long idServicio;
     private String nombre;
-    private Double costoAplicado;
+    private BigDecimal costoAplicado;
 
     public CotizacionServicioDTO() {
     }
@@ -20,7 +22,7 @@ public class CotizacionServicioDTO {
      * @param nombre
      * @param costoAplicado
      */
-    public CotizacionServicioDTO(Long idServicio, String nombre, Double costoAplicado) {
+    public CotizacionServicioDTO(Long idServicio, String nombre, BigDecimal costoAplicado) {
         this.idServicio = idServicio;
         this.nombre = nombre;
         this.costoAplicado = costoAplicado;
@@ -43,11 +45,11 @@ public class CotizacionServicioDTO {
         this.nombre = nombre;
     }
 
-    public Double getCostoAplicado() {
+    public BigDecimal getCostoAplicado() {
         return costoAplicado;
     }
 
-    public void setCostoAplicado(Double costoAplicado) {
+    public void setCostoAplicado(BigDecimal costoAplicado) {
         this.costoAplicado = costoAplicado;
     }
 }

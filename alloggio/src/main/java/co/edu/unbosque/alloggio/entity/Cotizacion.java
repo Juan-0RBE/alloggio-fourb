@@ -1,5 +1,6 @@
 package co.edu.unbosque.alloggio.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -40,32 +41,30 @@ public class Cotizacion {
     @Column(name = "Noches", nullable = false)
     private Integer noches;
 
-    @Column(name = "Precio_Base", nullable = false)
-    private Double precioBase;
+    @Column(name = "Precio_Base", nullable = false, precision = 12, scale = 2)
+    private BigDecimal precioBase;
 
-    @Column(name = "Limpieza", nullable = false)
-    private Double limpieza;
+    @Column(name = "Limpieza", nullable = false, precision = 12, scale = 2)
+    private BigDecimal limpieza;
 
-    @Column(name = "Servicio", nullable = false)
-    private Double servicio;
+    @Column(name = "Servicio", nullable = false, precision = 12, scale = 2)
+    private BigDecimal servicio;
 
-    @Column(name = "Descuento", nullable = false)
-    private Double descuento;
+    @Column(name = "Descuento", nullable = false, precision = 12, scale = 2)
+    private BigDecimal descuento;
 
     /** Incluye los servicios adicionales agregados a la cotización. */
-    @Column(name = "Total", nullable = false)
-    private Double total;
+    @Column(name = "Total", nullable = false, precision = 12, scale = 2)
+    private BigDecimal total;
 
     /** Fecha y hora hasta la cual la cotización puede usarse. */
     @Column(name = "Vigencia", nullable = false)
     private LocalDateTime vigencia;
 
-    // Relación con Usuario (Huésped)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "idUsuario", nullable = false)
     private Usuario huesped;
 
-    // Relación con Publicacion
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "idPublicacion", nullable = false)
     private Publicacion publicacion;
@@ -76,11 +75,11 @@ public class Cotizacion {
 
     public Cotizacion() {
         this.noches = 0;
-        this.precioBase = 0.0;
-        this.limpieza = 0.0;
-        this.servicio = 0.0;
-        this.descuento = 0.0;
-        this.total = 0.0;
+        this.precioBase = BigDecimal.ZERO;
+        this.limpieza = BigDecimal.ZERO;
+        this.servicio = BigDecimal.ZERO;
+        this.descuento = BigDecimal.ZERO;
+        this.total = BigDecimal.ZERO;
     }
 
     /**
@@ -100,8 +99,8 @@ public class Cotizacion {
      * @param publicacion
      */
     public Cotizacion(Long idCotizacion, LocalDate fechaLlegada, LocalDate fechaSalida, Integer noches,
-            Double precioBase, Double limpieza, Double servicio, Double descuento, Double total,
-            LocalDateTime vigencia, Usuario huesped, Publicacion publicacion) {
+            BigDecimal precioBase, BigDecimal limpieza, BigDecimal servicio, BigDecimal descuento,
+            BigDecimal total, LocalDateTime vigencia, Usuario huesped, Publicacion publicacion) {
         this.idCotizacion = idCotizacion;
         this.fechaLlegada = fechaLlegada;
         this.fechaSalida = fechaSalida;
@@ -149,43 +148,43 @@ public class Cotizacion {
         this.noches = noches;
     }
 
-    public Double getPrecioBase() {
+    public BigDecimal getPrecioBase() {
         return precioBase;
     }
 
-    public void setPrecioBase(Double precioBase) {
+    public void setPrecioBase(BigDecimal precioBase) {
         this.precioBase = precioBase;
     }
 
-    public Double getLimpieza() {
+    public BigDecimal getLimpieza() {
         return limpieza;
     }
 
-    public void setLimpieza(Double limpieza) {
+    public void setLimpieza(BigDecimal limpieza) {
         this.limpieza = limpieza;
     }
 
-    public Double getServicio() {
+    public BigDecimal getServicio() {
         return servicio;
     }
 
-    public void setServicio(Double servicio) {
+    public void setServicio(BigDecimal servicio) {
         this.servicio = servicio;
     }
 
-    public Double getDescuento() {
+    public BigDecimal getDescuento() {
         return descuento;
     }
 
-    public void setDescuento(Double descuento) {
+    public void setDescuento(BigDecimal descuento) {
         this.descuento = descuento;
     }
 
-    public Double getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
 
-    public void setTotal(Double total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 
