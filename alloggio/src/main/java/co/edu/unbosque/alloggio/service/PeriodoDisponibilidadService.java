@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.alloggio.dto.PeriodoDisponibilidadDTO;
@@ -23,7 +24,6 @@ import co.edu.unbosque.alloggio.repository.PublicacionRepository;
  * Clase de servicio para manejar la lógica de negocio relacionada con los
  * períodos de disponibilidad.
  * 
- * PeriodoDisponibilidadService
  */
 @Service
 public class PeriodoDisponibilidadService {
@@ -43,10 +43,9 @@ public class PeriodoDisponibilidadService {
     /**
      * Verifica que la publicación exista y pertenezca al usuario autenticado.
      * 
-     * @param nombreUsuario nombre del usuario autenticado
-     * @param idPublicacion ID de la publicación
-     * @return 0 si el usuario es el propietario, 1 si la publicación no existe, 2
-     *         si la publicación pertenece a otro anfitrión
+     * @param nombreUsuario
+     * @param idPublicacion
+     * @return
      */
     @Transactional(readOnly = true)
     public int validarPropietario(String nombreUsuario, Long idPublicacion) {
@@ -63,19 +62,16 @@ public class PeriodoDisponibilidadService {
     /**
      * Bloquea un rango de fechas de una publicación del anfitrión autenticado.
      * 
-     * @param nombreUsuario nombre del usuario autenticado
-     * @param dto           idPublicacion, fechaInicio y fechaFin (día de salida)
-     * @return 0 si es exitoso, 1 si la publicación no existe, 2 si no pertenece al
-     *         usuario, 3 si las fechas son nulas o la fecha de fin no es posterior
-     *         a la de inicio, 4 si el rango inicia en el pasado, 5 si se cruza con
-     *         una reserva confirmada, 6 si se cruza con otro bloqueo existente
+     * @param nombreUsuario
+     * @param dto
+     * @return
      */
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int bloquearRango(String nombreUsuario, PeriodoDisponibilidadDTO dto) {
         if (dto.getIdPublicacion() == null) {
             return 1; // Publicación no encontrada
         }
-        Optional<Publicacion> pubOpt = publicacionRepo.findById(dto.getIdPublicacion());
+        Optional<Publicacion> pubOpt = publicacionRepo.findByIdParaActualizar(dto.getIdPublicacion());
         if (!pubOpt.isPresent()) {
             return 1; // Publicación no encontrada
         }
@@ -87,7 +83,7 @@ public class PeriodoDisponibilidadService {
             return 2; // La publicación no pertenece al usuario
         }
         if (!rangoOrdenado(dto.getFechaInicio(), dto.getFechaFin())) {
-            return 3; // Fechas inválidas (RN-07)
+            return 3; // Fechas inválidas
         }
         if (dto.getFechaInicio().isBefore(LocalDate.now())) {
             return 4; // El rango inicia en el pasado
@@ -225,8 +221,8 @@ public class PeriodoDisponibilidadService {
     /**
      * Convierte un periodo en su DTO.
      * 
-     * @param periodo entidad a convertir
-     * @return el DTO del periodo
+     * @param periodo
+     * @return
      */
     private PeriodoDisponibilidadDTO aDTO(PeriodoDisponibilidad periodo) {
         PeriodoDisponibilidadDTO dto = new PeriodoDisponibilidadDTO();

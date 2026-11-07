@@ -18,7 +18,6 @@ import jakarta.persistence.Table;
  * Clase que representa un período de disponibilidad en el sistema de
  * alojamiento.
  * 
- * PeriodoDisponibilidad
  */
 @Entity
 @Table(name = "PERIODO_DISPONIBILIDAD")

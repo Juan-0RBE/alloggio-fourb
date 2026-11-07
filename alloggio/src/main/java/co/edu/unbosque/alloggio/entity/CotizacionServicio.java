@@ -1,5 +1,7 @@
 package co.edu.unbosque.alloggio.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -23,8 +25,8 @@ public class CotizacionServicio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idCotizacionServicio;
 
-    @Column(name = "Costo_Aplicado", nullable = false)
-    private Double costoAplicado;
+    @Column(name = "Costo_Aplicado", nullable = false, precision = 12, scale = 2)
+    private BigDecimal costoAplicado;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "idCotizacion", nullable = false)
@@ -35,7 +37,7 @@ public class CotizacionServicio {
     private ServicioAlojamiento servicio;
 
     public CotizacionServicio() {
-        this.costoAplicado = 0.0;
+        this.costoAplicado = BigDecimal.ZERO;
     }
 
     /**
@@ -47,7 +49,7 @@ public class CotizacionServicio {
      * @param cotizacion
      * @param servicio
      */
-    public CotizacionServicio(Long idCotizacionServicio, Double costoAplicado, Cotizacion cotizacion,
+    public CotizacionServicio(Long idCotizacionServicio, BigDecimal costoAplicado, Cotizacion cotizacion,
             ServicioAlojamiento servicio) {
         this.idCotizacionServicio = idCotizacionServicio;
         this.costoAplicado = costoAplicado;
@@ -64,11 +66,11 @@ public class CotizacionServicio {
         this.idCotizacionServicio = idCotizacionServicio;
     }
 
-    public Double getCostoAplicado() {
+    public BigDecimal getCostoAplicado() {
         return costoAplicado;
     }
 
-    public void setCostoAplicado(Double costoAplicado) {
+    public void setCostoAplicado(BigDecimal costoAplicado) {
         this.costoAplicado = costoAplicado;
     }
 

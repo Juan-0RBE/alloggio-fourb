@@ -183,10 +183,7 @@ public class PublicacionService {
      * @param nombreUsuario
      * @param id
      * @param dto
-     * @return 0 si es exitoso, 1 si no se encuentra la publicación, 2 si la
-     *         política no existe, 3 si el usuario no es propietario ni
-     *         administrador, 4 si faltan campos obligatorios o son inválidos (ver
-     *         validarDatos)
+     * @return
      */
     @Transactional
     public int actualizarPublicacion(String nombreUsuario, Long id, PublicacionDTO dto) {

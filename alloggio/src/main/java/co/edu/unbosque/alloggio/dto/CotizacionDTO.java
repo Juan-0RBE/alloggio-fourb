@@ -1,5 +1,6 @@
 package co.edu.unbosque.alloggio.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -7,8 +8,8 @@ import java.util.List;
 
 /**
  * Representa el DTO para la cotización. Al cotizar, el cliente solo envía
- * idPublicacion, fechaLlegada y fechaSalida; el resto de campos los calcula el
- * sistema y se devuelven en la respuesta.
+ * idPublicacion, fechaLlegada y fechaSalida
+ * Los demás campos los calcula el sistema.
  */
 public class CotizacionDTO {
 
@@ -17,12 +18,12 @@ public class CotizacionDTO {
     private LocalDate fechaLlegada;
     private LocalDate fechaSalida;
     private Integer noches;
-    private Double precioBase;
-    private Double limpieza;
-    private Double servicio;
-    private Double descuento;
-    private Double serviciosAdicionales;
-    private Double total;
+    private BigDecimal precioBase;
+    private BigDecimal limpieza;
+    private BigDecimal servicio;
+    private BigDecimal descuento;
+    private BigDecimal serviciosAdicionales;
+    private BigDecimal total;
     private LocalDateTime vigencia;
     private List<CotizacionServicioDTO> servicios = new ArrayList<>();
 
@@ -47,8 +48,8 @@ public class CotizacionDTO {
      * @param servicios
      */
     public CotizacionDTO(Long idCotizacion, Long idPublicacion, LocalDate fechaLlegada, LocalDate fechaSalida,
-            Integer noches, Double precioBase, Double limpieza, Double servicio, Double descuento,
-            Double serviciosAdicionales, Double total, LocalDateTime vigencia,
+            Integer noches, BigDecimal precioBase, BigDecimal limpieza, BigDecimal servicio, BigDecimal descuento,
+            BigDecimal serviciosAdicionales, BigDecimal total, LocalDateTime vigencia,
             List<CotizacionServicioDTO> servicios) {
         this.idCotizacion = idCotizacion;
         this.idPublicacion = idPublicacion;
@@ -106,51 +107,51 @@ public class CotizacionDTO {
         this.noches = noches;
     }
 
-    public Double getPrecioBase() {
+    public BigDecimal getPrecioBase() {
         return precioBase;
     }
 
-    public void setPrecioBase(Double precioBase) {
+    public void setPrecioBase(BigDecimal precioBase) {
         this.precioBase = precioBase;
     }
 
-    public Double getLimpieza() {
+    public BigDecimal getLimpieza() {
         return limpieza;
     }
 
-    public void setLimpieza(Double limpieza) {
+    public void setLimpieza(BigDecimal limpieza) {
         this.limpieza = limpieza;
     }
 
-    public Double getServicio() {
+    public BigDecimal getServicio() {
         return servicio;
     }
 
-    public void setServicio(Double servicio) {
+    public void setServicio(BigDecimal servicio) {
         this.servicio = servicio;
     }
 
-    public Double getDescuento() {
+    public BigDecimal getDescuento() {
         return descuento;
     }
 
-    public void setDescuento(Double descuento) {
+    public void setDescuento(BigDecimal descuento) {
         this.descuento = descuento;
     }
 
-    public Double getServiciosAdicionales() {
+    public BigDecimal getServiciosAdicionales() {
         return serviciosAdicionales;
     }
 
-    public void setServiciosAdicionales(Double serviciosAdicionales) {
+    public void setServiciosAdicionales(BigDecimal serviciosAdicionales) {
         this.serviciosAdicionales = serviciosAdicionales;
     }
 
-    public Double getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
 
-    public void setTotal(Double total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 
