@@ -1,0 +1,224 @@
+<div class="aloggio-detalle-contenedor">
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </div>
+
+    <div class="acciones-usuario">
+      <button class="boton-anfitrion" type="button">Modo Anfitrión</button>
+      <div class="menu-perfil-contenedor">
+        <i class="pi pi-bars icono-menu"></i>
+        <div class="avatar-usuario">
+          <i class="pi pi-user"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="cuerpo-detalle" *ngIf="alojamiento">
+    <div class="seccion-titulo-principal">
+      <h1 class="titulo-alojamiento">{{ alojamiento.titulo }}</h1>
+    </div>
+
+    <div class="sub-info-cabecera">
+      <div class="calificacion-resenas">
+        <i class="pi pi-star-fill icono-estrella"></i>
+        <span class="numero-calificacion">{{ alojamiento.calificacion }}</span>
+        <span class="separador-punto">·</span>
+        <span class="enlace-resenas">{{ alojamiento.resenasCount }} reseñas</span>
+      </div>
+      <span class="separador-punto">·</span>
+      <span class="ubicacion-texto"
+        ><i class="pi pi-map-marker"></i> {{ alojamiento.ubicacion }}</span
+      >
+    </div>
+
+    <div class="galeria-imagenes-grid">
+      <div class="imagen-principal-contenedor" (click)="abrirImagenPorIndice(0)">
+        <img [src]="alojamiento.imagenes[0].url" [alt]="alojamiento.imagenes[0].descripcion" />
+      </div>
+      <div class="galeria-secundaria-grid">
+        <div
+          class="imagen-secundaria"
+          *ngFor="let img of alojamiento.imagenes.slice(1, 5); let i = index"
+          (click)="abrirImagenPorIndice(i + 1)"
+        >
+          <img [src]="img.url" [alt]="img.descripcion" />
+          <div
+            *ngIf="i === 3"
+            class="overlay-ver-todas"
+            (click)="$event.stopPropagation(); abrirImagenPorIndice(1)"
+          >
+            <i class="pi pi-images"></i>
+            <span>Ver todas las fotos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-contenido-principal">
+      <div class="columna-informacion">
+        <div class="bloque-anfitrion-info">
+          <div class="textos-anfitrion">
+            <h2 class="subtitulo-seccion">
+              {{ alojamiento.tipo }} - Anfitrión: {{ alojamiento.anfitrionNombre }}
+            </h2>
+            <p class="detalles-capacidad">
+              {{ alojamiento.huespedes }} huéspedes · {{ alojamiento.habitaciones }} habitaciones ·
+              {{ alojamiento.banios }} baños
+            </p>
+          </div>
+          <img
+            [src]="alojamiento.anfitrionAvatar"
+            [alt]="alojamiento.anfitrionNombre"
+            class="avatar-anfitrion-grande"
+          />
+        </div>
+
+        <hr class="divisor-seccion" />
+
+        <div class="bloque-descripcion">
+          <h3 class="titulo-bloque">Acerca de este espacio</h3>
+          <p class="texto-descripcion">{{ alojamiento.descripcion }}</p>
+        </div>
+
+        <hr class="divisor-seccion" />
+
+        <div class="bloque-servicios">
+          <div class="encabezado-bloque-servicios">
+            <h3 class="titulo-bloque">Lo que este lugar ofrece</h3>
+            <span class="badge-aclaracion-incluidos">
+              <i class="pi pi-info-circle"></i> Todos los servicios ya están incluidos en la tarifa
+              por noche
+            </span>
+          </div>
+
+          <div class="lista-servicios-grid">
+            <div class="item-servicio-incluido" *ngFor="let servicio of alojamiento.servicios">
+              <i [class]="servicio.icono"></i>
+              <span>{{ servicio.nombre }}</span>
+              <i class="pi pi-check icono-check-incluido"></i>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divisor-seccion" />
+
+        <div class="bloque-reglas-politicas">
+          <div class="columna-reglas">
+            <h3 class="titulo-bloque">Lo que debes saber</h3>
+            <ul class="lista-reglas">
+              <li *ngFor="let regla of alojamiento.reglas">{{ regla }}</li>
+            </ul>
+          </div>
+          <div class="columna-politica">
+            <h3 class="titulo-bloque">Política de cancelación</h3>
+            <p class="texto-politica">
+              <i class="pi pi-shield"></i> {{ alojamiento.politicaCancelacion }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="columna-tarjeta-reserva">
+        <div class="tarjeta-reserva-flotante">
+          <div class="encabezado-precio-tarjeta">
+            <span class="precio-noche"
+              >${{ alojamiento.precioNoche | number: '1.0-0' }}
+              <span class="periodo">/ noche</span></span
+            >
+          </div>
+
+          <div class="formulario-reserva-caja">
+            <div class="fechas-grid-inputs">
+              <div class="input-bloque">
+                <label>Llegada</label>
+                <input type="date" [(ngModel)]="fechaLlegada" />
+              </div>
+              <div class="input-bloque">
+                <label>Salida</label>
+                <input type="date" [(ngModel)]="fechaSalida" [min]="fechaLlegada" />
+              </div>
+            </div>
+            <div class="input-bloque input-huespedes-full">
+              <label>Huéspedes</label>
+              <input
+                type="number"
+                min="1"
+                [max]="alojamiento.huespedes"
+                [(ngModel)]="cantidadHuespedes"
+              />
+            </div>
+          </div>
+
+          <button class="boton-reservar-principal" type="button" [disabled]="numeroNoches <= 0">
+            {{ numeroNoches > 0 ? 'Reservar ahora' : 'Selecciona las fechas' }}
+          </button>
+          <p class="aviso-cobro">No se te cobrará nada por el momento</p>
+
+          <div class="desglose-precios" *ngIf="numeroNoches > 0">
+            <div class="fila-desglose">
+              <span
+                >${{ alojamiento.precioNoche | number: '1.0-0' }} x {{ numeroNoches }}
+                {{ numeroNoches === 1 ? 'noche' : 'noches' }}</span
+              >
+              <span>${{ subtotalHospedaje | number: '1.0-0' }}</span>
+            </div>
+            <div class="fila-desglose">
+              <span>Tarifa de limpieza</span>
+              <span>${{ tarifaLimpieza | number: '1.0-0' }}</span>
+            </div>
+            <hr class="divisor-desglose" />
+            <div class="fila-desglose total">
+              <span>Total antes de impuestos</span>
+              <span>${{ totalReserva | number: '1.0-0' }}</span>
+            </div>
+          </div>
+
+          <div class="aviso-seleccion-fechas" *ngIf="numeroNoches <= 0">
+            <i class="pi pi-info-circle"></i>
+            <span
+              >Ingresa una fecha de llegada y salida para calcular el costo total de tu
+              estadía.</span
+            >
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="modal-visor-imagen" *ngIf="imagenSeleccionada" (click)="cerrarModal()">
+    <div class="contenido-modal" (click)="$event.stopPropagation()">
+      <button class="boton-cerrar-modal" (click)="cerrarModal()" type="button">
+        <i class="pi pi-times"></i>
+      </button>
+
+      <button
+        class="boton-navegacion boton-anterior"
+        (click)="imagenAnterior($event)"
+        type="button"
+      >
+        <i class="pi pi-chevron-left"></i>
+      </button>
+
+      <div class="contenedor-imagen-visor">
+        <img [src]="imagenSeleccionada.url" [alt]="imagenSeleccionada.descripcion" />
+        <div class="pie-info-visor">
+          <span class="contador-fotos"
+            >{{ indiceImagenSeleccionada! + 1 }} / {{ alojamiento.imagenes.length }}</span
+          >
+          <span class="descripcion-modal">{{ imagenSeleccionada.descripcion }}</span>
+        </div>
+      </div>
+
+      <button
+        class="boton-navegacion boton-siguiente"
+        (click)="imagenSiguiente($event)"
+        type="button"
+      >
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>

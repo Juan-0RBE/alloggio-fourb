@@ -1,0 +1,159 @@
+<div class="aloggio-resumen-contenedor">
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </div>
+    <div class="paso-checkout-indicador">
+      <i class="pi pi-lock"></i>
+      <span>Checkout Seguro con Stripe</span>
+    </div>
+  </header>
+
+  <main class="cuerpo-resumen">
+    <div class="encabezado-seccion-pagos">
+      <button class="boton-volver" type="button">
+        <i class="pi pi-chevron-left"></i>
+      </button>
+      <h1 class="titulo-pagina">Confirmar y pagar</h1>
+    </div>
+
+    <div class="grid-resumen-compra">
+      <section class="columna-formulario-pago">
+        <div class="bloque-informacion-viaje">
+          <h2 class="subtitulo-seccion">Tu viaje</h2>
+
+          <div class="fila-dato-viaje">
+            <div class="textos-dato">
+              <span class="etiqueta-dato">Fechas</span>
+              <span class="valor-dato"
+                >{{ datosReserva.fechaLlegada | date: 'd MMM' }} –
+                {{ datosReserva.fechaSalida | date: 'd MMM, yyyy' }} ({{
+                  datosReserva.numeroNoches
+                }}
+                noches)</span
+              >
+            </div>
+            <button class="boton-editar-dato" type="button">Editar</button>
+          </div>
+
+          <div class="fila-dato-viaje">
+            <div class="textos-dato">
+              <span class="etiqueta-dato">Huéspedes</span>
+              <span class="valor-dato">{{ datosReserva.cantidadHuespedes }} huéspedes</span>
+            </div>
+            <button class="boton-editar-dato" type="button">Editar</button>
+          </div>
+        </div>
+
+        <hr class="divisor-seccion" />
+
+        <div class="bloque-metodo-pago">
+          <h2 class="subtitulo-seccion">Pagar con Tarjeta</h2>
+
+          <div class="formulario-tarjeta-campos">
+            <div class="campo-input-full">
+              <label>Nombre del titular de la tarjeta</label>
+              <input
+                type="text"
+                placeholder="Como aparece en la tarjeta"
+                [(ngModel)]="nombreTitular"
+              />
+            </div>
+
+            <div class="campo-input-full">
+              <label>Información de la tarjeta (Stripe)</label>
+              <div id="stripe-card-element" class="stripe-elemento-contenedor"></div>
+            </div>
+
+            <div class="alerta-error-stripe" *ngIf="mensajeErrorTarjeta">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>{{ mensajeErrorTarjeta }}</span>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divisor-seccion" />
+
+        <div class="bloque-politicas-confirmacion">
+          <h2 class="subtitulo-seccion">Política de cancelación</h2>
+          <p class="texto-politica-resumen">
+            Cancelación gratuita antes del
+            <strong>{{ datosReserva.fechaLlegada | date: 'd MMM' }}</strong
+            >.
+          </p>
+
+          <label class="checkbox-acepta-terminos">
+            <input type="checkbox" [(ngModel)]="aceptaTerminos" />
+            <span
+              >Acepto las reglas de la casa y los términos del servicio de pagos seguros de
+              Stripe.</span
+            >
+          </label>
+
+          <button
+            class="boton-confirmar-pago"
+            [disabled]="!aceptaTerminos || procesandoPago"
+            (click)="confirmarYPagar()"
+            type="button"
+          >
+            <i class="pi" [ngClass]="procesandoPago ? 'pi-spin pi-spinner' : 'pi-check-circle'"></i>
+            {{
+              procesandoPago
+                ? 'Procesando pago seguro...'
+                : 'Confirmar y Pagar $' + (datosReserva.totalReserva | number: '1.0-0')
+            }}
+          </button>
+        </div>
+      </section>
+
+      <aside class="columna-preview-publicacion">
+        <div class="tarjeta-resumen-alojamiento">
+          <div class="encabezado-mini-alojamiento">
+            <img
+              [src]="datosReserva.imagenUrl"
+              [alt]="datosReserva.titulo"
+              class="imagen-mini-alojamiento"
+            />
+            <div class="info-mini-textos">
+              <span class="tipo-mini">{{ datosReserva.tipo }}</span>
+              <h3 class="titulo-mini">{{ datosReserva.titulo }}</h3>
+              <div class="calificacion-mini">
+                <i class="pi pi-star-fill"></i>
+                <span
+                  >{{ datosReserva.calificacion }} ({{ datosReserva.resenasCount }} reseñas)</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <hr class="divisor-desglose" />
+
+          <div class="seccion-desglose-precio">
+            <h3 class="titulo-desglose">Detalle del precio</h3>
+
+            <div class="fila-precio">
+              <span
+                >${{ datosReserva.precioNoche | number: '1.0-0' }} x
+                {{ datosReserva.numeroNoches }} noches</span
+              >
+              <span>${{ datosReserva.subtotalHospedaje | number: '1.0-0' }}</span>
+            </div>
+
+            <div class="fila-precio">
+              <span>Tarifa de limpieza (servicios incluidos)</span>
+              <span>${{ datosReserva.tarifaLimpieza | number: '1.0-0' }}</span>
+            </div>
+
+            <hr class="divisor-desglose" />
+
+            <div class="fila-precio total-final">
+              <span>Total (COP)</span>
+              <span>${{ datosReserva.totalReserva | number: '1.0-0' }}</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
