@@ -5,11 +5,7 @@ import java.util.List;
 import co.edu.unbosque.alloggio.entity.Publicacion.TipoAlojamiento;
 
 /**
- * DTO público con el detalle completo de un alojamiento: descripción,
- * servicios, reglas, imágenes, ubicación textual, calendario y precio, además
- * de
- * la política de cancelación. No expone datos internos como el anfitrión, el
- * estado o el motivo de bloqueo.
+ * DTO público con el detalle completo de un alojamiento.
  */
 public class AlojamientoDetalleDTO {
 
@@ -27,11 +23,16 @@ public class AlojamientoDetalleDTO {
     private List<ImagenAlojamientoDTO> imagenes;
     private List<RangoOcupadoDTO> calendarioOcupado;
 
+    private Double promedioCalificacion;
+    private Long totalResenas;
+    private List<ResenaDTO> resenas;
+
     public AlojamientoDetalleDTO() {
     }
 
     /**
      * Constructor para la clase AlojamientoDetalleDTO.
+     * 
      * 
      * @param idPublicacion
      * @param titulo
@@ -45,13 +46,16 @@ public class AlojamientoDetalleDTO {
      * @param servicios
      * @param reglas
      * @param imagenes
-     * @param calendarioOcupado   rangos no disponibles desde hoy en adelante
+     * @param calendarioOcupado
+     * @param promedioCalificacion
+     * @param totalResenas
+     * @param resenas
      */
-    public AlojamientoDetalleDTO(Long idPublicacion, String titulo, String descripcion, String ubicacion,
-            String ciudad, TipoAlojamiento tipo, Integer capacidad, Double precioNoche,
-            PoliticaCancelacionDTO politicaCancelacion, List<ServicioAlojamientoDTO> servicios,
-            List<ReglaAlojamientoDTO> reglas, List<ImagenAlojamientoDTO> imagenes,
-            List<RangoOcupadoDTO> calendarioOcupado) {
+    public AlojamientoDetalleDTO(Long idPublicacion, String titulo, String descripcion, String ubicacion, String ciudad,
+            TipoAlojamiento tipo, Integer capacidad, Double precioNoche, PoliticaCancelacionDTO politicaCancelacion,
+            List<ServicioAlojamientoDTO> servicios, List<ReglaAlojamientoDTO> reglas,
+            List<ImagenAlojamientoDTO> imagenes, List<RangoOcupadoDTO> calendarioOcupado, Double promedioCalificacion,
+            Long totalResenas, List<ResenaDTO> resenas) {
         this.idPublicacion = idPublicacion;
         this.titulo = titulo;
         this.descripcion = descripcion;
@@ -65,6 +69,9 @@ public class AlojamientoDetalleDTO {
         this.reglas = reglas;
         this.imagenes = imagenes;
         this.calendarioOcupado = calendarioOcupado;
+        this.promedioCalificacion = promedioCalificacion;
+        this.totalResenas = totalResenas;
+        this.resenas = resenas;
     }
 
     // Getters y Setters
@@ -171,6 +178,30 @@ public class AlojamientoDetalleDTO {
 
     public void setCalendarioOcupado(List<RangoOcupadoDTO> calendarioOcupado) {
         this.calendarioOcupado = calendarioOcupado;
+    }
+
+    public Double getPromedioCalificacion() {
+        return promedioCalificacion;
+    }
+
+    public void setPromedioCalificacion(Double promedioCalificacion) {
+        this.promedioCalificacion = promedioCalificacion;
+    }
+
+    public Long getTotalResenas() {
+        return totalResenas;
+    }
+
+    public void setTotalResenas(Long totalResenas) {
+        this.totalResenas = totalResenas;
+    }
+
+    public List<ResenaDTO> getResenas() {
+        return resenas;
+    }
+
+    public void setResenas(List<ResenaDTO> resenas) {
+        this.resenas = resenas;
     }
 
 }
