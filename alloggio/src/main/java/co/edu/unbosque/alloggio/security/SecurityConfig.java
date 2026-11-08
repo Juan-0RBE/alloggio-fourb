@@ -48,14 +48,15 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/politica-cancelacion/obtener/**", "/disponibilidad/**").permitAll()
                         .requestMatchers("/politica-cancelacion/obtener/**", "/alojamiento/**").permitAll()
+                        .requestMatchers("/disponibilidad/verificar").permitAll()
 
                         // Solo administrador (debe ir antes de las generales)
-                        .requestMatchers("/auditoria/**").hasRole("ADMINISTRADOR")
+                        .requestMatchers("/auditoria/**", "/resena/ocultar/**", "/resena/alojamiento/**")
+                        .hasRole("ADMINISTRADOR")
 
                         // Rutas que exigen autenticación
                         .requestMatchers("/usuario/perfil", "/usuario/desactivar", "/cotizacion/**").authenticated()
-                        .requestMatchers("/notificacion/**").authenticated()
-                        .requestMatchers("/publicacion/**").authenticated()
+                        .requestMatchers("/notificacion/**", "/publicacion/**", "/resena/**").authenticated()
 
                         .anyRequest().authenticated()
 

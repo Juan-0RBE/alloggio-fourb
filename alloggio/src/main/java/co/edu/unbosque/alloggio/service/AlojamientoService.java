@@ -42,7 +42,7 @@ import jakarta.persistence.criteria.Subquery;
 
 /**
  * Servicio para la consulta pública de alojamientos: búsqueda con filtros
- * (CU-013) y detalle (CU-014). Solo lee datos; no modifica ninguna entidad.
+ * y detalle. Solo lee datos; no modifica ninguna entidad.
  */
 @Service
 public class AlojamientoService {
@@ -66,24 +66,23 @@ public class AlojamientoService {
     private PeriodoDisponibilidadRepository periodoRepo;
 
     @Autowired
+    private ResenaService resenaService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     public AlojamientoService() {
     }
 
     /**
-     * Valida los criterios de búsqueda. Ningún filtro es obligatorio, pero los que
-     * se envían deben ser coherentes entre sí.
+     * Valida los criterios de búsqueda. Ningún filtro es obligatorio.
      * 
      * @param fechaLlegada
      * @param fechaSalida
      * @param precioMin
      * @param precioMax
      * @param capacidad
-     * @return 0 si los criterios son válidos, 1 si solo se envía una de las dos
-     *         fechas, 2 si la salida no es posterior a la llegada (RN-07), 3 si la
-     *         llegada es anterior a hoy, 4 si el precio mínimo es mayor que el
-     *         máximo, 5 si hay precios negativos o capacidad menor que 1
+     * @return
      */
     public int validarCriterios(LocalDate fechaLlegada, LocalDate fechaSalida, Double precioMin, Double precioMax,
             Integer capacidad) {
@@ -114,17 +113,17 @@ public class AlojamientoService {
      * ascendente (con el id como desempate para que las páginas sean estables).
      * Una búsqueda sin resultados devuelve una página vacía.
      * 
-     * @param ciudad       opcional, sin distinguir mayúsculas
-     * @param fechaLlegada opcional, solo junto con fechaSalida
-     * @param fechaSalida  opcional, solo junto con fechaLlegada (fin exclusivo)
-     * @param precioMin    opcional, precio por noche mínimo
-     * @param precioMax    opcional, precio por noche máximo
-     * @param capacidad    opcional, capacidad mínima requerida
-     * @param tipo         opcional
-     * @param servicios    opcional, nombres de servicios; deben estar todos
-     * @param pagina       número de página (empieza en 0)
-     * @param tamano       elementos por página (con tope máximo)
-     * @return PaginaDTO con los alojamientos de la página solicitada
+     * @param ciudad
+     * @param fechaLlegada
+     * @param fechaSalida
+     * @param precioMin
+     * @param precioMax
+     * @param capacidad
+     * @param tipo
+     * @param servicios
+     * @param pagina
+     * @param tamano
+     * @return
      */
     @Transactional(readOnly = true)
     public PaginaDTO<AlojamientoResumenDTO> buscar(String ciudad, LocalDate fechaLlegada, LocalDate fechaSalida,
@@ -202,8 +201,7 @@ public class AlojamientoService {
      * Obtiene el detalle público de un alojamiento.
      * 
      * @param idPublicacion
-     * @return AlojamientoDetalleDTO, o null si no existe o no está disponible para
-     *         consulta
+     * @return
      */
     @Transactional(readOnly = true)
     public AlojamientoDetalleDTO obtenerDetalle(Long idPublicacion) {
@@ -246,7 +244,10 @@ public class AlojamientoService {
 
         return new AlojamientoDetalleDTO(pub.getIdPublicacion(), pub.getTitulo(), pub.getDescripcion(),
                 pub.getUbicacion(), pub.getCiudad(), pub.getTipo(), pub.getCapacidad(), pub.getPrecioNoche(),
-                politicaDto, servicios, reglas, imagenes, calendario);
+                politicaDto, servicios, reglas, imagenes, calendario,
+                resenaService.calcularPromedio(idPublicacion),
+                resenaService.contarVisibles(idPublicacion),
+                resenaService.obtenerVisiblesRecientes(idPublicacion));
     }
 
     /**
