@@ -2,6 +2,7 @@ package co.edu.unbosque.alloggio.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -47,4 +48,11 @@ public interface PeriodoDisponibilidadRepository extends JpaRepository<PeriodoDi
         List<PeriodoDisponibilidad> findByPublicacionIdPublicacionAndFechaFinAfterOrderByFechaInicioAsc(
                         Long idPublicacion, LocalDate fecha);
 
+        /**
+         * 
+         * 
+         * @param idReserva
+         * @return
+         */
+        Optional<PeriodoDisponibilidad> findByReservaIdReserva(Long idReserva);
 }

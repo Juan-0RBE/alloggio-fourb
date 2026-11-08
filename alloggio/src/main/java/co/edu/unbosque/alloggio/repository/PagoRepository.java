@@ -1,5 +1,7 @@
 package co.edu.unbosque.alloggio.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import co.edu.unbosque.alloggio.entity.Pago;
@@ -16,4 +18,14 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
      * @return true si existe al menos un pago
      */
     boolean existsByCotizacionIdCotizacionAndEstado(Long idCotizacion, EstadoPago estado);
+
+    /**
+     * 
+     * 
+     * @param idReserva
+     * @param estado
+     * @return
+     */
+    Optional<Pago> findFirstByReservaIdReservaAndEstado(Long idReserva, EstadoPago estado);
+
 }
