@@ -72,6 +72,8 @@ public class ReservaController {
                                         .body("La cotización ya tiene un pago aprobado sin reserva; contacta a soporte");
                         case 14 -> ResponseEntity.status(HttpStatus.CONFLICT)
                                         .body("Esa clave de idempotencia ya se usó con otra cotización");
+                        case 15 -> ResponseEntity.status(HttpStatus.CONFLICT)
+                                        .body("El anfitrión de este alojamiento no puede recibir reservas");
                         default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                         .body("Error inesperado al crear la reserva");
                 };
