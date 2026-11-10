@@ -5,6 +5,7 @@ import { Recuperacion } from './autenticacion/recuperacion/recuperacion.componen
 import { Inicio } from './alojamientos/inicio/inicio.component';
 import { DetalleAlojamiento } from './alojamientos/detalle-alojamiento/detalle-alojamiento.component';
 import { ResumenReserva } from './alojamientos/resumen-reserva/resumen-reserva.component';
+import { FormularioResena } from './resenas/formulario-resena/formulario-resena.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -15,4 +16,5 @@ export const routes: Routes = [
   { path: 'inicio', component: Inicio },
   { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
   { path: 'resumen-reserva', component: ResumenReserva },
+  { path: 'formulario-resena', component: FormularioResena },
 ];

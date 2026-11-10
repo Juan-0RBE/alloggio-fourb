@@ -1,0 +1,83 @@
+<div class="modal-overlay-resena" (click)="cancelarFormulario()">
+  <div class="contenedor-formulario-resena" (click)="$event.stopPropagation()">
+    <div class="encabezado-modal-resena">
+      <h2>Escribe tu reseña</h2>
+      <p class="subtitulo-alojamiento">
+        Comparte tu experiencia en <strong>{{ alojamientoTitulo }}</strong>
+      </p>
+      <button class="boton-cerrar" (click)="cancelarFormulario()" type="button">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <hr class="divisor-resena" />
+
+    <div class="cuerpo-formulario">
+      <div class="fila-calificacion-principal">
+        <span>Calificación general</span>
+        <app-estrella
+          [calificacion]="calificacionGeneral"
+          [interactivo]="true"
+          (calificacionCambiada)="calificacionGeneral = $event"
+        >
+        </app-estrella>
+      </div>
+
+      <hr class="divisor-claro" />
+
+      <div class="grid-categorias-calificacion">
+        <div class="item-categoria">
+          <span>Limpieza</span>
+          <app-estrella
+            [calificacion]="limpieza"
+            [interactivo]="true"
+            (calificacionCambiada)="limpieza = $event"
+          ></app-estrella>
+        </div>
+        <div class="item-categoria">
+          <span>Comunicación</span>
+          <app-estrella
+            [calificacion]="comunicacion"
+            [interactivo]="true"
+            (calificacionCambiada)="comunicacion = $event"
+          ></app-estrella>
+        </div>
+        <div class="item-categoria">
+          <span>Exactitud del lugar</span>
+          <app-estrella
+            [calificacion]="exactitud"
+            [interactivo]="true"
+            (calificacionCambiada)="exactitud = $event"
+          ></app-estrella>
+        </div>
+      </div>
+
+      <hr class="divisor-claro" />
+
+      <div class="campo-comentario">
+        <label for="comentario">Tu comentario</label>
+        <textarea
+          id="comentario"
+          rows="4"
+          [(ngModel)]="comentario"
+          placeholder="¿Cómo fue tu estancia? ¿Qué te gustó más del alojamiento y del anfitrión?"
+        >
+        </textarea>
+      </div>
+    </div>
+
+    <div class="pie-acciones-resena">
+      <button class="boton-secundario" (click)="cancelarFormulario()" type="button">
+        Cancelar
+      </button>
+      <button
+        class="boton-primario"
+        [disabled]="!comentario.trim()"
+        (click)="enviar()"
+        type="button"
+      >
+        Publicar reseña
+      </button>
+    </div>
+  </div>
+</div>

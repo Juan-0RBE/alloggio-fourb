@@ -61,9 +61,7 @@
       <div class="columna-informacion">
         <div class="bloque-anfitrion-info">
           <div class="textos-anfitrion">
-            <h2 class="subtitulo-seccion">
-              {{ alojamiento.tipo }} - Anfitrión: {{ alojamiento.anfitrionNombre }}
-            </h2>
+            <h2 class="subtitulo-seccion">Anfitrión: {{ alojamiento.anfitrionNombre }}</h2>
             <p class="detalles-capacidad">
               {{ alojamiento.huespedes }} huéspedes · {{ alojamiento.habitaciones }} habitaciones ·
               {{ alojamiento.banios }} baños
@@ -186,7 +184,63 @@
         </div>
       </aside>
     </div>
+
+    <section class="seccion-resenas-alojamiento">
+      <div class="cabecera-resenas">
+        <h2 class="titulo-seccion-resenas">
+          <i class="pi pi-star-fill icono-estrella-titulo"></i>
+          {{ totalResenas }} reseñas
+        </h2>
+        <button class="boton-abrir-formulario-resena" (click)="abrirModalResena()" type="button">
+          Escribir una reseña
+        </button>
+      </div>
+
+      <div class="grid-desglose-calificaciones">
+        <div class="item-desglose">
+          <span>Limpieza</span>
+          <div class="barra-progreso"><div class="avance" style="width: 98%"></div></div>
+          <span class="valor-categoria">4.9</span>
+        </div>
+        <div class="item-desglose">
+          <span>Comunicación</span>
+          <div class="barra-progreso"><div class="avance" style="width: 100%"></div></div>
+          <span class="valor-categoria">5.0</span>
+        </div>
+        <div class="item-desglose">
+          <span>Exactitud</span>
+          <div class="barra-progreso"><div class="avance" style="width: 96%"></div></div>
+          <span class="valor-categoria">4.8</span>
+        </div>
+      </div>
+
+      <div class="grid-listado-resenas">
+        <div class="tarjeta-reseña-usuario" *ngFor="let resena of listaResenas">
+          <div class="encabezado-usuario-reseña">
+            <img [src]="resena.avatarUrl" [alt]="resena.nombreUsuario" class="avatar-usuario" />
+            <div class="info-usuario-texto">
+              <h4 class="nombre-usuario">{{ resena.nombreUsuario }}</h4>
+              <span class="fecha-estancia-reseña">{{ resena.fechaEstancia }}</span>
+            </div>
+          </div>
+
+          <app-estrella [calificacion]="resena.calificacion" [interactivo]="false"></app-estrella>
+
+          <p class="texto-comentario-reseña">
+            {{ resena.comentario }}
+          </p>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <app-formulario-resena
+    *ngIf="mostrandoModalResena"
+    [alojamientoTitulo]="alojamiento.titulo"
+    (enviarResena)="guardarResena($event)"
+    (cancelar)="cerrarModalResena()"
+  >
+  </app-formulario-resena>
 
   <div class="modal-visor-imagen" *ngIf="imagenSeleccionada" (click)="cerrarModal()">
     <div class="contenido-modal" (click)="$event.stopPropagation()">
