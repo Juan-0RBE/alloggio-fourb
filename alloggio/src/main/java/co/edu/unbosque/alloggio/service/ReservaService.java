@@ -141,6 +141,9 @@ public class ReservaService {
         if (pub.getEstado() != EstadoPublicacion.ACTIVA) {
             return 7; // Solo las publicaciones ACTIVAS reciben reservas
         }
+        if (Usuario.ESTADO_RESTRINGIDA.equals(pub.getAnfitrion().getEstadoCuenta())) {
+            return 15; // El anfitrión está restringido: no recibe reservas nuevas
+        }
 
         // La verificación se repite al confirmar
         if (!periodoRepo.findIntersectingPeriods(idPublicacion, cotizacion.getFechaLlegada(),

@@ -111,11 +111,24 @@ public class AuthController {
                             loginRequest.getClaveUsuario()));
 
             // Las credenciales son correctas: ahora se revisa el estado de la cuenta
-            if (found.getEstadoCuenta() != null && found.getEstadoCuenta() == Usuario.ESTADO_RESTRINGIDA) {
+            /*
+             * if (found.getEstadoCuenta() != null && found.getEstadoCuenta() ==
+             * Usuario.ESTADO_RESTRINGIDA) {
+             * return ResponseEntity.status(HttpStatus.FORBIDDEN)
+             * .body("La cuenta está restringida y no puede iniciar sesión");
+             * }
+             * if (found.getEstaActivo() != null && found.getEstaActivo() == false) {
+             * return ResponseEntity.status(HttpStatus.FORBIDDEN)
+             * .body("La cuenta está inactiva. Puedes reactivarla confirmando tus credenciales"
+             * );
+             * }
+             */
+
+            if (Usuario.ESTADO_RESTRINGIDA.equals(found.getEstadoCuenta())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("La cuenta está restringida y no puede iniciar sesión");
             }
-            if (found.getEstaActivo() != null && found.getEstaActivo() == false) {
+            if (Boolean.FALSE.equals(found.getEstaActivo())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("La cuenta está inactiva. Puedes reactivarla confirmando tus credenciales");
             }

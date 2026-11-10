@@ -10,8 +10,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.alloggio.dto.UsuarioDTO;
+import co.edu.unbosque.alloggio.dto.UsuarioModeracionDTO;
 import co.edu.unbosque.alloggio.entity.EventoAuditoria.Accion;
 import co.edu.unbosque.alloggio.entity.EventoAuditoria.TipoEntidad;
 import co.edu.unbosque.alloggio.entity.Usuario;
@@ -51,6 +53,7 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
     @Override
     public int create(UsuarioDTO newData) {
         Usuario entity = modelMapper.map(newData, Usuario.class);
+        entity.setIdUsuario(null);
         if (findUsernameAlreadyTaken(entity.getNombreUsuario())) {
             return 1; // Nombre de usuario ya está en uso
         }
@@ -70,9 +73,11 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
         entity.setIsVerified(true);
         entity.setEstaActivo(true);
         entity.setEstadoCuenta("ACTIVA");
-        if (newData.getRole() != null) {
-            entity.setRole(newData.getRole());
-        }
+        /*
+         * if (newData.getRole() != null) {
+         * entity.setRole(newData.getRole());
+         * }
+         */
         entity.setClaveUsuario(passwordEncoder.encode(entity.getClaveUsuario()));
         usuarioRepo.save(entity);
         return 0; // Usuario creado exitosamente
@@ -147,9 +152,11 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 
         temp.setNumeroTelefono(newData.getNumeroTelefono());
 
-        if (newData.getRole() != null) {
-            temp.setRole(newData.getRole());
-        }
+        /*
+         * if (newData.getRole() != null) {
+         * temp.setRole(newData.getRole());
+         * }
+         */
 
         usuarioRepo.save(temp);
         return 0; // Usuario actualizado exitosamente
@@ -510,6 +517,97 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
                 temp.getIdUsuario(), "El usuario reactivó su cuenta");
 
         return 0; // Cuenta reactivada exitosamente
+    }
+
+    // Restricción de usuarios
+
+    /**
+     * Restringe la cuenta de un usuario (CU-027). El usuario no podrá iniciar
+     * sesión
+     * ni usar los tokens que ya tenía. Un administrador no puede restringirse a sí
+     * mismo ni a otro administrador.
+     *
+     * @param nombreAdmin nombre del administrador autenticado
+     * @param idUsuario   ID del usuario a restringir
+     * @param datos       DTO que trae el campo confirmar
+     * @return 0 si es exitoso, 1 si el usuario no existe, 2 si el administrador
+     *         intenta restringirse a sí mismo, 3 si el usuario es administrador, 4
+     *         si
+     *         ya está restringido, 5 si el administrador no confirmó (no se
+     *         modifica
+     *         nada)
+     */
+    @Transactional
+    public int restringirUsuario(String nombreAdmin, Long idUsuario, UsuarioDTO datos) {
+        Optional<Usuario> found = usuarioRepo.findById(idUsuario);
+        if (!found.isPresent()) {
+            return 1; // Usuario no encontrado
+        }
+
+        Usuario objetivo = found.get();
+        if (objetivo.getNombreUsuario().equals(nombreAdmin)) {
+            auditoriaService.registrarDenegado(nombreAdmin, Accion.RESTRINGIR_USUARIO, TipoEntidad.USUARIO,
+                    idUsuario, "Intento de restringir su propia cuenta");
+            return 2;
+        }
+        if (objetivo.getRole() == Usuario.Role.ADMINISTRADOR) {
+            auditoriaService.registrarDenegado(nombreAdmin, Accion.RESTRINGIR_USUARIO, TipoEntidad.USUARIO,
+                    idUsuario, "Intento de restringir a un administrador");
+            return 3;
+        }
+        if (Usuario.ESTADO_RESTRINGIDA.equals(objetivo.getEstadoCuenta())) {
+            return 4; // Ya estaba restringida
+        }
+        if (!Boolean.TRUE.equals(datos.getConfirmar())) {
+            return 5; // A1: sin confirmación no se modifica la cuenta
+        }
+
+        objetivo.setEstadoCuenta(Usuario.ESTADO_RESTRINGIDA);
+        usuarioRepo.save(objetivo);
+
+        auditoriaService.registrarExito(nombreAdmin, Accion.RESTRINGIR_USUARIO, TipoEntidad.USUARIO, idUsuario,
+                "El administrador restringió la cuenta de " + objetivo.getNombreUsuario());
+        return 0;
+    }
+
+    /**
+     * Lista los perfiles para el administrador, sin datos sensibles.
+     *
+     * @param estadoCuenta filtro opcional (ACTIVA o RESTRINGIDA)
+     * @return perfiles de moderación
+     */
+    @Transactional(readOnly = true)
+    public List<UsuarioModeracionDTO> listarParaModeracion(String estadoCuenta) {
+        List<UsuarioModeracionDTO> lista = new ArrayList<>();
+        for (Usuario u : usuarioRepo.findAll()) {
+            if (estadoCuenta == null || estadoCuenta.equalsIgnoreCase(u.getEstadoCuenta())) {
+                lista.add(convertirModeracion(u));
+            }
+        }
+        return lista;
+    }
+
+    /**
+     * Perfil de moderación de un usuario.
+     *
+     * @param idUsuario ID del usuario
+     * @return el perfil, o null si no existe
+     */
+    @Transactional(readOnly = true)
+    public UsuarioModeracionDTO obtenerParaModeracion(Long idUsuario) {
+        return usuarioRepo.findById(idUsuario).map(this::convertirModeracion).orElse(null);
+    }
+
+    private UsuarioModeracionDTO convertirModeracion(Usuario u) {
+        UsuarioModeracionDTO dto = new UsuarioModeracionDTO();
+        dto.setIdUsuario(u.getIdUsuario());
+        dto.setNombreUsuario(u.getNombreUsuario());
+        dto.setPrimerNombre(u.getPrimerNombre());
+        dto.setPrimerApellido(u.getPrimerApellido());
+        dto.setRole(u.getRole());
+        dto.setEstadoCuenta(u.getEstadoCuenta());
+        dto.setEstaActivo(u.getEstaActivo());
+        return dto;
     }
 
 }

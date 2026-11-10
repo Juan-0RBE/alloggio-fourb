@@ -9,9 +9,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import co.edu.unbosque.alloggio.entity.Usuario;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -63,17 +66,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            try {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                if (jwtUtil.validateToken(jwt, userDetails) && cuentaOperativa(userDetails)) {
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
+            } catch (UsernameNotFoundException e) {
+                // Token de un usuario que ya no existe: la petición sigue sin autenticar
+                logger.warn("Token de un usuario inexistente: " + username);
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Indica si la cuenta puede operar: no restringida ni desactivada, y
+     * habilitada.
+     * Se revisa en cada petición para que la restricción o la desactivación
+     * invaliden los tokens ya emitidos.
+     *
+     * @param userDetails usuario cargado de la base de datos
+     * @return true si la cuenta puede autenticarse
+     */
+    private boolean cuentaOperativa(UserDetails userDetails) {
+        if (!(userDetails instanceof Usuario usuario)) {
+            return false;
+        }
+        return !Usuario.ESTADO_RESTRINGIDA.equals(usuario.getEstadoCuenta())
+                && !Boolean.FALSE.equals(usuario.getEstaActivo())
+                && usuario.isEnabled() && usuario.isAccountNonLocked();
     }
 
 }

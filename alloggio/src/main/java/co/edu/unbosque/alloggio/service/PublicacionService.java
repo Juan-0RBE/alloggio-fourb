@@ -1,5 +1,6 @@
 package co.edu.unbosque.alloggio.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -7,11 +8,14 @@ import java.util.Optional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.alloggio.dto.ImagenAlojamientoDTO;
+import co.edu.unbosque.alloggio.dto.ModeracionPublicacionDTO;
 import co.edu.unbosque.alloggio.dto.PublicacionDTO;
 import co.edu.unbosque.alloggio.dto.ReglaAlojamientoDTO;
+import co.edu.unbosque.alloggio.dto.ReservaModeracionDTO;
 import co.edu.unbosque.alloggio.dto.ServicioAlojamientoDTO;
 import co.edu.unbosque.alloggio.entity.EventoAuditoria.Accion;
 import co.edu.unbosque.alloggio.entity.EventoAuditoria.TipoEntidad;
@@ -20,12 +24,15 @@ import co.edu.unbosque.alloggio.entity.PoliticaCancelacion;
 import co.edu.unbosque.alloggio.entity.Publicacion;
 import co.edu.unbosque.alloggio.entity.Publicacion.EstadoPublicacion;
 import co.edu.unbosque.alloggio.entity.ReglaAlojamiento;
+import co.edu.unbosque.alloggio.entity.Reserva;
+import co.edu.unbosque.alloggio.entity.Reserva.EstadoReserva;
 import co.edu.unbosque.alloggio.entity.ServicioAlojamiento;
 import co.edu.unbosque.alloggio.entity.Usuario;
 import co.edu.unbosque.alloggio.repository.ImagenAlojamientoRepository;
 import co.edu.unbosque.alloggio.repository.PoliticaCancelacionRepository;
 import co.edu.unbosque.alloggio.repository.PublicacionRepository;
 import co.edu.unbosque.alloggio.repository.ReglaAlojamientoRepository;
+import co.edu.unbosque.alloggio.repository.ReservaRepository;
 import co.edu.unbosque.alloggio.repository.ServicioAlojamientoRepository;
 import co.edu.unbosque.alloggio.repository.UsuarioRepository;
 
@@ -59,6 +66,11 @@ public class PublicacionService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    private static final int LONGITUD_MAX_MOTIVO = 500;
+
+    @Autowired
+    private ReservaRepository reservaRepo;
 
     public PublicacionService() {
     }
@@ -187,7 +199,7 @@ public class PublicacionService {
      */
     @Transactional
     public int actualizarPublicacion(String nombreUsuario, Long id, PublicacionDTO dto) {
-        Optional<Publicacion> found = publicacionRepo.findById(id);
+        Optional<Publicacion> found = publicacionRepo.findByIdParaActualizar(id);
         if (!found.isPresent()) {
             return 1; // Publicación no encontrada
         }
@@ -196,6 +208,9 @@ public class PublicacionService {
         if (!puedeModificar(pub, nombreUsuario)) {
             registrarIntentoAjeno(nombreUsuario, id, "Intento de editar una publicación ajena");
             return 3; // La publicación no pertenece al usuario
+        }
+        if (pub.getEstado() == EstadoPublicacion.BLOQUEADA) {
+            return 5;
         }
         if (!validarDatos(dto).isEmpty()) {
             return 4; // Faltan campos obligatorios o son inválidos
@@ -234,7 +249,7 @@ public class PublicacionService {
      */
     @Transactional
     public int eliminarPublicacion(String nombreUsuario, Long id) {
-        Optional<Publicacion> found = publicacionRepo.findById(id);
+        Optional<Publicacion> found = publicacionRepo.findByIdParaActualizar(id);
         if (!found.isPresent()) {
             return 1; // No encontrada
         }
@@ -244,7 +259,9 @@ public class PublicacionService {
             registrarIntentoAjeno(nombreUsuario, id, "Intento de eliminar una publicación ajena");
             return 2; // La publicación no pertenece al usuario
         }
-
+        if (pub.getEstado() == EstadoPublicacion.BLOQUEADA) {
+            return 3;
+        }
         String titulo = pub.getTitulo();
         publicacionRepo.delete(pub);
 
@@ -487,7 +504,7 @@ public class PublicacionService {
      */
     @Transactional
     public int activarPublicacion(String nombreUsuario, Long idPublicacion) {
-        Optional<Publicacion> pubOpt = publicacionRepo.findById(idPublicacion);
+        Optional<Publicacion> pubOpt = publicacionRepo.findByIdParaActualizar(idPublicacion);
         if (!pubOpt.isPresent()) {
             return 1; // Publicación no encontrada
         }
@@ -697,5 +714,128 @@ public class PublicacionService {
      */
     private boolean textoVacio(String valor) {
         return valor == null || valor.trim().isEmpty();
+    }
+
+    // Métodos relacionados con la moderación por parte del administrador
+
+    /**
+     * Bloquea una publicación ACTIVA o PAUSADA (CU-026). Las reservas futuras
+     * confirmadas no se tocan: quedan para revisión manual (RN-14). La fila se
+     * bloquea durante la transacción, así que no puede coincidir con una reserva,
+     * una pausa o una edición del anfitrión.
+     *
+     * @param nombreAdmin   nombre del administrador autenticado
+     * @param idPublicacion ID de la publicación
+     * @param dto           trae el motivoBloqueo; devuelve totalReservasFuturas
+     * @return 0 si es exitoso, 1 si no existe, 2 si el motivo falta o supera 500
+     *         caracteres, 3 si la publicación no está ACTIVA ni PAUSADA
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public int bloquearPublicacion(String nombreAdmin, Long idPublicacion, ModeracionPublicacionDTO dto) {
+        String motivo = dto.getMotivoBloqueo() == null ? "" : dto.getMotivoBloqueo().trim();
+        if (motivo.isEmpty() || motivo.length() > LONGITUD_MAX_MOTIVO) {
+            return 2; // Motivo obligatorio (E1)
+        }
+
+        Optional<Publicacion> pubOpt = publicacionRepo.findByIdParaActualizar(idPublicacion);
+        if (!pubOpt.isPresent()) {
+            return 1; // Publicación no encontrada
+        }
+
+        Publicacion pub = pubOpt.get();
+        if (pub.getEstado() != EstadoPublicacion.ACTIVA && pub.getEstado() != EstadoPublicacion.PAUSADA) {
+            return 3; // Solo se bloquean publicaciones ACTIVAS o PAUSADAS (E2)
+        }
+
+        pub.setEstado(EstadoPublicacion.BLOQUEADA);
+        pub.setMotivoBloqueo(motivo);
+        publicacionRepo.save(pub);
+
+        int futuras = reservaRepo.findByPublicacionIdPublicacionAndEstadoAndFechaSalidaAfterOrderByFechaLlegadaAsc(
+                idPublicacion, EstadoReserva.CONFIRMADA, LocalDate.now()).size();
+
+        auditoriaService.registrarExito(nombreAdmin, Accion.BLOQUEAR_PUBLICACION, TipoEntidad.PUBLICACION,
+                idPublicacion, "Publicación bloqueada: " + pub.getTitulo() + ". Reservas futuras conservadas: "
+                        + futuras + ". Motivo: " + motivo);
+
+        dto.setTotalReservasFuturas(futuras);
+        return 0; // Publicación bloqueada exitosamente
+    }
+
+    /**
+     * Lista las publicaciones para el administrador, sin los borradores.
+     *
+     * @param estado filtro opcional por estado
+     * @return resumen de cada publicación
+     */
+    @Transactional(readOnly = true)
+    public List<ModeracionPublicacionDTO> listarParaModeracion(EstadoPublicacion estado) {
+        List<ModeracionPublicacionDTO> lista = new ArrayList<>();
+        for (Publicacion pub : publicacionRepo.findAll()) {
+            if (pub.getEstado() == EstadoPublicacion.BORRADOR) {
+                continue;
+            }
+            if (estado == null || pub.getEstado() == estado) {
+                lista.add(convertirModeracion(pub, false));
+            }
+        }
+        return lista;
+    }
+
+    /**
+     * Detalle de una publicación para el administrador, con sus reservas futuras
+     * confirmadas. Los servicios, reglas e imágenes se consultan con los endpoints
+     * de /publicacion/{id}.
+     *
+     * @param idPublicacion ID de la publicación
+     * @return el detalle, o null si no existe o es un borrador
+     */
+    @Transactional(readOnly = true)
+    public ModeracionPublicacionDTO obtenerParaModeracion(Long idPublicacion) {
+        Optional<Publicacion> pubOpt = publicacionRepo.findById(idPublicacion);
+        if (!pubOpt.isPresent() || pubOpt.get().getEstado() == EstadoPublicacion.BORRADOR) {
+            return null;
+        }
+        return convertirModeracion(pubOpt.get(), true);
+    }
+
+    /**
+     * Convierte la publicación en su DTO de moderación. Se arma a mano dentro de la
+     * transacción por las relaciones LAZY.
+     */
+    private ModeracionPublicacionDTO convertirModeracion(Publicacion pub, boolean detalle) {
+        ModeracionPublicacionDTO dto = new ModeracionPublicacionDTO();
+        dto.setIdPublicacion(pub.getIdPublicacion());
+        dto.setTitulo(pub.getTitulo());
+        dto.setCiudad(pub.getCiudad());
+        dto.setEstado(pub.getEstado());
+        dto.setMotivoBloqueo(pub.getMotivoBloqueo());
+        dto.setNombreUsuarioAnfitrion(pub.getAnfitrion().getNombreUsuario());
+        dto.setNombreAnfitrion(pub.getAnfitrion().getPrimerNombre() + " " + pub.getAnfitrion().getPrimerApellido());
+
+        if (detalle) {
+            dto.setUbicacion(pub.getUbicacion());
+            dto.setDescripcion(pub.getDescripcion());
+            dto.setTipo(pub.getTipo());
+            dto.setCapacidad(pub.getCapacidad());
+            dto.setPrecioNoche(pub.getPrecioNoche());
+
+            List<ReservaModeracionDTO> reservas = new ArrayList<>();
+            for (Reserva r : reservaRepo
+                    .findByPublicacionIdPublicacionAndEstadoAndFechaSalidaAfterOrderByFechaLlegadaAsc(
+                            pub.getIdPublicacion(), EstadoReserva.CONFIRMADA, LocalDate.now())) {
+                ReservaModeracionDTO rd = new ReservaModeracionDTO();
+                rd.setIdReserva(r.getIdReserva());
+                rd.setFechaLlegada(r.getFechaLlegada());
+                rd.setFechaSalida(r.getFechaSalida());
+                rd.setTotal(r.getTotal());
+                rd.setNombreUsuarioHuesped(r.getHuesped().getNombreUsuario());
+                rd.setNombreHuesped(r.getHuesped().getPrimerNombre() + " " + r.getHuesped().getPrimerApellido());
+                reservas.add(rd);
+            }
+            dto.setReservasFuturas(reservas);
+            dto.setTotalReservasFuturas(reservas.size());
+        }
+        return dto;
     }
 }

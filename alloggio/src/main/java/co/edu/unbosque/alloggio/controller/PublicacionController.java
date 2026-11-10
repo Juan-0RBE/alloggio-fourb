@@ -143,6 +143,8 @@ public class PublicacionController {
             String detalle = String.join(", ", publicacionServ.validarDatos(dto));
             return new ResponseEntity<>("Faltan campos obligatorios o son inválidos: " + detalle,
                     HttpStatus.BAD_REQUEST);
+        } else if (status == 5) {
+            return new ResponseEntity<>("La publicación está bloqueada por un administrador", HttpStatus.CONFLICT);
         } else {
             return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -166,6 +168,8 @@ public class PublicacionController {
             return new ResponseEntity<>("Publicación no encontrada", HttpStatus.NOT_FOUND);
         } else if (status == 2) {
             return new ResponseEntity<>("La publicación no pertenece al usuario autenticado", HttpStatus.FORBIDDEN);
+        } else if (status == 3) {
+            return new ResponseEntity<>("La publicación está bloqueada por un administrador", HttpStatus.CONFLICT);
         } else {
             return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }
