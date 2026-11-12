@@ -1,6 +1,6 @@
 <div class="aloggio-resumen-contenedor">
   <header class="encabezado-navegacion">
-    <div class="contenedor-logo">
+    <div class="contenedor-logo" routerLink="/inicio">
       <i class="pi pi-building icono-logo"></i>
       <span class="texto-logo">Aloggio</span>
     </div>
@@ -12,7 +12,12 @@
 
   <main class="cuerpo-resumen">
     <div class="encabezado-seccion-pagos">
-      <button class="boton-volver" type="button">
+      <button
+        class="boton-volver"
+        type="button"
+        aria-label="Volver al alojamiento"
+        (click)="volver()"
+      >
         <i class="pi pi-chevron-left"></i>
       </button>
       <h1 class="titulo-pagina">Confirmar y pagar</h1>
@@ -22,27 +27,12 @@
       <section class="columna-formulario-pago">
         <div class="bloque-informacion-viaje">
           <h2 class="subtitulo-seccion">Tu viaje</h2>
-
           <div class="fila-dato-viaje">
             <div class="textos-dato">
               <span class="etiqueta-dato">Fechas</span>
-              <span class="valor-dato"
-                >{{ datosReserva.fechaLlegada | date: 'd MMM' }} –
-                {{ datosReserva.fechaSalida | date: 'd MMM, yyyy' }} ({{
-                  datosReserva.numeroNoches
-                }}
-                noches)</span
-              >
+              <span class="valor-dato">10 Dic – 15 Dic, 2026 (5 noches)</span>
             </div>
-            <button class="boton-editar-dato" type="button">Editar</button>
-          </div>
-
-          <div class="fila-dato-viaje">
-            <div class="textos-dato">
-              <span class="etiqueta-dato">Huéspedes</span>
-              <span class="valor-dato">{{ datosReserva.cantidadHuespedes }} huéspedes</span>
-            </div>
-            <button class="boton-editar-dato" type="button">Editar</button>
+            <button class="boton-editar-dato" type="button" (click)="volver()">Editar</button>
           </div>
         </div>
 
@@ -53,9 +43,11 @@
 
           <div class="formulario-tarjeta-campos">
             <div class="campo-input-full">
-              <label>Nombre del titular de la tarjeta</label>
+              <label for="nombre-titular">Nombre del titular de la tarjeta</label>
               <input
+                id="nombre-titular"
                 type="text"
+                autocomplete="cc-name"
                 placeholder="Como aparece en la tarjeta"
                 [(ngModel)]="nombreTitular"
               />
@@ -63,12 +55,17 @@
 
             <div class="campo-input-full">
               <label>Información de la tarjeta (Stripe)</label>
-              <div id="stripe-card-element" class="stripe-elemento-contenedor"></div>
+              <div #contenedorTarjeta class="stripe-elemento-contenedor"></div>
             </div>
 
-            <div class="alerta-error-stripe" *ngIf="mensajeErrorTarjeta">
+            <div class="alerta-error-stripe" *ngIf="mensajeErrorTarjeta" role="alert">
               <i class="pi pi-exclamation-circle"></i>
               <span>{{ mensajeErrorTarjeta }}</span>
+            </div>
+
+            <div class="alerta-error-stripe" *ngIf="stripeNoDisponible" role="alert">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>No pudimos cargar el formulario seguro de Stripe. Revisa tu conexión.</span>
             </div>
           </div>
         </div>
@@ -78,9 +75,7 @@
         <div class="bloque-politicas-confirmacion">
           <h2 class="subtitulo-seccion">Política de cancelación</h2>
           <p class="texto-politica-resumen">
-            Cancelación gratuita antes del
-            <strong>{{ datosReserva.fechaLlegada | date: 'd MMM' }}</strong
-            >.
+            Cancelación gratuita hasta 48 horas antes del check-in.
           </p>
 
           <label class="checkbox-acepta-terminos">
@@ -93,16 +88,12 @@
 
           <button
             class="boton-confirmar-pago"
-            [disabled]="!aceptaTerminos || procesandoPago"
+            [disabled]="!aceptaTerminos || procesandoPago || stripeNoDisponible"
             (click)="confirmarYPagar()"
             type="button"
           >
             <i class="pi" [ngClass]="procesandoPago ? 'pi-spin pi-spinner' : 'pi-check-circle'"></i>
-            {{
-              procesandoPago
-                ? 'Procesando pago seguro...'
-                : 'Confirmar y Pagar $' + (datosReserva.totalReserva | number: '1.0-0')
-            }}
+            {{ procesandoPago ? 'Procesando pago seguro...' : 'Confirmar y Pagar $2,835,000' }}
           </button>
         </div>
       </section>
@@ -111,18 +102,16 @@
         <div class="tarjeta-resumen-alojamiento">
           <div class="encabezado-mini-alojamiento">
             <img
-              [src]="datosReserva.imagenUrl"
-              [alt]="datosReserva.titulo"
+              [src]="alojamiento.imagenes[0].urlImagen"
+              [alt]="alojamiento.titulo"
               class="imagen-mini-alojamiento"
             />
             <div class="info-mini-textos">
-              <span class="tipo-mini">{{ datosReserva.tipo }}</span>
-              <h3 class="titulo-mini">{{ datosReserva.titulo }}</h3>
+              <span class="tipo-mini">Villa completa en Medellín</span>
+              <h3 class="titulo-mini">{{ alojamiento.titulo }}</h3>
               <div class="calificacion-mini">
                 <i class="pi pi-star-fill"></i>
-                <span
-                  >{{ datosReserva.calificacion }} ({{ datosReserva.resenasCount }} reseñas)</span
-                >
+                <span>4.95 (42 reseñas)</span>
               </div>
             </div>
           </div>
@@ -133,23 +122,20 @@
             <h3 class="titulo-desglose">Detalle del precio</h3>
 
             <div class="fila-precio">
-              <span
-                >${{ datosReserva.precioNoche | number: '1.0-0' }} x
-                {{ datosReserva.numeroNoches }} noches</span
-              >
-              <span>${{ datosReserva.subtotalHospedaje | number: '1.0-0' }}</span>
+              <span>$550,000 x 5 noches</span>
+              <span>$2,750,000</span>
             </div>
 
             <div class="fila-precio">
-              <span>Tarifa de limpieza (servicios incluidos)</span>
-              <span>${{ datosReserva.tarifaLimpieza | number: '1.0-0' }}</span>
+              <span>Tarifa de limpieza</span>
+              <span>$85,000</span>
             </div>
 
             <hr class="divisor-desglose" />
 
             <div class="fila-precio total-final">
               <span>Total (COP)</span>
-              <span>${{ datosReserva.totalReserva | number: '1.0-0' }}</span>
+              <span>$2,835,000</span>
             </div>
           </div>
         </div>

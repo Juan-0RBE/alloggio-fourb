@@ -1,0 +1,107 @@
+<div class="aloggio-reservas-contenedor">
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo" routerLink="/inicio">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </div>
+
+    <a routerLink="/inicio" class="enlace-volver">
+      <i class="pi pi-arrow-left"></i>
+      <span>Volver al inicio</span>
+    </a>
+  </header>
+
+  <main class="cuerpo-reservas">
+    <h1 class="titulo-pagina">Mis reservas</h1>
+
+    <div class="estado-pagina" *ngIf="cargando()" role="status">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Cargando tus reservas...</span>
+    </div>
+
+    <div class="estado-pagina error" *ngIf="!cargando() && error() as e" role="alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ e.mensaje }}</span>
+      <a *ngIf="e.sesion" routerLink="/login" class="boton-estado">Iniciar sesión</a>
+      <button *ngIf="!e.sesion" type="button" class="boton-estado" (click)="cargar()">
+        Reintentar
+      </button>
+    </div>
+
+    <ng-container *ngIf="!cargando() && !error()">
+      <div class="estado-pagina" *ngIf="lista().length === 0">
+        <i class="pi pi-calendar"></i>
+        <h2 class="titulo-estado">Aún no tienes reservas</h2>
+        <p class="texto-estado">Cuando reserves un alojamiento, aparecerá aquí.</p>
+        <a routerLink="/inicio" class="boton-estado dorado">Explorar alojamientos</a>
+      </div>
+
+      <ng-container *ngIf="lista().length > 0">
+        <div class="filtros-reservas" role="tablist" aria-label="Filtrar reservas por estado">
+          <button
+            *ngFor="let filtro of filtros"
+            type="button"
+            role="tab"
+            class="filtro"
+            [class.activo]="filtroActivo() === filtro.valor"
+            [attr.aria-selected]="filtroActivo() === filtro.valor"
+            (click)="seleccionarFiltro(filtro.valor)"
+          >
+            {{ filtro.etiqueta }}
+            <span class="conteo">{{ conteos()[filtro.valor] }}</span>
+          </button>
+        </div>
+
+        <div class="estado-pagina" *ngIf="visibles().length === 0">
+          <i class="pi pi-filter"></i>
+          <h2 class="titulo-estado">No tienes reservas {{ etiquetaFiltroActivo() }}</h2>
+          <button type="button" class="boton-estado" (click)="seleccionarFiltro('TODAS')">
+            Ver todas
+          </button>
+        </div>
+
+        <ul class="lista-reservas" *ngIf="visibles().length > 0">
+          <li *ngFor="let reserva of visibles()">
+            <a class="tarjeta-reserva" [routerLink]="['/mis-reservas', reserva.idReserva]">
+              <div class="miniatura">
+                <img
+                  *ngIf="reserva.imagen; else sinImagen"
+                  [src]="reserva.imagen"
+                  [alt]="reserva.titulo"
+                />
+                <ng-template #sinImagen><i class="pi pi-image"></i></ng-template>
+              </div>
+
+              <div class="info-reserva">
+                <div class="fila-superior">
+                  <span
+                    class="insignia-estado"
+                    [ngClass]="'estado-' + reserva.estado.toLowerCase()"
+                    >{{ etiquetasEstado[reserva.estado] }}</span
+                  >
+                  <span class="codigo">#{{ reserva.idReserva }}</span>
+                </div>
+                <h2 class="titulo-reserva">{{ reserva.titulo }}</h2>
+                <p class="ciudad-reserva" *ngIf="reserva.ciudad">
+                  <i class="pi pi-map-marker"></i> {{ reserva.ciudad }}
+                </p>
+                <p class="fechas-reserva">
+                  {{ reserva.fechaLlegada | date: 'd MMM' : '' : 'es-CO' }} –
+                  {{ reserva.fechaSalida | date: 'd MMM, yyyy' : '' : 'es-CO' }} ·
+                  {{ reserva.noches }}
+                  {{ reserva.noches === 1 ? 'noche' : 'noches' }}
+                </p>
+              </div>
+
+              <div class="total-reserva">
+                <span class="etiqueta">Total</span>
+                <span class="valor">${{ reserva.total | number: '1.0-0' }}</span>
+                <i class="pi pi-chevron-right indicador"></i>
+              </div>
+            </a>
+          </li>
+        </ul>
+      </ng-container>
+    </ng-container>
+  </main>
+</div>

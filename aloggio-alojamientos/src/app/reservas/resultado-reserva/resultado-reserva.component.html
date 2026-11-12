@@ -1,0 +1,71 @@
+<div class="aloggio-resultado-contenedor">
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo" routerLink="/inicio">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </div>
+  </header>
+
+  <main class="cuerpo-resultado">
+    <section class="tarjeta-resultado" [ngClass]="'tono-' + config.tono">
+      <div class="icono-resultado">
+        <i class="pi" [ngClass]="config.icono"></i>
+      </div>
+
+      <h1 class="titulo-resultado">{{ config.titulo }}</h1>
+      <p class="descripcion-resultado">{{ config.descripcion }}</p>
+
+      <ng-container *ngIf="tipo === 'exito'">
+        <div class="resumen-reserva-confirmada">
+          <div class="codigo-reserva">
+            <span class="etiqueta">Código de reserva</span>
+            <span class="valor">#{{ reserva.idReserva }}</span>
+          </div>
+
+          <div class="alojamiento-confirmado">
+            <img
+              [src]="alojamiento.imagenes[0].urlImagen"
+              [alt]="alojamiento.titulo"
+              class="imagen-confirmada"
+            />
+            <div class="textos-confirmados">
+              <span class="titulo-confirmado">{{ alojamiento.titulo }}</span>
+              <span class="ubicacion-confirmada">{{ alojamiento.ubicacion }}</span>
+            </div>
+          </div>
+
+          <dl class="datos-reserva">
+            <div class="dato">
+              <dt>Llegada</dt>
+              <dd>{{ reserva.fechaLlegada }}</dd>
+            </div>
+            <div class="dato">
+              <dt>Salida</dt>
+              <dd>{{ reserva.fechaSalida }}</dd>
+            </div>
+            <div class="dato">
+              <dt>Duración</dt>
+              <dd>{{ reserva.noches }} noches</dd>
+            </div>
+            <div class="dato total">
+              <dt>Total pagado</dt>
+              <dd>${{ reserva.total | number: '1.0-0' }} COP</dd>
+            </div>
+          </dl>
+        </div>
+      </ng-container>
+
+      <div class="acciones-resultado">
+        <ng-container [ngSwitch]="tipo">
+          <ng-container *ngSwitchCase="'exito'">
+            <a class="boton-dorado" routerLink="/inicio">Volver al inicio</a>
+          </ng-container>
+
+          <ng-container *ngSwitchDefault>
+            <a class="boton-dorado" routerLink="/inicio">Volver al inicio</a>
+          </ng-container>
+        </ng-container>
+      </div>
+    </section>
+  </main>
+</div>
