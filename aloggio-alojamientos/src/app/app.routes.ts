@@ -4,7 +4,9 @@ import { Registro } from './autenticacion/registro/registro.component';
 import { Recuperacion } from './autenticacion/recuperacion/recuperacion.component';
 import { Inicio } from './alojamientos/inicio/inicio.component';
 import { DetalleAlojamiento } from './alojamientos/detalle-alojamiento/detalle-alojamiento.component';
-import { ResumenReserva } from './alojamientos/resumen-reserva/resumen-reserva.component';
+import { ResumenReserva } from './reservas/resumen-reserva/resumen-reserva.component';
+import { ResultadoReserva } from './reservas/resultado-reserva/resultado-reserva.component';
+import { MisReservas } from './reservas/mis-reservas/mis-reservas.component';
 import { FormularioResena } from './resenas/formulario-resena/formulario-resena.component';
 
 export const routes: Routes = [
@@ -16,5 +18,7 @@ export const routes: Routes = [
   { path: 'inicio', component: Inicio },
   { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
   { path: 'resumen-reserva', component: ResumenReserva },
+  { path: 'resultado-reserva', component: ResultadoReserva },
+  { path: 'mis-reservas', component: MisReservas },
   { path: 'formulario-resena', component: FormularioResena },
 ];

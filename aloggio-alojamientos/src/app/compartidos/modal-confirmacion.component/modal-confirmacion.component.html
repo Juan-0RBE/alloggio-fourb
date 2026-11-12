@@ -1,0 +1,46 @@
+<div class="modal-fondo" *ngIf="visible()" (click)="alClicFondo()">
+  <div
+    #dialogo
+    class="modal-dialogo"
+    [class.peligro]="tipo() === 'peligro'"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    [attr.aria-labelledby]="idBase + '-titulo'"
+    [attr.aria-describedby]="mensaje() ? idBase + '-mensaje' : null"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-icono">
+      <i class="pi" [ngClass]="icono()"></i>
+    </div>
+
+    <h2 class="modal-titulo" [id]="idBase + '-titulo'">{{ titulo() }}</h2>
+    <p *ngIf="mensaje()" class="modal-mensaje" [id]="idBase + '-mensaje'">{{ mensaje() }}</p>
+
+    <div class="modal-contenido">
+      <ng-content></ng-content>
+    </div>
+
+    <div class="modal-acciones">
+      <button
+        *ngIf="mostrarCancelar()"
+        type="button"
+        class="boton-secundario"
+        [disabled]="cargando()"
+        (click)="cancelar.emit()"
+      >
+        {{ textoCancelar() }}
+      </button>
+      <button
+        type="button"
+        class="boton-confirmar"
+        [class.peligro]="tipo() === 'peligro'"
+        [disabled]="confirmarDeshabilitado() || cargando()"
+        (click)="confirmar.emit()"
+      >
+        <i *ngIf="cargando()" class="pi pi-spin pi-spinner"></i>
+        {{ textoConfirmar() }}
+      </button>
+    </div>
+  </div>
+</div>
