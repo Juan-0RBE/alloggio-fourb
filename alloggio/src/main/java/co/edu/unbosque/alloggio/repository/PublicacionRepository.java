@@ -47,4 +47,11 @@ public interface PublicacionRepository extends JpaRepository<Publicacion, Long>,
     @Query("SELECT p FROM Publicacion p WHERE p.idPublicacion = :idPublicacion")
     Optional<Publicacion> findByIdParaActualizar(@Param("idPublicacion") Long idPublicacion);
 
+    /**
+     * Cuenta las publicaciones por estado. Cada fila es [estado, cantidad].
+     * 
+     * @return
+     */
+    @Query("SELECT p.estado, COUNT(p) FROM Publicacion p GROUP BY p.estado")
+    List<Object[]> contarPorEstado();
 }

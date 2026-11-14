@@ -52,7 +52,7 @@ public class SecurityConfig {
 
                         // Solo administrador (debe ir antes de las generales)
                         .requestMatchers("/auditoria/**", "/moderacion/**", "/resena/ocultar/**",
-                                "/resena/alojamiento/**")
+                                "/resena/alojamiento/**", "/dashboard/**")
                         .hasRole("ADMINISTRADOR")
 
                         // Del módulo de usuarios, solo estos dos son para cualquier autenticado
