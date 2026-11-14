@@ -1,8 +1,10 @@
 package co.edu.unbosque.alloggio.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import co.edu.unbosque.alloggio.entity.Usuario;
 
@@ -49,4 +51,20 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @return
      */
     public void deleteByNombreUsuario(String nombreUsuario);
+
+    /**
+     * Cuenta los usuarios por rol. Cada fila es [rol, cantidad].
+     * 
+     * @return
+     */
+    @Query("SELECT u.role, COUNT(u) FROM Usuario u GROUP BY u.role")
+    List<Object[]> contarPorRol();
+
+    /**
+     * Cuenta los usuarios por estado de cuenta. Cada fila es [estado, cantidad].
+     * 
+     * @return
+     */
+    @Query("SELECT u.estadoCuenta, COUNT(u) FROM Usuario u GROUP BY u.estadoCuenta")
+    List<Object[]> contarPorEstadoCuenta();
 }

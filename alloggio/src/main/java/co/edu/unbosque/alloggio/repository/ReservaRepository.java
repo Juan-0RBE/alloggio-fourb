@@ -1,9 +1,12 @@
 package co.edu.unbosque.alloggio.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -79,4 +82,35 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
          */
         List<Reserva> findByPublicacionIdPublicacionAndEstadoAndFechaSalidaAfterOrderByFechaLlegadaAsc(
                         Long idPublicacion, EstadoReserva estado, LocalDate fecha);
+
+        /**
+         * Cuenta las reservas por estado. Cada fila es [estado, cantidad].
+         * 
+         * @return
+         */
+        @Query("SELECT r.estado, COUNT(r) FROM Reserva r GROUP BY r.estado")
+        List<Object[]> contarPorEstado();
+
+        /**
+         * Suma el total de las reservas que están en alguno de los estados dados.
+         * Devuelve null si no hay reservas.
+         * 
+         * @param estados
+         * @return
+         */
+        @Query("SELECT SUM(r.total) FROM Reserva r WHERE r.estado IN :estados")
+        BigDecimal sumarTotalPorEstados(@Param("estados") Collection<EstadoReserva> estados);
+
+        /**
+         * Ciudades con más reservas, excluyendo un estado (las canceladas). Cada fila
+         * es [ciudad, cantidad de reservas, suma del total]. El Pageable limita el top.
+         * 
+         * @param excluida
+         * @param pageable
+         * @return
+         */
+        @Query("SELECT p.ciudad, COUNT(r), SUM(r.total) FROM Reserva r JOIN r.publicacion p "
+                        + "WHERE r.estado <> :excluida GROUP BY p.ciudad "
+                        + "ORDER BY COUNT(r) DESC, SUM(r.total) DESC, p.ciudad ASC")
+        List<Object[]> ciudadesConMayorDemanda(@Param("excluida") EstadoReserva excluida, Pageable pageable);
 }
