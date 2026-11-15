@@ -1,5 +1,4 @@
 <div class="aloggio-admin-contenedor">
-  <!-- Barra superior -->
   <header class="encabezado-navegacion">
     <div class="contenedor-logo" routerLink="/inicio">
       <i class="pi pi-building icono-logo"></i>
@@ -16,7 +15,6 @@
   </header>
 
   <div class="layout-admin">
-    <!-- Menú lateral de secciones -->
     <aside class="menu-lateral" aria-label="Secciones de administración">
       <button
         type="button"
@@ -79,9 +77,7 @@
       </button>
     </aside>
 
-    <!-- Área principal de contenido -->
     <main class="contenido-admin">
-      <!-- 1. DASHBOARD -->
       <section *ngIf="seccionActiva() === 'dashboard'" class="bloque-seccion">
         <div class="cabecera-seccion">
           <div>
@@ -157,7 +153,6 @@
         </ng-template>
       </section>
 
-      <!-- 2. REPORTES / EXPORTACIÓN (Entidad REPORTE) -->
       <section *ngIf="seccionActiva() === 'reportes'" class="bloque-seccion">
         <div class="cabecera-seccion">
           <div>
@@ -224,7 +219,6 @@
         </ng-template>
       </section>
 
-      <!-- 3. MODERACIÓN DE PUBLICACIONES -->
       <section *ngIf="seccionActiva() === 'publicaciones'" class="bloque-seccion">
         <div class="cabecera-seccion">
           <div>
@@ -308,7 +302,6 @@
         </ng-template>
       </section>
 
-      <!-- 4. MODERACIÓN DE RESEÑAS (Campo Visible en RESENA) -->
       <section *ngIf="seccionActiva() === 'resenas'" class="bloque-seccion">
         <div class="cabecera-seccion">
           <div>
@@ -363,7 +356,6 @@
         </ng-template>
       </section>
 
-      <!-- 5. GESTIÓN DE USUARIOS (Campo Restringido en USUARIO) -->
       <section *ngIf="seccionActiva() === 'usuarios'" class="bloque-seccion">
         <div class="cabecera-seccion">
           <div>
@@ -434,7 +426,6 @@
         </ng-template>
       </section>
 
-      <!-- 6. LOG DE AUDITORÍA (Solo lectura sobre EVENTO_AUDITORIA) -->
       <section *ngIf="seccionActiva() === 'auditoria'" class="bloque-seccion">
         <div class="cabecera-seccion">
           <div>

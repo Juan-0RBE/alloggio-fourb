@@ -164,6 +164,7 @@ $peligro: #e74c3c;
       font-weight: 600;
       color: $texto-principal;
       display: -webkit-box;
+      line-clamp: 2;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
@@ -245,7 +246,6 @@ $peligro: #e74c3c;
   }
 }
 
-// Botones globales
 .boton-dorado {
   background-color: $dorado-acento;
   border: 1px solid $dorado-acento;
@@ -280,7 +280,6 @@ $peligro: #e74c3c;
   }
 }
 
-// Modal
 .modal-fondo {
   position: fixed;
   inset: 0;
@@ -371,19 +370,16 @@ $peligro: #e74c3c;
   }
 }
 
-// Dentro de .info-propiedad:
 .detalles-capacidad {
   font-size: 0.8rem;
   color: $texto-secundario;
 }
 
-// Dentro de .modal-dialogo (ajusta max-height para que haga scroll si la pantalla es pequeña):
 .modal-dialogo {
   max-height: 90vh;
   overflow-y: auto;
 }
 
-// Dentro de .formulario-modal:
 .fila-triple {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

@@ -161,7 +161,6 @@ $peligro: #e74c3c;
   }
 }
 
-// KPIs Dashboard
 .grid-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -207,7 +206,6 @@ $peligro: #e74c3c;
   }
 }
 
-// Reportes
 .tarjeta-formulario-reporte {
   background-color: $fondo-tarjeta;
   border: 1px solid $borde-contenedor;
@@ -247,7 +245,6 @@ $peligro: #e74c3c;
   font-weight: 600;
 }
 
-// Tablas
 .tabla-contenedor {
   background-color: $fondo-tarjeta;
   border: 1px solid $borde-contenedor;
@@ -296,7 +293,6 @@ $peligro: #e74c3c;
   gap: 0.4rem;
 }
 
-// Reseñas moderación
 .lista-tarjetas-mod {
   display: flex;
   flex-direction: column;
@@ -340,7 +336,6 @@ $peligro: #e74c3c;
   }
 }
 
-// Buscadores y filtros
 .filtros-auditoria {
   display: flex;
   flex-wrap: wrap;
@@ -384,7 +379,6 @@ $peligro: #e74c3c;
   font-size: 0.9rem;
 }
 
-// Insignias y botones
 .insignia {
   display: inline-block;
   padding: 0.2rem 0.55rem;

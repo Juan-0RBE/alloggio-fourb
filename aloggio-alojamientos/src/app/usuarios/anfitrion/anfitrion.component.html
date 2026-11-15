@@ -1,5 +1,4 @@
 <div class="aloggio-anfitrion-contenedor">
-  <!-- Cabecera -->
   <header class="encabezado-navegacion">
     <div class="contenedor-logo" routerLink="/inicio">
       <i class="pi pi-building icono-logo"></i>
@@ -25,7 +24,6 @@
       </button>
     </div>
 
-    <!-- Lista de alojamientos propios del anfitrión -->
     <div class="grid-mis-alojamientos" *ngIf="misAlojamientos().length > 0; else sinAlojamientos">
       <div class="tarjeta-propiedad" *ngFor="let aloj of misAlojamientos()">
         <div class="imagen-contenedor">
@@ -51,7 +49,6 @@
         </div>
 
         <div class="acciones-propiedad">
-          <!-- Botón de editar alojamiento -->
           <button
             class="boton-accion"
             type="button"
@@ -92,7 +89,6 @@
     </ng-template>
   </main>
 
-  <!-- Modal Completo para Crear / Editar Alojamiento -->
   <div class="modal-fondo" *ngIf="mostrandoModal()" (click)="cerrarModal()">
     <div class="modal-dialogo" (click)="$event.stopPropagation()">
       <div class="modal-encabezado">
@@ -134,7 +130,6 @@
           </div>
         </div>
 
-        <!-- Capacidad y distribución -->
         <div class="fila-triple">
           <div class="campo">
             <label for="huespedes">Huéspedes</label>
@@ -156,7 +151,6 @@
           </div>
         </div>
 
-        <!-- Tarifas -->
         <div class="fila-doble">
           <div class="campo">
             <label for="precio">Precio por noche (COP)</label>
@@ -180,7 +174,6 @@
           </div>
         </div>
 
-        <!-- Galería de Múltiples Imágenes -->
         <div class="campo">
           <label>Galería de Imágenes ({{ formImagenes.length }})</label>
           <div class="grupo-agregar-imagen">
