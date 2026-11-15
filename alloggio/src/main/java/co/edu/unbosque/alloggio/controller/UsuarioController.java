@@ -63,6 +63,8 @@ public class UsuarioController {
             return new ResponseEntity<>("Correo electrónico ya está en uso", HttpStatus.CONFLICT);
         } else if (status == 4) {
             return new ResponseEntity<>("Documento de identidad ya está en uso", HttpStatus.CONFLICT);
+        } else if (status == 5) {
+            return new ResponseEntity<>("Faltan datos obligatorios o son inválidos", HttpStatus.BAD_REQUEST);
         } else {
             return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }

@@ -39,6 +39,8 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 
     private static final String REGEX_TELEFONO = "^\\+?\\d{7,15}$";
 
+    private static final String REGEX_CORREO = "^[\\w.+\\-]+@[\\w\\-]+(\\.[\\w\\-]+)+$";
+
     public UsuarioService() {
     }
 
@@ -48,10 +50,13 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
      * @param newData los datos del usuario a crear
      * @return 0 si es exitoso, 1 si el nombre de usuario ya está en uso, 2 si la
      *         contraseña no cumple con los requisitos, 3 si el correo ya está en
-     *         uso, 4 si el ID ya está en uso
+     *         uso, 4 si el ID ya está en uso, 5 si faltan datos o son inválidos
      */
     @Override
     public int create(UsuarioDTO newData) {
+        if (!camposInvalidosRegistro(newData).isEmpty()) {
+            return 5; // Faltan datos obligatorios o son inválidos
+        }
         Usuario entity = modelMapper.map(newData, Usuario.class);
         entity.setIdUsuario(null);
         if (findUsernameAlreadyTaken(entity.getNombreUsuario())) {
@@ -608,6 +613,48 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
         dto.setEstadoCuenta(u.getEstadoCuenta());
         dto.setEstaActivo(u.getEstaActivo());
         return dto;
+    }
+
+    /**
+     * Valida los datos obligatorios del registro.
+     *
+     * @param dto datos del registro
+     * @return nombres de los campos faltantes o inválidos; lista vacía si todo es
+     *         válido
+     */
+    public List<String> camposInvalidosRegistro(UsuarioDTO dto) {
+        List<String> invalidos = new ArrayList<>();
+        if (dto.getCorreoUsuario() == null || !dto.getCorreoUsuario().trim().matches(REGEX_CORREO)) {
+            invalidos.add("correoUsuario");
+        }
+        if (dto.getNombreUsuario() == null || dto.getNombreUsuario().trim().isEmpty()) {
+            invalidos.add("nombreUsuario");
+        }
+        if (dto.getClaveUsuario() == null || dto.getClaveUsuario().isEmpty()) {
+            invalidos.add("claveUsuario");
+        }
+        if (dto.getDocumentoIdentidad() == null || dto.getDocumentoIdentidad().trim().isEmpty()) {
+            invalidos.add("documentoIdentidad");
+        }
+        if (!nombreValido(dto.getPrimerNombre(), true)) {
+            invalidos.add("primerNombre");
+        }
+        if (!nombreValido(dto.getSegundoNombre(), false)) {
+            invalidos.add("segundoNombre");
+        }
+        if (!nombreValido(dto.getPrimerApellido(), true)) {
+            invalidos.add("primerApellido");
+        }
+        if (!nombreValido(dto.getSegundoApellido(), false)) {
+            invalidos.add("segundoApellido");
+        }
+        if (dto.getFechaNacimiento() == null || dto.getFechaNacimiento().isAfter(LocalDate.now())) {
+            invalidos.add("fechaNacimiento");
+        }
+        if (dto.getNumeroTelefono() == null || !dto.getNumeroTelefono().trim().matches(REGEX_TELEFONO)) {
+            invalidos.add("numeroTelefono");
+        }
+        return invalidos;
     }
 
 }

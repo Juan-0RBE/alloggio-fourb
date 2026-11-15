@@ -93,7 +93,7 @@ public class PublicacionService {
         }
 
         if (!validarDatos(dto).isEmpty()) {
-            return 3; // Faltan campos obligatorios o son inválidos (RN-06)
+            return 3; // Faltan campos obligatorios o son inválidos
         }
 
         Optional<PoliticaCancelacion> politicaOpt = politicaRepo.findById(dto.getIdPoliticaCancelacion());
