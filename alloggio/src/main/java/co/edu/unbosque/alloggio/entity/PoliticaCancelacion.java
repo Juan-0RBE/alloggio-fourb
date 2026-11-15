@@ -27,7 +27,7 @@ public class PoliticaCancelacion {
     @Column(name = "Plazo_Cancelacion", nullable = false)
     private Integer plazoCancelacion;
 
-    PoliticaCancelacion() {
+    public PoliticaCancelacion() {
     }
 
     public PoliticaCancelacion(Long idPolitica, String nombre, Double porcentajeDevolucion, String condiciones,
