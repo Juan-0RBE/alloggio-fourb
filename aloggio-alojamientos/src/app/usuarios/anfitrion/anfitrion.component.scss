@@ -1,0 +1,468 @@
+@use '../../../styles.scss' as *;
+
+$exito: #5fc788;
+$peligro: #e74c3c;
+
+.aloggio-anfitrion-contenedor {
+  min-height: 100vh;
+  background-color: $fondo-principal;
+  color: $texto-principal;
+  display: flex;
+  flex-direction: column;
+}
+
+.encabezado-navegacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 2rem;
+  background-color: rgba($fondo-tarjeta, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid $borde-contenedor;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .contenedor-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+
+    .icono-logo {
+      font-size: 1.5rem;
+      color: $dorado-acento;
+    }
+
+    .texto-logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: $texto-principal;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge-modo {
+      font-size: 0.7rem;
+      background-color: rgba(229, 184, 105, 0.15);
+      color: $dorado-acento;
+      padding: 0.15rem 0.5rem;
+      border-radius: 99px;
+      border: 1px solid rgba(229, 184, 105, 0.3);
+    }
+  }
+
+  .enlace-volver {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $texto-secundario;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: color 0.2s;
+
+    &:hover {
+      color: $dorado-acento;
+    }
+  }
+}
+
+.cuerpo-anfitrion {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  .seccion-titulo-accion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .titulo-pagina {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .subtitulo-pagina {
+      margin: 0.3rem 0 0;
+      font-size: 0.9rem;
+      color: $texto-secundario;
+    }
+  }
+}
+
+.grid-mis-alojamientos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.tarjeta-propiedad {
+  background-color: $fondo-tarjeta;
+  border: 1px solid $borde-contenedor;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: rgba(229, 184, 105, 0.4);
+  }
+
+  .imagen-contenedor {
+    position: relative;
+    height: 180px;
+    background-color: $fondo-entrada;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .insignia-estado {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background-color: rgba(231, 76, 60, 0.85);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+
+      &.activo {
+        background-color: rgba(95, 199, 136, 0.85);
+        color: #121417;
+      }
+    }
+  }
+
+  .info-propiedad {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1;
+
+    .tipo-alojamiento {
+      font-size: 0.8rem;
+      color: $texto-secundario;
+    }
+
+    .titulo-propiedad {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: $texto-principal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .precio-propiedad {
+      margin: 0.4rem 0 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: $dorado-acento;
+
+      .noche {
+        font-size: 0.8rem;
+        font-weight: 400;
+        color: $texto-secundario;
+      }
+    }
+  }
+
+  .acciones-propiedad {
+    padding: 0.75rem 1.25rem;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid $borde-contenedor;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+
+    .boton-accion {
+      background-color: transparent;
+      border: 1px solid $borde-contenedor;
+      color: $texto-principal;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: $fondo-entrada;
+      }
+
+      &.peligro:hover {
+        background-color: rgba(231, 76, 60, 0.15);
+        color: $peligro;
+        border-color: rgba(231, 76, 60, 0.3);
+      }
+    }
+  }
+}
+
+.estado-vacio {
+  text-align: center;
+  padding: 4rem 1rem;
+  background-color: $fondo-tarjeta;
+  border: 1px solid $borde-contenedor;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+
+  i {
+    font-size: 2.5rem;
+    color: $dorado-acento;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+
+  p {
+    margin: 0;
+    color: $texto-secundario;
+    font-size: 0.9rem;
+  }
+}
+
+// Botones globales
+.boton-dorado {
+  background-color: $dorado-acento;
+  border: 1px solid $dorado-acento;
+  color: #121417;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: $dorado-hover;
+  }
+}
+
+.boton-secundario {
+  background-color: transparent;
+  border: 1px solid $borde-contenedor;
+  color: $texto-principal;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $fondo-entrada;
+  }
+}
+
+// Modal
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(18, 20, 23, 0.85);
+  backdrop-filter: blur(6px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-dialogo {
+  width: 100%;
+  max-width: 520px;
+  background-color: $fondo-tarjeta;
+  border: 1px solid $borde-contenedor;
+  border-radius: 16px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .modal-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .boton-cerrar {
+      background: none;
+      border: none;
+      color: $texto-secundario;
+      font-size: 1.1rem;
+      cursor: pointer;
+
+      &:hover {
+        color: $texto-principal;
+      }
+    }
+  }
+
+  .formulario-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+
+      label {
+        font-size: 0.85rem;
+        color: $texto-secundario;
+      }
+
+      input,
+      select {
+        background-color: $fondo-entrada;
+        border: 1px solid $borde-contenedor;
+        color: $texto-principal;
+        padding: 0.7rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+
+        &:focus {
+          outline: 2px solid $dorado-acento;
+        }
+      }
+    }
+
+    .fila-doble {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+  }
+
+  .modal-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+}
+
+// Dentro de .info-propiedad:
+.detalles-capacidad {
+  font-size: 0.8rem;
+  color: $texto-secundario;
+}
+
+// Dentro de .modal-dialogo (ajusta max-height para que haga scroll si la pantalla es pequeña):
+.modal-dialogo {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+// Dentro de .formulario-modal:
+.fila-triple {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+textarea {
+  background-color: $fondo-entrada;
+  border: 1px solid $borde-contenedor;
+  color: $texto-principal;
+  padding: 0.7rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+
+  &:focus {
+    outline: 2px solid $dorado-acento;
+  }
+}
+
+.grupo-agregar-imagen {
+  display: flex;
+  gap: 0.5rem;
+
+  input {
+    flex: 1;
+    background-color: $fondo-entrada;
+    border: 1px solid $borde-contenedor;
+    color: $texto-principal;
+    padding: 0.7rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+}
+
+.lista-mini-imagenes {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  margin-top: 0.5rem;
+  padding-bottom: 0.5rem;
+
+  .item-mini-imagen {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid $borde-contenedor;
+    background-color: $fondo-entrada;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .boton-quitar-img {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: #ff4d4d;
+      border: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #ff4d4d;
+        color: #fff;
+      }
+    }
+  }
+}

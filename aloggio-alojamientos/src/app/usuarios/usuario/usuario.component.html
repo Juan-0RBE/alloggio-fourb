@@ -1,0 +1,252 @@
+<div class="aloggio-principal">
+  <header class="encabezado-navegacion">
+    <a routerLink="/inicio" class="contenedor-logo">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </a>
+
+    <a routerLink="/inicio" class="enlace-volver">
+      <i class="pi pi-arrow-left"></i>
+      <span>Volver al inicio</span>
+    </a>
+  </header>
+
+  <div class="cuerpo-principal">
+    <aside class="barra-lateral-perfil">
+      <div class="resumen-usuario">
+        <div class="avatar-perfil">{{ iniciales }}</div>
+        <h2 class="nombre-completo">{{ nombreCompleto || 'Mi perfil' }}</h2>
+        <span *ngIf="perfil.nombreUsuario" class="nombre-usuario">@{{ perfil.nombreUsuario }}</span>
+
+        <div class="insignias">
+          <span *ngIf="perfil.isVerified" class="insignia">
+            <i class="pi pi-check-circle"></i>
+            <span>Cuenta verificada</span>
+          </span>
+          <span *ngIf="perfil.role === 'ADMINISTRADOR'" class="insignia">
+            <i class="pi pi-shield"></i>
+            <span>Administrador</span>
+          </span>
+        </div>
+      </div>
+
+      <nav class="menu-perfil">
+        <button
+          *ngFor="let opcion of opcionesMenu"
+          type="button"
+          class="opcion-menu"
+          [class.activa]="seccionActiva === opcion.id"
+          (click)="seccionActiva = opcion.id"
+        >
+          <i class="pi" [ngClass]="opcion.icono"></i>
+          <span>{{ opcion.etiqueta }}</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="contenedor-contenido">
+      <section *ngIf="seccionActiva === 'informacion'" class="tarjeta-seccion">
+        <div class="encabezado-seccion">
+          <h1 class="titulo-principal">Información personal</h1>
+          <p class="texto-secundario">Mantén actualizados tus datos de contacto.</p>
+        </div>
+
+        <form (ngSubmit)="alGuardarPerfil()" class="formulario" novalidate>
+          <div class="row g-3">
+            <div *ngFor="let config of camposNombre" class="col-12 col-md-6 campo-formulario">
+              <label [for]="config.campo" class="etiqueta-campo">{{ config.etiqueta }}</label>
+              <div class="grupo-input" [class.invalido]="errorNombre(config)">
+                <span class="icono-input"><i class="pi pi-user"></i></span>
+                <input
+                  [id]="config.campo"
+                  [name]="config.campo"
+                  [(ngModel)]="formulario[config.campo]"
+                  type="text"
+                  class="entrada-control"
+                  [placeholder]="config.placeholder"
+                  maxlength="50"
+                />
+              </div>
+              <small *ngIf="errorNombre(config)" class="mensaje-error">{{
+                errorNombre(config)
+              }}</small>
+            </div>
+
+            <div class="col-12 col-md-6 campo-formulario">
+              <label for="numeroTelefono" class="etiqueta-campo">Número de teléfono</label>
+              <div class="grupo-input" [class.invalido]="errorTelefono()">
+                <span class="icono-input"><i class="pi pi-phone"></i></span>
+                <input
+                  id="numeroTelefono"
+                  name="numeroTelefono"
+                  [(ngModel)]="formulario.numeroTelefono"
+                  type="tel"
+                  inputmode="tel"
+                  class="entrada-control"
+                  placeholder="3001234567"
+                  maxlength="16"
+                />
+              </div>
+              <small *ngIf="errorTelefono()" class="mensaje-error">{{ errorTelefono() }}</small>
+            </div>
+          </div>
+
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-secundario"
+              [disabled]="!hayCambios"
+              (click)="restablecerFormulario()"
+            >
+              Descartar cambios
+            </button>
+            <button type="submit" class="boton-dorado" [disabled]="!hayCambios">
+              Guardar cambios
+            </button>
+          </div>
+        </form>
+
+        <div class="separador-horizontal"></div>
+
+        <div>
+          <h2 class="subtitulo-seccion">Datos de la cuenta</h2>
+          <p class="texto-secundario mb-3">Estos datos no se pueden modificar desde tu perfil.</p>
+
+          <div class="row g-3">
+            <div *ngFor="let dato of camposSoloLectura" class="col-12 col-md-6 campo-formulario">
+              <label [for]="dato.campo" class="etiqueta-campo">{{ dato.etiqueta }}</label>
+              <div class="grupo-input solo-lectura">
+                <span class="icono-input"><i class="pi" [ngClass]="dato.icono"></i></span>
+                <input
+                  [id]="dato.campo"
+                  type="text"
+                  class="entrada-control"
+                  [value]="valorSoloLectura(dato.campo)"
+                  readonly
+                />
+                <span class="icono-bloqueo"><i class="pi pi-lock"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEGURIDAD -->
+      <section *ngIf="seccionActiva === 'seguridad'" class="tarjeta-seccion">
+        <div class="encabezado-seccion">
+          <h1 class="titulo-principal">Seguridad</h1>
+          <p class="texto-secundario">Cambia tu contraseña para mantener tu cuenta protegida.</p>
+        </div>
+
+        <form (ngSubmit)="alCambiarClave()" class="formulario" novalidate>
+          <div *ngFor="let config of camposClave" class="campo-formulario">
+            <label [for]="config.campo" class="etiqueta-campo">{{ config.etiqueta }}</label>
+            <div
+              class="grupo-input"
+              [class.invalido]="
+                config.campo === 'confirmarClave' && cambioClave.confirmarClave && !clavesCoinciden
+              "
+            >
+              <span class="icono-input"><i class="pi pi-lock"></i></span>
+              <input
+                [id]="config.campo"
+                [name]="config.campo"
+                [(ngModel)]="cambioClave[config.campo]"
+                [type]="mostrarClave[config.campo] ? 'text' : 'password'"
+                class="entrada-control"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                class="boton-peek"
+                aria-label="Mostrar u ocultar contraseña"
+                (click)="mostrarClave[config.campo] = !mostrarClave[config.campo]"
+              >
+                <i
+                  class="pi"
+                  [ngClass]="mostrarClave[config.campo] ? 'pi-eye-slash' : 'pi-eye'"
+                ></i>
+              </button>
+            </div>
+            <small
+              *ngIf="
+                config.campo === 'confirmarClave' && cambioClave.confirmarClave && !clavesCoinciden
+              "
+              class="mensaje-error"
+              >Las contraseñas no coinciden.</small
+            >
+          </div>
+
+          <ul class="lista-requisitos">
+            <li
+              *ngFor="let requisito of requisitosClave"
+              [class.cumple]="requisito.cumple(cambioClave.claveNueva)"
+            >
+              <i
+                class="pi"
+                [ngClass]="
+                  requisito.cumple(cambioClave.claveNueva) ? 'pi-check-circle' : 'pi-circle'
+                "
+              ></i>
+              <span>{{ requisito.texto }}</span>
+            </li>
+          </ul>
+
+          <div class="acciones-formulario">
+            <button type="submit" class="boton-dorado" [disabled]="!claveValida">
+              Actualizar contraseña
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- CUENTA -->
+      <section *ngIf="seccionActiva === 'cuenta'" class="tarjeta-seccion">
+        <div class="encabezado-seccion">
+          <h1 class="titulo-principal">Cuenta</h1>
+          <p class="texto-secundario">Administra el estado de tu cuenta en Aloggio.</p>
+        </div>
+
+        <div class="bloque-peligro">
+          <div class="texto-peligro">
+            <h2 class="subtitulo-seccion">Desactivar cuenta</h2>
+            <p class="texto-secundario mb-0">
+              Tu cuenta quedará inactiva y no podrás iniciar sesión hasta reactivarla confirmando
+              tus credenciales.
+            </p>
+          </div>
+
+          <button
+            *ngIf="!mostrarConfirmacion"
+            type="button"
+            class="boton-peligro"
+            (click)="mostrarConfirmacion = true"
+          >
+            Desactivar mi cuenta
+          </button>
+        </div>
+
+        <div *ngIf="mostrarConfirmacion" class="confirmacion-peligro">
+          <label class="etiqueta-checkbox">
+            <input type="checkbox" [(ngModel)]="confirmarDesactivacion" />
+            <span>Entiendo que mi cuenta quedará inactiva.</span>
+          </label>
+
+          <div class="acciones-formulario">
+            <button type="button" class="boton-secundario" (click)="cancelarDesactivacion()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-peligro solido"
+              [disabled]="!confirmarDesactivacion"
+              (click)="alDesactivarCuenta()"
+            >
+              Sí, desactivar cuenta
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
