@@ -92,14 +92,20 @@
           <div class="encabezado-bloque-servicios">
             <h3 class="titulo-bloque">Lo que este lugar ofrece</h3>
             <span class="badge-aclaracion-incluidos">
-              <i class="pi pi-info-circle"></i> Todos los servicios están incluidos en la tarifa
+              <i class="pi pi-info-circle"></i> Servicios configurados por el anfitrión
             </span>
           </div>
 
           <div class="lista-servicios-grid">
-            <div class="item-servicio-incluido" *ngFor="let servicio of alojamiento.servicios">
-              <i [class]="servicio.icono"></i>
+            <div
+              class="item-servicio-incluido"
+              *ngFor="let servicio of alojamiento.serviciosAdicionales"
+            >
+              <i class="pi pi-check-circle"></i>
               <span>{{ servicio.nombre }}</span>
+              <strong class="precio-servicio-badge" *ngIf="servicio.precio > 0">
+                (+${{ servicio.precio | number: '1.0-0' }})
+              </strong>
             </div>
           </div>
         </div>
@@ -107,17 +113,14 @@
         <hr class="divisor-seccion" />
 
         <div class="bloque-reglas-politicas">
-          <div class="columna-reglas">
-            <h3 class="titulo-bloque">Lo que debes saber</h3>
-            <ul class="lista-reglas">
-              <li *ngFor="let regla of alojamiento.reglas">{{ regla }}</li>
-            </ul>
-          </div>
           <div class="columna-politica">
             <h3 class="titulo-bloque">Política de cancelación</h3>
             <p class="texto-politica">
               <i class="pi pi-shield"></i>
-              <span>{{ alojamiento.politicaCancelacion }}</span>
+              <span
+                >Mínimo 5 días antes del periodo de reserva y con devolución del 20% del
+                monto.</span
+              >
             </p>
           </div>
         </div>
@@ -136,14 +139,19 @@
             <div class="fechas-grid-inputs">
               <div class="input-bloque">
                 <label for="fecha-llegada">Llegada</label>
-                <input id="fecha-llegada" type="date" [(ngModel)]="fechaLlegada" />
+                <input
+                  id="fecha-llegada"
+                  type="date"
+                  [min]="fechaMinimaHoy"
+                  [(ngModel)]="fechaLlegada"
+                />
               </div>
               <div class="input-bloque">
                 <label for="fecha-salida">Salida</label>
                 <input
                   id="fecha-salida"
                   type="date"
-                  [min]="fechaLlegada"
+                  [min]="fechaMinimaSalida"
                   [(ngModel)]="fechaSalida"
                 />
               </div>
@@ -178,11 +186,32 @@
               >
               <span>${{ subtotalHospedaje | number: '1.0-0' }}</span>
             </div>
+
             <div class="fila-desglose">
               <span>Tarifa de limpieza</span>
               <span>${{ tarifaLimpieza | number: '1.0-0' }}</span>
             </div>
+
+            <!-- NUEVO: Servicios adicionales fijos del alojamiento -->
+            <div
+              class="seccion-servicios-incluidos"
+              *ngIf="
+                alojamiento.serviciosAdicionales && alojamiento.serviciosAdicionales.length > 0
+              "
+            >
+              <div
+                class="fila-desglose servicio-fijo"
+                *ngFor="let servicio of alojamiento.serviciosAdicionales"
+              >
+                <span class="nombre-servicio">
+                  <i class="pi pi-check-circle"></i> {{ servicio.nombre }}
+                </span>
+                <span>${{ servicio.precio | number: '1.0-0' }}</span>
+              </div>
+            </div>
+
             <hr class="divisor-desglose" />
+
             <div class="fila-desglose total">
               <span>Total antes de impuestos</span>
               <span>${{ totalReserva | number: '1.0-0' }}</span>

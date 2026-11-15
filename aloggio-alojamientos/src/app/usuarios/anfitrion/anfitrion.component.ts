@@ -8,6 +8,12 @@ interface ImagenAlojamientoAnfitrion {
   urlImagen: string;
 }
 
+interface ServicioAdicional {
+  id: number;
+  nombre: string;
+  precio: number;
+}
+
 interface AlojamientoAnfitrion {
   id: number;
   idAnfitrion: string;
@@ -21,6 +27,7 @@ interface AlojamientoAnfitrion {
   tarifaLimpieza: number;
   descripcion: string;
   imagenes: ImagenAlojamientoAnfitrion[];
+  serviciosAdicionales: ServicioAdicional[];
   estado: 'Activo' | 'Pausado';
 }
 
@@ -35,6 +42,7 @@ export class Anfitrion {
   usuarioActualId = 'anfitrion-123';
   mostrandoModal = signal(false);
   editandoId = signal<number | null>(null);
+
   formTitulo = '';
   formUbicacion = '';
   formTipo = 'Villa completa';
@@ -47,6 +55,10 @@ export class Anfitrion {
 
   nuevaImagenUrl = '';
   formImagenes: string[] = [];
+
+  nuevoServicioNombre = '';
+  nuevoServicioPrecio = 50000;
+  formServicios: { nombre: string; precio: number }[] = [];
 
   alojamientos = signal<AlojamientoAnfitrion[]>([
     {
@@ -67,11 +79,10 @@ export class Anfitrion {
           urlImagen:
             'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80',
         },
-        {
-          id: 2,
-          urlImagen:
-            'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80',
-        },
+      ],
+      serviciosAdicionales: [
+        { id: 1, nombre: 'Piscina climatizada', precio: 100000 },
+        { id: 2, nombre: 'WiFi de alta velocidad', precio: 40000 },
       ],
       estado: 'Activo',
     },
@@ -103,6 +114,14 @@ export class Anfitrion {
     this.formImagenes = [
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
     ];
+
+    this.nuevoServicioNombre = '';
+    this.nuevoServicioPrecio = 50000;
+    this.formServicios = [
+      { nombre: 'WiFi Alta Velocidad', precio: 30000 },
+      { nombre: 'Uso de Jacuzzi / Piscina', precio: 80000 },
+    ];
+
     this.mostrandoModal.set(true);
   }
 
@@ -119,6 +138,14 @@ export class Anfitrion {
     this.formDescripcion = aloj.descripcion;
     this.nuevaImagenUrl = '';
     this.formImagenes = aloj.imagenes.map((img) => img.urlImagen);
+
+    this.formServicios = aloj.serviciosAdicionales.map((s) => ({
+      nombre: s.nombre,
+      precio: s.precio,
+    }));
+    this.nuevoServicioNombre = '';
+    this.nuevoServicioPrecio = 50000;
+
     this.mostrandoModal.set(true);
   }
 
@@ -137,6 +164,21 @@ export class Anfitrion {
     this.formImagenes.splice(index, 1);
   }
 
+  agregarServicioForm(): void {
+    if (this.nuevoServicioNombre.trim()) {
+      this.formServicios.push({
+        nombre: this.nuevoServicioNombre.trim(),
+        precio: Number(this.nuevoServicioPrecio) || 0,
+      });
+      this.nuevoServicioNombre = '';
+      this.nuevoServicioPrecio = 50000;
+    }
+  }
+
+  eliminarServicioForm(index: number): void {
+    this.formServicios.splice(index, 1);
+  }
+
   guardarAlojamiento(): void {
     if (!this.formTitulo.trim() || !this.formUbicacion.trim()) {
       alert('Por favor completa los campos principales.');
@@ -149,6 +191,11 @@ export class Anfitrion {
     }
 
     const idEditando = this.editandoId();
+    const serviciosMapeados: ServicioAdicional[] = this.formServicios.map((s, idx) => ({
+      id: idx + 1,
+      nombre: s.nombre,
+      precio: s.precio,
+    }));
 
     if (idEditando !== null) {
       this.alojamientos.update((lista) =>
@@ -169,6 +216,7 @@ export class Anfitrion {
                   id: index + 1,
                   urlImagen: url,
                 })),
+                serviciosAdicionales: serviciosMapeados,
               }
             : item,
         ),
@@ -187,6 +235,7 @@ export class Anfitrion {
         tarifaLimpieza: Number(this.formTarifaLimpieza),
         descripcion: this.formDescripcion,
         imagenes: this.formImagenes.map((url, index) => ({ id: index + 1, urlImagen: url })),
+        serviciosAdicionales: serviciosMapeados,
         estado: 'Activo',
       };
 
@@ -213,5 +262,20 @@ export class Anfitrion {
       ),
     );
     this.filtrarMisAlojamientos();
+  }
+
+  get totalServiciosForm(): number {
+    return this.formServicios.reduce((total, serv) => total + (Number(serv.precio) || 0), 0);
+  }
+
+  get precioConTodosLosServiciosForm(): number {
+    const base = Number(this.formPrecioNoche) || 0;
+    const limpieza = Number(this.formTarifaLimpieza) || 0;
+    return base + limpieza + this.totalServiciosForm;
+  }
+
+  calcularTotalCompletoTarjeta(aloj: AlojamientoAnfitrion): number {
+    const totalServicios = (aloj.serviciosAdicionales || []).reduce((acc, s) => acc + s.precio, 0);
+    return aloj.precioNoche + (aloj.tarifaLimpieza || 0) + totalServicios;
   }
 }
