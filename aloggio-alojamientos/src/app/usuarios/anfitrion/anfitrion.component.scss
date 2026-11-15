@@ -462,3 +462,200 @@ textarea {
     }
   }
 }
+
+.grupo-agregar-servicio {
+  display: flex;
+  gap: 0.5rem;
+
+  input {
+    background-color: $fondo-entrada;
+    border: 1px solid $borde-contenedor;
+    color: $texto-principal;
+    padding: 0.7rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  input:first-child {
+    flex: 1;
+  }
+}
+
+.lista-servicios-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  max-height: 150px;
+  overflow-y: auto;
+
+  .item-servicio-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: $fondo-entrada;
+    border: 1px solid $borde-contenedor;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+
+    .nombre-serv {
+      font-weight: 500;
+    }
+
+    .precio-serv {
+      color: $dorado-acento;
+      font-weight: 600;
+      margin-left: auto;
+      margin-right: 0.75rem;
+    }
+
+    .boton-quitar-serv {
+      background: none;
+      border: none;
+      color: #ff4d4d;
+      cursor: pointer;
+      font-size: 0.85rem;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
+.servicios-tarjeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.2rem;
+
+  .etiqueta-servicio {
+    font-size: 0.72rem;
+    background-color: $fondo-entrada;
+    border: 1px solid $borde-contenedor;
+    color: $texto-secundario;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    strong {
+      color: $dorado-acento;
+      font-weight: 600;
+    }
+  }
+}
+
+// Cuadro de resumen dentro del modal
+.resumen-tarifa-modal {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  background-color: rgba(229, 184, 105, 0.06);
+  border: 1px solid rgba(229, 184, 105, 0.25);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+
+  .fila-resumen {
+    display: flex;
+    justify-content: space-between;
+    color: $texto-secundario;
+
+    &.total {
+      margin-top: 0.3rem;
+      padding-top: 0.45rem;
+      border-top: 1px solid $borde-contenedor;
+      color: $texto-principal;
+      font-weight: 600;
+    }
+
+    .valor-destacado {
+      color: $dorado-acento;
+      font-weight: 700;
+    }
+  }
+}
+
+// Precios en la tarjeta del panel de anfitrión
+.bloque-precios-tarjeta {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  .precio-propiedad {
+    margin: 0;
+  }
+
+  .precio-con-extras {
+    margin: 0;
+    font-size: 0.78rem;
+    color: $texto-secundario;
+
+    strong {
+      color: $texto-principal;
+      font-weight: 600;
+    }
+  }
+}
+
+// Cuadro de resumen en tiempo real dentro del modal
+.resumen-tarifa-modal {
+  margin-top: 0.75rem;
+  padding: 0.9rem 1rem;
+  background-color: rgba(229, 184, 105, 0.05);
+  border: 1px solid rgba(229, 184, 105, 0.25);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+
+  .fila-resumen {
+    display: flex;
+    justify-content: space-between;
+    color: $texto-secundario;
+
+    &.total {
+      margin-top: 0.35rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid $borde-contenedor;
+      color: $texto-principal;
+      font-weight: 600;
+    }
+
+    .valor-destacado {
+      color: $dorado-acento;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+  }
+}
+
+// Estilo para el desglose de precios en la tarjeta del listado
+.bloque-precios-tarjeta {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  .precio-propiedad {
+    margin: 0;
+  }
+
+  .precio-con-extras {
+    margin: 0;
+    font-size: 0.78rem;
+    color: $texto-secundario;
+
+    strong {
+      color: $dorado-acento;
+      font-weight: 600;
+    }
+  }
+}

@@ -3,6 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
+interface ServicioAdicional {
+  id: number;
+  nombre: string;
+  precio: number;
+}
+
 @Component({
   selector: 'app-detalle-alojamiento',
   standalone: true,
@@ -21,6 +27,7 @@ export class DetalleAlojamiento {
     calificacion: 4.95,
     resenasCount: 42,
     precioNoche: 550000,
+    tarifaLimpieza: 85000,
     descripcion:
       'Hermosa villa privada con vista panorámica, ideal para descansar y disfrutar de la naturaleza con todas las comodidades modernas.',
     anfitrionNombre: 'Camila Restrepo',
@@ -48,22 +55,49 @@ export class DetalleAlojamiento {
         descripcion: 'Habitación',
       },
     ],
-    servicios: [
-      { nombre: 'Piscina privada', icono: 'pi pi-sun' },
-      { nombre: 'Wi-Fi de alta velocidad', icono: 'pi pi-wifi' },
-      { nombre: 'Parqueadero gratuito', icono: 'pi pi-car' },
-      { nombre: 'Cocina equipada', icono: 'pi pi-briefcase' },
-    ],
-    reglas: [
-      'No se permiten fiestas ni eventos',
-      'Horario de silencio a partir de las 10:00 PM',
-      'Check-in: de 3:00 PM a 9:00 PM',
-    ],
-    politicaCancelacion: 'Cancelación gratuita hasta 48 horas antes de la fecha de llegada.',
+    // Sin iconos fijos, completamente dinámico
+    serviciosAdicionales: [
+      { id: 1, nombre: 'Piscina climatizada', precio: 100000 },
+      { id: 2, nombre: 'Wi-Fi de alta velocidad', precio: 40000 },
+      { id: 3, nombre: 'Parqueadero gratuito', precio: 0 },
+    ] as ServicioAdicional[],
   };
 
-  fechaLlegada: string = '';
+  private _fechaLlegada: string = '';
+
+  get fechaLlegada(): string {
+    return this._fechaLlegada;
+  }
+
+  set fechaLlegada(val: string) {
+    this._fechaLlegada = val;
+
+    // Validar que fechaSalida sea estrictamente mayor a la nueva llegada (mínimo 1 día después)
+    if (this.fechaSalida && this.fechaSalida <= val) {
+      this.fechaSalida = '';
+    }
+  }
+
   fechaSalida: string = '';
+
+  get fechaMinimaHoy(): string {
+    return this.formatearFecha(new Date());
+  }
+
+  get fechaMinimaSalida(): string {
+    const fechaBaseStr = this.fechaLlegada || this.fechaMinimaHoy;
+    const [anio, mes, dia] = fechaBaseStr.split('-').map(Number);
+    const fechaSiguiente = new Date(anio, mes - 1, dia + 1);
+    return this.formatearFecha(fechaSiguiente);
+  }
+
+  private formatearFecha(fecha: Date): string {
+    const anio = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    return `${anio}-${mes}-${dia}`;
+  }
+
   cantidadHuespedes: number = 2;
   tarifaLimpieza: number = 85000;
 
@@ -89,8 +123,17 @@ export class DetalleAlojamiento {
     return this.numeroNoches * this.alojamiento.precioNoche;
   }
 
+  get totalServiciosAdicionales(): number {
+    if (!this.alojamiento.serviciosAdicionales || this.numeroNoches <= 0) return 0;
+    return this.alojamiento.serviciosAdicionales.reduce((acc, s) => acc + s.precio, 0);
+  }
+
   get totalReserva(): number {
-    return this.subtotalHospedaje + (this.numeroNoches > 0 ? this.tarifaLimpieza : 0);
+    return (
+      this.subtotalHospedaje +
+      (this.numeroNoches > 0 ? this.tarifaLimpieza : 0) +
+      this.totalServiciosAdicionales
+    );
   }
 
   abrirImagenPorIndice(index: number) {

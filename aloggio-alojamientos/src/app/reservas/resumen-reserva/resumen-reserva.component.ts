@@ -8,6 +8,12 @@ declare var Stripe: any;
 const CLAVE_PUBLICABLE_STRIPE =
   'pk_test_51UXNaYBTJgL9ePBUMEkYZ3xIW5v8bBlRac3FcVIKe3B1icOJKUb2xt1XzziK9aZI7MHUbOnn2imbdePRhF4vzZ9j006XNltBGI';
 
+interface ServicioAdicional {
+  id: number;
+  nombre: string;
+  precio: number;
+}
+
 @Component({
   selector: 'app-resumen-reserva',
   standalone: true,
@@ -29,16 +35,15 @@ export class ResumenReserva implements OnInit, OnDestroy {
     fechaLlegada: '2026-12-10',
     fechaSalida: '2026-12-15',
     noches: 5,
-    precioBase: 2750000,
+    precioBaseNoche: 550000,
     limpieza: 85000,
-    servicio: 0,
-    total: 2835000,
   };
 
   alojamiento = {
     titulo: 'Villa Moderna Vista al Valle y Montaña',
     tipo: 'Villa completa',
-    ciudad: 'Medellín',
+    ubicacion: 'Medellín, Antioquia',
+    precioNoche: 550000,
     promedioCalificacion: 4.95,
     totalResenas: 42,
     imagenes: [
@@ -47,7 +52,28 @@ export class ResumenReserva implements OnInit, OnDestroy {
           'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80',
       },
     ],
+    serviciosAdicionales: [
+      { id: 1, nombre: 'Piscina climatizada', precio: 100000 },
+      { id: 2, nombre: 'WiFi de alta velocidad', precio: 40000 },
+    ] as ServicioAdicional[],
   };
+
+  get noches(): number {
+    return this.cotizacion.noches;
+  }
+
+  get subtotalNoches(): number {
+    return this.cotizacion.precioBaseNoche * this.cotizacion.noches;
+  }
+
+  get totalServiciosAdicionales(): number {
+    if (!this.alojamiento.serviciosAdicionales) return 0;
+    return this.alojamiento.serviciosAdicionales.reduce((acc, s) => acc + s.precio, 0);
+  }
+
+  get totalFinal(): number {
+    return this.subtotalNoches + this.cotizacion.limpieza + this.totalServiciosAdicionales;
+  }
 
   private stripe: any = null;
   private cardElement: any = null;

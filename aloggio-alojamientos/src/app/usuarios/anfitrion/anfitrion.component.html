@@ -43,9 +43,25 @@
           <span class="detalles-capacidad">
             {{ aloj.huespedes }} huésp. · {{ aloj.habitaciones }} hab. · {{ aloj.banios }} baños
           </span>
-          <p class="precio-propiedad">
-            ${{ aloj.precioNoche | number: '1.0-0' }} <span class="noche">/ noche</span>
-          </p>
+
+          <div
+            class="servicios-tarjeta"
+            *ngIf="aloj.serviciosAdicionales && aloj.serviciosAdicionales.length > 0"
+          >
+            <span class="etiqueta-servicio" *ngFor="let serv of aloj.serviciosAdicionales">
+              {{ serv.nombre }}: <strong>${{ serv.precio | number: '1.0-0' }}</strong>
+            </span>
+          </div>
+
+          <div class="bloque-precios-tarjeta">
+            <p class="precio-propiedad">
+              ${{ aloj.precioNoche | number: '1.0-0' }} <span class="noche">/ noche base</span>
+            </p>
+            <p class="precio-con-extras">
+              Total 1 noche (limpieza + extras):
+              <strong>${{ calcularTotalCompletoTarjeta(aloj) | number: '1.0-0' }}</strong>
+            </p>
+          </div>
         </div>
 
         <div class="acciones-propiedad">
@@ -171,6 +187,61 @@
               min="0"
               step="5000"
             />
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Servicios Adicionales (Opcionales)</label>
+          <div class="grupo-agregar-servicio">
+            <input
+              type="text"
+              [(ngModel)]="nuevoServicioNombre"
+              placeholder="Ej: WiFi dedicado, Piscina, Jacuzzi..."
+              name="nombreServicio"
+            />
+            <input
+              type="number"
+              [(ngModel)]="nuevoServicioPrecio"
+              placeholder="Precio COP"
+              min="0"
+              step="5000"
+              style="max-width: 130px"
+              name="precioServicio"
+            />
+            <button type="button" class="boton-secundario" (click)="agregarServicioForm()">
+              Añadir
+            </button>
+          </div>
+
+          <div class="lista-servicios-form" *ngIf="formServicios.length > 0">
+            <div class="item-servicio-form" *ngFor="let serv of formServicios; let i = index">
+              <span class="nombre-serv">{{ serv.nombre }}</span>
+              <span class="precio-serv">${{ serv.precio | number: '1.0-0' }} COP</span>
+              <button type="button" class="boton-quitar-serv" (click)="eliminarServicioForm(i)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="resumen-tarifa-modal">
+          <div class="fila-resumen">
+            <span>Tarifa base por noche:</span>
+            <span>${{ formPrecioNoche || 0 | number: '1.0-0' }} COP</span>
+          </div>
+          <div class="fila-resumen">
+            <span>Tarifa de limpieza:</span>
+            <span>+${{ formTarifaLimpieza || 0 | number: '1.0-0' }} COP</span>
+          </div>
+          <div class="fila-resumen" *ngIf="formServicios.length > 0">
+            <span>Servicios adicionales ({{ formServicios.length }}):</span>
+            <span>+${{ totalServiciosForm | number: '1.0-0' }} COP</span>
+          </div>
+          <div class="fila-resumen total">
+            <span>Total estimado (1 noche + limpieza + extras):</span>
+            <span class="valor-destacado"
+              >${{ precioConTodosLosServiciosForm | number: '1.0-0' }} COP</span
+            >
           </div>
         </div>
 
