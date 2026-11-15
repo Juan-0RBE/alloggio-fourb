@@ -189,6 +189,22 @@ public class PublicacionService {
     }
 
     /**
+     * Obtiene las publicaciones del anfitrión autenticado (CU-011). El anfitrión se
+     * toma de la sesión, no de un parámetro de la petición.
+     *
+     * @param nombreUsuario
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<PublicacionDTO> obtenerPropias(String nombreUsuario) {
+        Optional<Usuario> anfitrion = usuarioRepo.findByNombreUsuario(nombreUsuario);
+        if (!anfitrion.isPresent()) {
+            return new ArrayList<>();
+        }
+        return obtenerPorAnfitrion(anfitrion.get().getIdUsuario());
+    }
+
+    /**
      * Actualiza una publicación existente. Solo el propietario o un administrador
      * pueden hacerlo
      * 

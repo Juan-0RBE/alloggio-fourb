@@ -118,7 +118,7 @@ public class PublicacionController {
     }
 
     /**
-     * Actualiza una publicación existente. Solo el propietario o un administrador.
+     * Actualiza una publicación existente. Solo el propietario.
      * 
      * @param authentication
      * @param id
@@ -151,7 +151,7 @@ public class PublicacionController {
     }
 
     /**
-     * Elimina una publicación por su ID. Solo el propietario o un administrador.
+     * Elimina una publicación por su ID. Solo el propietario.
      * 
      * @param authentication
      * @param id
@@ -370,6 +370,20 @@ public class PublicacionController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(imagenes, HttpStatus.OK);
+    }
+
+    /**
+     * Obtiene las publicaciones propias del usuario con la sesión activa.
+     * 
+     * @param authentication
+     * @return
+     */
+    @Operation(summary = "Consultar las publicaciones del anfitrión autenticado")
+    @GetMapping("/mis-publicaciones")
+    public ResponseEntity<List<PublicacionDTO>> obtenerPropias(Authentication authentication) {
+        // 200 con lista vacía cuando no hay publicaciones; el front muestra el mensaje
+        // informativo
+        return new ResponseEntity<>(publicacionServ.obtenerPropias(authentication.getName()), HttpStatus.OK);
     }
 
     // Endpoints de activacion de publicación
