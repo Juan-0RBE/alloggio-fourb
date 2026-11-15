@@ -1,0 +1,507 @@
+<div class="aloggio-admin-contenedor">
+  <!-- Barra superior -->
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo" routerLink="/inicio">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio <span class="badge-admin">Administración</span></span>
+    </div>
+
+    <div class="info-sesion-admin">
+      <span class="correo-admin"><i class="pi pi-shield"></i> {{ adminActual }}</span>
+      <a routerLink="/inicio" class="enlace-volver">
+        <i class="pi pi-arrow-left"></i>
+        <span>Salir del panel</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="layout-admin">
+    <!-- Menú lateral de secciones -->
+    <aside class="menu-lateral" aria-label="Secciones de administración">
+      <button
+        type="button"
+        class="item-menu"
+        [class.activo]="seccionActiva() === 'dashboard'"
+        (click)="cambiarSeccion('dashboard')"
+      >
+        <i class="pi pi-chart-bar"></i>
+        <span>Dashboard</span>
+      </button>
+
+      <button
+        type="button"
+        class="item-menu"
+        [class.activo]="seccionActiva() === 'reportes'"
+        (click)="cambiarSeccion('reportes')"
+      >
+        <i class="pi pi-file-export"></i>
+        <span>Reportes y Exportación</span>
+      </button>
+
+      <button
+        type="button"
+        class="item-menu"
+        [class.activo]="seccionActiva() === 'publicaciones'"
+        (click)="cambiarSeccion('publicaciones')"
+      >
+        <i class="pi pi-home"></i>
+        <span>Moderación Publicaciones</span>
+      </button>
+
+      <button
+        type="button"
+        class="item-menu"
+        [class.activo]="seccionActiva() === 'resenas'"
+        (click)="cambiarSeccion('resenas')"
+      >
+        <i class="pi pi-comments"></i>
+        <span>Moderación Reseñas</span>
+      </button>
+
+      <button
+        type="button"
+        class="item-menu"
+        [class.activo]="seccionActiva() === 'usuarios'"
+        (click)="cambiarSeccion('usuarios')"
+      >
+        <i class="pi pi-users"></i>
+        <span>Gestión de Usuarios</span>
+      </button>
+
+      <button
+        type="button"
+        class="item-menu"
+        [class.activo]="seccionActiva() === 'auditoria'"
+        (click)="cambiarSeccion('auditoria')"
+      >
+        <i class="pi pi-history"></i>
+        <span>Log de Auditoría</span>
+      </button>
+    </aside>
+
+    <!-- Área principal de contenido -->
+    <main class="contenido-admin">
+      <!-- 1. DASHBOARD -->
+      <section *ngIf="seccionActiva() === 'dashboard'" class="bloque-seccion">
+        <div class="cabecera-seccion">
+          <div>
+            <h1>Resumen General</h1>
+            <p>Indicadores operativos actuales de la plataforma Aloggio.</p>
+          </div>
+          <button
+            *ngIf="indicadores().totalPublicaciones > 0"
+            type="button"
+            class="boton-secundario"
+            (click)="limpiarDatosPrueba()"
+          >
+            Simular estado vacío
+          </button>
+        </div>
+
+        <ng-container
+          *ngIf="
+            indicadores().totalPublicaciones > 0 ||
+              indicadores().totalUsuarios > 0 ||
+              indicadores().totalResenas > 0;
+            else dashboardVacio
+          "
+        >
+          <div class="grid-kpis">
+            <article class="tarjeta-kpi">
+              <div class="kpi-icono"><i class="pi pi-home"></i></div>
+              <div class="kpi-datos">
+                <span class="kpi-valor"
+                  >{{ indicadores().publicacionesActivas }} /
+                  {{ indicadores().totalPublicaciones }}</span
+                >
+                <span class="kpi-etiqueta">Publicaciones activas</span>
+              </div>
+            </article>
+
+            <article class="tarjeta-kpi">
+              <div class="kpi-icono"><i class="pi pi-users"></i></div>
+              <div class="kpi-datos">
+                <span class="kpi-valor">{{ indicadores().totalUsuarios }}</span>
+                <span class="kpi-etiqueta"
+                  >Usuarios ({{ indicadores().usuariosRestringidos }} restringidos)</span
+                >
+              </div>
+            </article>
+
+            <article class="tarjeta-kpi">
+              <div class="kpi-icono"><i class="pi pi-star"></i></div>
+              <div class="kpi-datos">
+                <span class="kpi-valor">{{ indicadores().totalResenas }}</span>
+                <span class="kpi-etiqueta"
+                  >Reseñas ({{ indicadores().resenasOcultas }} ocultas)</span
+                >
+              </div>
+            </article>
+
+            <article class="tarjeta-kpi">
+              <div class="kpi-icono"><i class="pi pi-shield"></i></div>
+              <div class="kpi-datos">
+                <span class="kpi-valor">{{ indicadores().totalEventos }}</span>
+                <span class="kpi-etiqueta">Eventos en auditoría</span>
+              </div>
+            </article>
+          </div>
+        </ng-container>
+
+        <ng-template #dashboardVacio>
+          <div class="estado-vacio">
+            <i class="pi pi-inbox"></i>
+            <h2>Sin datos operativos para mostrar</h2>
+            <p>Aún no hay publicaciones, usuarios o actividad registrada en el sistema.</p>
+          </div>
+        </ng-template>
+      </section>
+
+      <!-- 2. REPORTES / EXPORTACIÓN (Entidad REPORTE) -->
+      <section *ngIf="seccionActiva() === 'reportes'" class="bloque-seccion">
+        <div class="cabecera-seccion">
+          <div>
+            <h1>Reportes y Exportación</h1>
+            <p>Genera archivos descargables y registra la solicitud en la entidad REPORTE.</p>
+          </div>
+        </div>
+
+        <div class="tarjeta-formulario-reporte">
+          <div class="campo">
+            <label for="tipoReporte">Tipo de reporte</label>
+            <select id="tipoReporte" [(ngModel)]="tipoReporteSeleccionado">
+              <option value="Reservas e Ingresos">Reservas e Ingresos</option>
+              <option value="Actividad de Usuarios">Actividad de Usuarios</option>
+              <option value="Publicaciones Activas">Publicaciones Activas</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="formatoReporte">Formato de salida</label>
+            <select id="formatoReporte" [(ngModel)]="formatoReporteSeleccionado">
+              <option value="CSV">CSV (Excel / Hojas de cálculo)</option>
+              <option value="JSON">JSON (Estructurado)</option>
+            </select>
+          </div>
+
+          <button type="button" class="boton-dorado" (click)="generarReporte()">
+            <i class="pi pi-download"></i> Generar y descargar
+          </button>
+        </div>
+
+        <h2 class="subtitulo-tabla">Historial de solicitudes (REPORTE)</h2>
+        <div class="tabla-contenedor" *ngIf="historialReportes().length > 0; else sinReportes">
+          <table class="tabla-admin">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Formato</th>
+                <th>Solicitado por</th>
+                <th>Fecha_Solicitud</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rep of historialReportes()">
+                <td class="mono">#{{ rep.idReporte }}</td>
+                <td>{{ rep.tipo }}</td>
+                <td>
+                  <span class="insignia neutra">{{ rep.formato }}</span>
+                </td>
+                <td>{{ rep.solicitadoPor }}</td>
+                <td class="mono">{{ rep.fechaSolicitud }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #sinReportes>
+          <div class="estado-vacio">
+            <i class="pi pi-file"></i>
+            <h2>No se han generado reportes</h2>
+            <p>Selecciona un tipo y formato arriba para exportar el primer reporte.</p>
+          </div>
+        </ng-template>
+      </section>
+
+      <!-- 3. MODERACIÓN DE PUBLICACIONES -->
+      <section *ngIf="seccionActiva() === 'publicaciones'" class="bloque-seccion">
+        <div class="cabecera-seccion">
+          <div>
+            <h1>Moderación de Publicaciones</h1>
+            <p>
+              Supervisa los alojamientos publicados y pausa o retira aquellos que infrinjan
+              políticas.
+            </p>
+          </div>
+        </div>
+
+        <div class="tabla-contenedor" *ngIf="publicaciones().length > 0; else sinPublicaciones">
+          <table class="tabla-admin">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Alojamiento</th>
+                <th>Anfitrión</th>
+                <th>Tarifa / noche</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let pub of publicaciones()">
+                <td class="mono">#{{ pub.idPublicacion }}</td>
+                <td>
+                  <strong>{{ pub.titulo }}</strong>
+                  <div class="texto-tenue">{{ pub.ciudad }}</div>
+                </td>
+                <td>{{ pub.anfitrion }}</td>
+                <td>${{ pub.precioNoche | number: '1.0-0' }}</td>
+                <td>
+                  <span
+                    class="insignia"
+                    [ngClass]="{
+                      exito: pub.estado === 'ACTIVA',
+                      aviso: pub.estado === 'PAUSADA',
+                      peligro: pub.estado === 'RETIRADA',
+                    }"
+                  >
+                    {{ pub.estado }}
+                  </span>
+                </td>
+                <td class="celda-acciones">
+                  <button
+                    *ngIf="pub.estado !== 'ACTIVA'"
+                    type="button"
+                    class="boton-mini"
+                    (click)="cambiarEstadoPublicacion(pub, 'ACTIVA')"
+                  >
+                    Aprobar / Activar
+                  </button>
+                  <button
+                    *ngIf="pub.estado === 'ACTIVA'"
+                    type="button"
+                    class="boton-mini aviso"
+                    (click)="cambiarEstadoPublicacion(pub, 'PAUSADA')"
+                  >
+                    Pausar
+                  </button>
+                  <button
+                    *ngIf="pub.estado !== 'RETIRADA'"
+                    type="button"
+                    class="boton-mini peligro"
+                    (click)="cambiarEstadoPublicacion(pub, 'RETIRADA')"
+                  >
+                    Retirar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #sinPublicaciones>
+          <div class="estado-vacio">
+            <i class="pi pi-home"></i>
+            <h2>No hay publicaciones registradas</h2>
+          </div>
+        </ng-template>
+      </section>
+
+      <!-- 4. MODERACIÓN DE RESEÑAS (Campo Visible en RESENA) -->
+      <section *ngIf="seccionActiva() === 'resenas'" class="bloque-seccion">
+        <div class="cabecera-seccion">
+          <div>
+            <h1>Moderación de Reseñas</h1>
+            <p>
+              Oculta reseñas que incumplen las normas (Visible = false) o vuelve a hacerlas
+              públicas.
+            </p>
+          </div>
+        </div>
+
+        <div class="lista-tarjetas-mod" *ngIf="resenas().length > 0; else sinResenas">
+          <article
+            class="tarjeta-resena-mod"
+            *ngFor="let res of resenas()"
+            [class.oculta]="!res.visible"
+          >
+            <div class="resena-cabecera">
+              <div>
+                <span class="mono">#{{ res.idResena }}</span> · <strong>{{ res.autor }}</strong>
+                <span class="texto-tenue"> en {{ res.alojamiento }} ({{ res.fecha }})</span>
+              </div>
+              <span class="insignia" [ngClass]="res.visible ? 'exito' : 'peligro'">
+                {{ res.visible ? 'Visible en detalle' : 'Oculta (Visible = false)' }}
+              </span>
+            </div>
+
+            <p class="resena-texto">"{{ res.comentario }}"</p>
+
+            <div class="resena-pie">
+              <span class="estrellas-doradas">
+                <i class="pi pi-star-fill"></i> {{ res.calificacion }} / 5
+              </span>
+              <button
+                type="button"
+                class="boton-mini"
+                [class.peligro]="res.visible"
+                (click)="alternarVisibilidadResena(res)"
+              >
+                <i class="pi" [ngClass]="res.visible ? 'pi-eye-slash' : 'pi-eye'"></i>
+                {{ res.visible ? 'Ocultar reseña' : 'Volver a mostrar' }}
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #sinResenas>
+          <div class="estado-vacio">
+            <i class="pi pi-comments"></i>
+            <h2>No hay reseñas para moderar</h2>
+          </div>
+        </ng-template>
+      </section>
+
+      <!-- 5. GESTIÓN DE USUARIOS (Campo Restringido en USUARIO) -->
+      <section *ngIf="seccionActiva() === 'usuarios'" class="bloque-seccion">
+        <div class="cabecera-seccion">
+          <div>
+            <h1>Gestión de Usuarios</h1>
+            <p>
+              Restringe cuentas infractoras (Restringido = true) o levanta restricciones existentes.
+            </p>
+          </div>
+        </div>
+
+        <div class="barra-busqueda">
+          <i class="pi pi-search"></i>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, correo o ID..."
+            [ngModel]="busquedaUsuario()"
+            (ngModelChange)="busquedaUsuario.set($event)"
+          />
+        </div>
+
+        <div class="tabla-contenedor" *ngIf="usuariosFiltrados().length > 0; else sinUsuarios">
+          <table class="tabla-admin">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Estado cuenta</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let usr of usuariosFiltrados()">
+                <td class="mono">#{{ usr.idUsuario }}</td>
+                <td>
+                  <strong>{{ usr.nombre }}</strong>
+                  <div class="texto-tenue">{{ usr.correo }}</div>
+                </td>
+                <td>
+                  <span class="insignia neutra">{{ usr.rol }}</span>
+                </td>
+                <td>
+                  <span class="insignia" [ngClass]="usr.restringido ? 'peligro' : 'exito'">
+                    {{ usr.restringido ? 'Restringido' : 'Activo' }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="boton-mini"
+                    [class.peligro]="!usr.restringido"
+                    (click)="alternarRestriccionUsuario(usr)"
+                  >
+                    {{ usr.restringido ? 'Levantar restricción' : 'Restringir usuario' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #sinUsuarios>
+          <div class="estado-vacio">
+            <i class="pi pi-user-minus"></i>
+            <h2>No se encontraron usuarios</h2>
+            <p>Intenta con otro término de búsqueda.</p>
+          </div>
+        </ng-template>
+      </section>
+
+      <!-- 6. LOG DE AUDITORÍA (Solo lectura sobre EVENTO_AUDITORIA) -->
+      <section *ngIf="seccionActiva() === 'auditoria'" class="bloque-seccion">
+        <div class="cabecera-seccion">
+          <div>
+            <h1>Log de Auditoría</h1>
+            <p>
+              Vista de solo lectura sobre EVENTO_AUDITORIA con trazabilidad de acciones críticas.
+            </p>
+          </div>
+        </div>
+
+        <div class="filtros-auditoria">
+          <div class="barra-busqueda">
+            <i class="pi pi-filter"></i>
+            <input
+              type="text"
+              placeholder="Filtrar por acción, entidad o usuario..."
+              [ngModel]="filtroAccionAuditoria()"
+              (ngModelChange)="filtroAccionAuditoria.set($event)"
+            />
+          </div>
+
+          <select
+            class="select-filtro"
+            [ngModel]="filtroResultadoAuditoria()"
+            (ngModelChange)="filtroResultadoAuditoria.set($event)"
+          >
+            <option value="TODOS">Todos los resultados</option>
+            <option value="EXITO">Éxito</option>
+            <option value="DENEGADO">Denegado</option>
+          </select>
+        </div>
+
+        <div class="tabla-contenedor" *ngIf="eventosFiltrados().length > 0; else sinEventos">
+          <table class="tabla-admin">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Acción</th>
+                <th>Entidad afectada</th>
+                <th>Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ev of eventosFiltrados()">
+                <td class="mono">{{ ev.fecha }}</td>
+                <td>{{ ev.usuario }}</td>
+                <td class="mono">{{ ev.accion }}</td>
+                <td>{{ ev.entidadAfectada }}</td>
+                <td>
+                  <span class="insignia" [ngClass]="ev.resultado === 'EXITO' ? 'exito' : 'peligro'">
+                    {{ ev.resultado }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #sinEventos>
+          <div class="estado-vacio">
+            <i class="pi pi-history"></i>
+            <h2>No hay eventos de auditoría registrados</h2>
+            <p>No se encontraron registros que coincidan con los filtros actuales.</p>
+          </div>
+        </ng-template>
+      </section>
+    </main>
+  </div>
+</div>

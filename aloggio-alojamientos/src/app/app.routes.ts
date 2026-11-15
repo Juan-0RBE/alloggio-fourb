@@ -8,6 +8,9 @@ import { ResumenReserva } from './reservas/resumen-reserva/resumen-reserva.compo
 import { ResultadoReserva } from './reservas/resultado-reserva/resultado-reserva.component';
 import { MisReservas } from './reservas/mis-reservas/mis-reservas.component';
 import { FormularioResena } from './resenas/formulario-resena/formulario-resena.component';
+import { Usuario } from './usuarios/usuario/usuario.component';
+import { Anfitrion } from './usuarios/anfitrion/anfitrion.component';
+import { Admin } from './usuarios/admin/admin.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -21,4 +24,8 @@ export const routes: Routes = [
   { path: 'resultado-reserva', component: ResultadoReserva },
   { path: 'mis-reservas', component: MisReservas },
   { path: 'formulario-resena', component: FormularioResena },
+
+  { path: 'usuario', component: Usuario },
+  { path: 'anfitrion', component: Anfitrion },
+  { path: 'admin', component: Admin },
 ];
