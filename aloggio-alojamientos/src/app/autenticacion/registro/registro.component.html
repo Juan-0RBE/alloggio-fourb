@@ -4,6 +4,7 @@
       <div class="cabecera-auth">
         <div class="logotipo">
           <i class="pi pi-building text-dorado"></i>
+
           <span>Aloggio</span>
         </div>
       </div>
@@ -12,11 +13,15 @@
         <div class="indicador-pasos mb-4">
           <div class="paso" [class.activo]="pasoActual === 1" [class.completado]="pasoActual > 1">
             <span class="numero-paso">1</span>
+
             <span class="texto-paso">Cuenta</span>
           </div>
+
           <div class="linea-conector"></div>
+
           <div class="paso" [class.activo]="pasoActual === 2">
             <span class="numero-paso">2</span>
+
             <span class="texto-paso">Perfil</span>
           </div>
         </div>
@@ -25,13 +30,16 @@
           <div *ngIf="pasoActual === 1" class="d-flex flex-column gap-3">
             <div class="mb-2">
               <h1 class="titulo-principal">Crea tu cuenta gratis</h1>
+
               <p class="texto-secundario">Configura tus credenciales de acceso a Aloggio.</p>
             </div>
 
             <div class="campo-formulario">
               <label for="nombreUsuario" class="etiqueta-campo">Nombre de Usuario</label>
+
               <div class="grupo-input">
                 <span class="icono-input"><i class="pi pi-at"></i></span>
+
                 <input
                   id="nombreUsuario"
                   [(ngModel)]="formulario.nombreUsuario"
@@ -46,8 +54,10 @@
 
             <div class="campo-formulario">
               <label for="correoUsuario" class="etiqueta-campo">Correo Electrónico</label>
+
               <div class="grupo-input">
                 <span class="icono-input"><i class="pi pi-envelope"></i></span>
+
                 <input
                   id="correoUsuario"
                   [(ngModel)]="formulario.correoUsuario"
@@ -63,6 +73,7 @@
             <div class="row g-2">
               <div class="col-6 campo-formulario">
                 <label for="claveUsuario" class="etiqueta-campo">Contraseña</label>
+
                 <div class="grupo-input">
                   <input
                     id="claveUsuario"
@@ -73,6 +84,7 @@
                     placeholder="••••••••"
                     required
                   />
+
                   <button
                     type="button"
                     class="boton-peek"
@@ -85,6 +97,7 @@
 
               <div class="col-6 campo-formulario">
                 <label for="confirmarClave" class="etiqueta-campo">Confirmar</label>
+
                 <div class="grupo-input">
                   <input
                     id="confirmarClave"
@@ -95,6 +108,7 @@
                     placeholder="••••••••"
                     required
                   />
+
                   <button
                     type="button"
                     class="boton-peek"
@@ -114,12 +128,14 @@
           <div *ngIf="pasoActual === 2" class="d-flex flex-column gap-3">
             <div class="mb-2">
               <h1 class="titulo-principal">Información Personal</h1>
+
               <p class="texto-secundario">Requerida para validar tus reservas o publicaciones.</p>
             </div>
 
             <div class="row g-2">
               <div class="col-6 campo-formulario">
                 <label for="primerNombre" class="etiqueta-campo">Primer Nombre</label>
+
                 <input
                   id="primerNombre"
                   [(ngModel)]="formulario.primerNombre"
@@ -130,10 +146,12 @@
                   required
                 />
               </div>
+
               <div class="col-6 campo-formulario">
                 <label for="segundoNombre" class="etiqueta-campo"
                   >Segundo Nombre <span class="opcional">(Opcional)</span></label
                 >
+
                 <input
                   id="segundoNombre"
                   [(ngModel)]="formulario.segundoNombre"
@@ -148,6 +166,7 @@
             <div class="row g-2">
               <div class="col-6 campo-formulario">
                 <label for="primerApellido" class="etiqueta-campo">Primer Apellido</label>
+
                 <input
                   id="primerApellido"
                   [(ngModel)]="formulario.primerApellido"
@@ -158,10 +177,12 @@
                   required
                 />
               </div>
+
               <div class="col-6 campo-formulario">
                 <label for="segundoApellido" class="etiqueta-campo"
                   >Segundo Apellido <span class="opcional">(Opcional)</span></label
                 >
+
                 <input
                   id="segundoApellido"
                   [(ngModel)]="formulario.segundoApellido"
@@ -175,8 +196,10 @@
 
             <div class="campo-formulario">
               <label for="documentoIdentidad" class="etiqueta-campo">Documento de Identidad</label>
+
               <div class="grupo-input">
                 <span class="icono-input"><i class="pi pi-id-card"></i></span>
+
                 <input
                   id="documentoIdentidad"
                   [(ngModel)]="formulario.documentoIdentidad"
@@ -192,8 +215,10 @@
             <div class="row g-2">
               <div class="col-6 campo-formulario">
                 <label for="numeroTelefono" class="etiqueta-campo">Teléfono</label>
+
                 <div class="grupo-input">
                   <span class="icono-input"><i class="pi pi-phone"></i></span>
+
                   <input
                     id="numeroTelefono"
                     [(ngModel)]="formulario.numeroTelefono"
@@ -208,8 +233,10 @@
 
               <div class="campo-formulario">
                 <label for="fechaNacimiento" class="etiqueta-campo">Nacimiento</label>
+
                 <div class="grupo-input">
                   <span class="icono-input"><i class="pi pi-calendar"></i></span>
+
                   <input
                     id="fechaNacimiento"
                     [(ngModel)]="formulario.fechaNacimiento"
@@ -221,10 +248,12 @@
                 </div>
               </div>
             </div>
+
             <div class="d-flex gap-2 mt-3">
               <button type="button" class="boton-secundario w-50" (click)="pasoActual = 1">
                 &larr; Volver
               </button>
+
               <button type="submit" class="boton-dorado w-50">Finalizar Registro</button>
             </div>
           </div>
@@ -233,6 +262,7 @@
 
       <div class="pie-pagina" align="center">
         <span class="texto-secundario">¿Ya tienes cuenta?</span>
+
         <a routerLink="/login" class="enlace-dorado">Inicia sesión &rarr;</a>
       </div>
     </div>
@@ -253,7 +283,9 @@
           stroke-dasharray="6 6"
         />
       </svg>
+
       <div class="icono-vehiculo carro"><i class="pi pi-car"></i></div>
+
       <div class="icono-vehiculo avion"><i class="pi pi-send"></i></div>
     </div>
 
@@ -263,8 +295,10 @@
       <div class="lista-beneficios d-flex flex-column gap-3">
         <div class="item-beneficio d-flex align-items-center gap-3">
           <div class="icono-beneficio"><i class="pi pi-lock"></i></div>
+
           <div>
             <h3 class="titulo-item">Alojamientos Verificados</h3>
+
             <p class="texto-secundario mb-0">
               Reservas seguras con garantía de calidad y soporte continuo en cada destino.
             </p>
@@ -273,13 +307,76 @@
 
         <div class="item-beneficio d-flex align-items-center gap-3">
           <div class="icono-beneficio"><i class="pi pi-check-circle"></i></div>
+
           <div>
             <h3 class="titulo-item">Herramientas para Anfitriones</h3>
+
             <p class="texto-secundario mb-0">
               Reservas seguras con garantía de calidad y soporte continuo en cada destino.
             </p>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div
+    class="modal-backdrop-aloggio"
+    *ngIf="mostrarModalVerificacion"
+    (click)="mostrarModalVerificacion = false"
+  >
+    <div class="modal-tarjeta" (click)="$event.stopPropagation()">
+      <button type="button" class="boton-cerrar" (click)="mostrarModalVerificacion = false">
+        <i class="pi pi-times"></i>
+      </button>
+      <div class="text-center mb-4">
+        <div
+          class="icono-circular mb-3 mx-auto"
+          style="
+            width: 50px;
+            height: 50px;
+            background: rgba(229, 184, 105, 0.1);
+            border: 1px solid rgba(229, 184, 105, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <i class="pi pi-envelope text-dorado fs-4" style="color: #e5b869"></i>
+        </div>
+        <h2 class="titulo-principal h4 text-white">Verifica tu correo</h2>
+        <p class="texto-secundario small">
+          Hemos enviado un código de 6 dígitos a
+          <strong class="text-white">{{ formulario.correoUsuario }}</strong
+          >.
+        </p>
+      </div>
+
+      <form (ngSubmit)="verificarCodigo()" class="d-flex flex-column gap-3">
+        <div class="campo-formulario">
+          <label class="etiqueta-campo text-center d-block mb-1">Código de Verificación</label>
+          <input
+            type="text"
+            [(ngModel)]="codigoVerificacion"
+            name="codigoVerificacion"
+            class="entrada-control text-center fs-4 tracking-widest"
+            placeholder="123456"
+            maxlength="6"
+            required
+          />
+        </div>
+
+        <button type="submit" class="boton-dorado py-2 mt-2 fw-semibold">Confirmar cuenta</button>
+      </form>
+
+      <div class="text-center mt-3">
+        <button
+          type="button"
+          class="btn btn-link enlace-dorado small text-decoration-none p-0 border-0 bg-transparent"
+          (click)="reenviarCodigo()"
+        >
+          ¿No recibiste el código? Reenviar
+        </button>
       </div>
     </div>
   </div>

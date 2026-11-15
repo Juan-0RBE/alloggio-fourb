@@ -55,7 +55,6 @@ export class DetalleAlojamiento {
         descripcion: 'Habitación',
       },
     ],
-    // Sin iconos fijos, completamente dinámico
     serviciosAdicionales: [
       { id: 1, nombre: 'Piscina climatizada', precio: 100000 },
       { id: 2, nombre: 'Wi-Fi de alta velocidad', precio: 40000 },
@@ -72,7 +71,6 @@ export class DetalleAlojamiento {
   set fechaLlegada(val: string) {
     this._fechaLlegada = val;
 
-    // Validar que fechaSalida sea estrictamente mayor a la nueva llegada (mínimo 1 día después)
     if (this.fechaSalida && this.fechaSalida <= val) {
       this.fechaSalida = '';
     }
