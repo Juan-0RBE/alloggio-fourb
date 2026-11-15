@@ -34,9 +34,8 @@ interface AlojamientoAnfitrion {
 export class Anfitrion {
   usuarioActualId = 'anfitrion-123';
   mostrandoModal = signal(false);
-  editandoId = signal<number | null>(null); // <--- Controla si estamos editando (null = creando)
+  editandoId = signal<number | null>(null);
 
-  // Campos del formulario
   formTitulo = '';
   formUbicacion = '';
   formTipo = 'Villa completa';
@@ -91,7 +90,7 @@ export class Anfitrion {
   }
 
   abrirModalCrear(): void {
-    this.editandoId.set(null); // Modo creación
+    this.editandoId.set(null);
     this.formTitulo = '';
     this.formUbicacion = '';
     this.formTipo = 'Villa completa';
@@ -109,7 +108,7 @@ export class Anfitrion {
   }
 
   abrirModalEditar(aloj: AlojamientoAnfitrion): void {
-    this.editandoId.set(aloj.id); // Modo edición (guardamos el ID del alojamiento)
+    this.editandoId.set(aloj.id);
     this.formTitulo = aloj.titulo;
     this.formUbicacion = aloj.ubicacion;
     this.formTipo = aloj.tipo;
@@ -153,7 +152,6 @@ export class Anfitrion {
     const idEditando = this.editandoId();
 
     if (idEditando !== null) {
-      // Si estamos editando, actualizamos el elemento existente
       this.alojamientos.update((lista) =>
         lista.map((item) =>
           item.id === idEditando
@@ -177,7 +175,6 @@ export class Anfitrion {
         ),
       );
     } else {
-      // Si no, creamos uno nuevo
       const nuevoAlojamiento: AlojamientoAnfitrion = {
         id: Date.now(),
         idAnfitrion: this.usuarioActualId,

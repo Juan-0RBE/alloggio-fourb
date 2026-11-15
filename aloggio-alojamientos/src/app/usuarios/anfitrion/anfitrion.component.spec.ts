@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AnfitrionComponent } from './anfitrion.component';
+import { Anfitrion } from './anfitrion.component';
 
-describe('AnfitrionComponent', () => {
-  let component: AnfitrionComponent;
-  let fixture: ComponentFixture<AnfitrionComponent>;
+describe('Anfitrion', () => {
+  let component: Anfitrion;
+  let fixture: ComponentFixture<Anfitrion>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AnfitrionComponent],
+      imports: [Anfitrion],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(AnfitrionComponent);
+    fixture = TestBed.createComponent(Anfitrion);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

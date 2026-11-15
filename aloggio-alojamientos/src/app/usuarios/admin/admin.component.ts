@@ -6,8 +6,7 @@ import { RouterModule } from '@angular/router';
 type SeccionAdmin =
   'dashboard' | 'reportes' | 'publicaciones' | 'resenas' | 'usuarios' | 'auditoria';
 
-// Entidades alineadas al MER
-interface ReporteMER {
+interface Reporte {
   idReporte: number;
   tipo: 'Reservas e Ingresos' | 'Actividad de Usuarios' | 'Publicaciones Activas';
   formato: 'CSV' | 'JSON';
@@ -31,7 +30,7 @@ interface ResenaMod {
   calificacion: number;
   comentario: string;
   fecha: string;
-  visible: boolean; // Campo Visible en RESENA
+  visible: boolean;
 }
 
 interface UsuarioMod {
@@ -39,7 +38,7 @@ interface UsuarioMod {
   nombre: string;
   correo: string;
   rol: 'HUESPED' | 'ANFITRION' | 'ADMIN';
-  restringido: boolean; // Campo Restringido en USUARIO
+  restringido: boolean;
 }
 
 interface EventoAuditoriaMER {
@@ -62,10 +61,9 @@ export class Admin {
   readonly adminActual = 'admin@aloggio.co';
   seccionActiva = signal<SeccionAdmin>('dashboard');
 
-  // --- 1. REPORTES (Entidad REPORTE) ---
-  tipoReporteSeleccionado: ReporteMER['tipo'] = 'Reservas e Ingresos';
-  formatoReporteSeleccionado: ReporteMER['formato'] = 'CSV';
-  historialReportes = signal<ReporteMER[]>([
+  tipoReporteSeleccionado: Reporte['tipo'] = 'Reservas e Ingresos';
+  formatoReporteSeleccionado: Reporte['formato'] = 'CSV';
+  historialReportes = signal<Reporte[]>([
     {
       idReporte: 501,
       tipo: 'Reservas e Ingresos',
@@ -75,7 +73,6 @@ export class Admin {
     },
   ]);
 
-  // --- 2. PUBLICACIONES ---
   publicaciones = signal<PublicacionMod[]>([
     {
       idPublicacion: 1,
@@ -103,7 +100,6 @@ export class Admin {
     },
   ]);
 
-  // --- 3. RESEÑAS (Campo Visible en RESENA) ---
   resenas = signal<ResenaMod[]>([
     {
       idResena: 88,
@@ -125,7 +121,6 @@ export class Admin {
     },
   ]);
 
-  // --- 4. USUARIOS (Campo Restringido en USUARIO) ---
   busquedaUsuario = signal('');
   usuarios = signal<UsuarioMod[]>([
     {
@@ -169,7 +164,6 @@ export class Admin {
     );
   });
 
-  // --- 5. AUDITORÍA (Solo lectura sobre EVENTO_AUDITORIA) ---
   filtroAccionAuditoria = signal('');
   filtroResultadoAuditoria = signal<'TODOS' | 'EXITO' | 'DENEGADO'>('TODOS');
 
@@ -206,7 +200,6 @@ export class Admin {
     });
   });
 
-  // --- INDICADORES DASHBOARD ---
   indicadores = computed(() => ({
     totalUsuarios: this.usuarios().length,
     usuariosRestringidos: this.usuarios().filter((u) => u.restringido).length,
@@ -221,11 +214,9 @@ export class Admin {
     this.seccionActiva.set(seccion);
   }
 
-  // --- ACCIONES CON REGISTRO EN AUDITORÍA ---
-
   generarReporte(): void {
     const ahora = this.fechaActualFormateada();
-    const nuevoReporte: ReporteMER = {
+    const nuevoReporte: Reporte = {
       idReporte: Math.floor(500 + Math.random() * 499),
       tipo: this.tipoReporteSeleccionado,
       formato: this.formatoReporteSeleccionado,
@@ -278,7 +269,6 @@ export class Admin {
     this.registrarAuditoria(accion, `USUARIO #${usuario.idUsuario} (${usuario.correo})`, 'EXITO');
   }
 
-  // Utilidad para simular estado vacío en Dashboard si quieres probarlo
   limpiarDatosPrueba(): void {
     this.publicaciones.set([]);
     this.resenas.set([]);
@@ -303,7 +293,7 @@ export class Admin {
     this.eventosAuditoria.update((lista) => [nuevoEvento, ...lista]);
   }
 
-  private descargarArchivoSimulado(reporte: ReporteMER): void {
+  private descargarArchivoSimulado(reporte: Reporte): void {
     let contenido = '';
     let mime = 'text/plain;charset=utf-8';
 

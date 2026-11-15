@@ -232,7 +232,6 @@ $peligro: #e74c3c;
   background-color: $borde-contenedor;
 }
 
-/* Formulario (mismos estilos que autenticación) */
 .formulario {
   display: flex;
   flex-direction: column;
@@ -410,7 +409,6 @@ $peligro: #e74c3c;
   cursor: not-allowed;
 }
 
-/* Cuenta */
 .bloque-peligro {
   display: flex;
   align-items: center;

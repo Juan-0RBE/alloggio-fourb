@@ -46,7 +46,6 @@ export class Usuario {
     { id: 'cuenta', etiqueta: 'Cuenta', icono: 'pi-cog' },
   ];
 
-  // Datos de solo lectura: el backend solo permite editar nombres y teléfono
   perfil: PerfilUsuario = {
     correoUsuario: '',
     nombreUsuario: '',
@@ -63,7 +62,6 @@ export class Usuario {
     { campo: 'fechaNacimiento', etiqueta: 'Fecha de nacimiento', icono: 'pi-calendar' },
   ];
 
-  // Información personal
   readonly camposNombre: ConfigCampoNombre[] = [
     {
       campo: 'primerNombre',
@@ -95,7 +93,6 @@ export class Usuario {
   formulario: FormularioPerfil = { ...this.datosGuardados };
   intentoGuardar: boolean = false;
 
-  // Seguridad
   readonly camposClave: { campo: CampoClave; etiqueta: string }[] = [
     { campo: 'claveActual', etiqueta: 'Contraseña actual' },
     { campo: 'claveNueva', etiqueta: 'Nueva contraseña' },
@@ -125,7 +122,6 @@ export class Usuario {
     },
   ];
 
-  // Cuenta
   mostrarConfirmacion: boolean = false;
   confirmarDesactivacion: boolean = false;
 
@@ -174,7 +170,6 @@ export class Usuario {
   valorSoloLectura(campo: CampoSoloLectura): string {
     const valor = this.perfil[campo];
     if (campo === 'fechaNacimiento' && valor) {
-      // Se fuerza la hora local para que la fecha no se corra por la zona horaria
       return new Date(valor + 'T00:00:00').toLocaleDateString('es-CO');
     }
     return valor;
