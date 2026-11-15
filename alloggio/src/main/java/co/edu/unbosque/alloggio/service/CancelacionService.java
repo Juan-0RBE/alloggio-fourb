@@ -35,9 +35,9 @@ import co.edu.unbosque.alloggio.repository.UsuarioRepository;
 import co.edu.unbosque.alloggio.util.exception.PasarelaException;
 
 /**
- * Servicio para cancelar una reserva confirmada (CU-020). Aplica la política de
+ * Servicio para cancelar una reserva confirmada. Aplica la política de
  * cancelación de la publicación, devuelve el dinero por la pasarela (simulada),
- * libera las fechas y deja el registro de la cancelación (RN-11, RN-12).
+ * libera las fechas y deja el registro de la cancelación.
  */
 @Service
 public class CancelacionService {

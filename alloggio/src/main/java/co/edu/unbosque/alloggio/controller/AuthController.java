@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -229,6 +230,11 @@ public class AuthController {
                       "verified": false
                     }
                     					""")) @RequestBody UsuarioDTO registerRequest) {
+        List<String> invalidos = userService.camposInvalidosRegistro(registerRequest);
+        if (!invalidos.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Corrige los siguientes campos: " + String.join(", ", invalidos));
+        }
         // Verificar si el nombre de usuario ya existe
         if (userService.findUsernameAlreadyTaken(registerRequest.getNombreUsuario())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("El nombre de usuario ya existe");
@@ -251,6 +257,11 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.CREATED)
                         .body("Usuario registrado exitosamente, pero no se pudo enviar el correo de verificación");
             }
+        } else if (result == 2) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("La contraseña no cumple con los requisitos de complejidad");
+        } else if (result == 4) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("El documento de identidad ya está en uso");
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al registrar el usuario");
         }
