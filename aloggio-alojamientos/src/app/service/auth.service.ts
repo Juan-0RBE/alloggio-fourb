@@ -20,8 +20,9 @@ export class AuthService {
     );
   }
 
-  register(user: UsuarioDTO) {
-    return this.http.post(`${API_URL}/auth/register`, user, { responseType: 'text' });
+  register(usuario: any) {
+    // Ajusta el prefijo al @RequestMapping del controlador (/auth/register, /usuarios/register...)
+    return this.http.post(`${API_URL}/auth/register`, usuario, { responseType: 'text' });
   }
 
   logout(): void {
