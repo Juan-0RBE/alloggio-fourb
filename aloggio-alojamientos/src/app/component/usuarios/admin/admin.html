@@ -78,68 +78,105 @@
     </aside>
 
     <main class="contenido-admin">
+      <div class="mensaje-confirmacion" *ngIf="mensajeConfirmacion()" role="status">
+        <i class="pi pi-check-circle"></i>
+        <span>{{ mensajeConfirmacion() }}</span>
+      </div>
+
       <section *ngIf="seccionActiva() === 'dashboard'" class="bloque-seccion">
         <div class="cabecera-seccion">
           <div>
             <h1>Resumen General</h1>
             <p>Indicadores operativos actuales de la plataforma Aloggio.</p>
           </div>
-          <button
-            *ngIf="indicadores().totalPublicaciones > 0"
-            type="button"
-            class="boton-secundario"
-            (click)="limpiarDatosPrueba()"
-          >
-            Simular estado vacío
-          </button>
+          <div class="acciones-cabecera">
+            <button type="button" class="boton-secundario" (click)="exportarIndicadores('PDF')">
+              <i class="pi pi-file-pdf"></i> Exportar PDF
+            </button>
+            <button type="button" class="boton-secundario" (click)="exportarIndicadores('EXCEL')">
+              <i class="pi pi-file-excel"></i> Exportar Excel
+            </button>
+            <button
+              *ngIf="!dashboard().sinDatos"
+              type="button"
+              class="boton-secundario"
+              (click)="simularDashboardVacio()"
+            >
+              Simular estado vacío
+            </button>
+          </div>
         </div>
 
-        <ng-container
-          *ngIf="
-            indicadores().totalPublicaciones > 0 ||
-              indicadores().totalUsuarios > 0 ||
-              indicadores().totalResenas > 0;
-            else dashboardVacio
-          "
-        >
+        <ng-container *ngIf="!dashboard().sinDatos; else dashboardVacio">
           <div class="grid-kpis">
+            <article class="tarjeta-kpi">
+              <div class="kpi-icono"><i class="pi pi-users"></i></div>
+              <div class="kpi-datos">
+                <span class="kpi-valor">{{ dashboard().totalUsuarios }}</span>
+                <span class="kpi-etiqueta"
+                  >Usuarios ({{
+                    dashboard().usuariosPorEstadoCuenta['RESTRINGIDA'] || 0
+                  }}
+                  restringidos)</span
+                >
+              </div>
+            </article>
+
             <article class="tarjeta-kpi">
               <div class="kpi-icono"><i class="pi pi-home"></i></div>
               <div class="kpi-datos">
                 <span class="kpi-valor"
-                  >{{ indicadores().publicacionesActivas }} /
-                  {{ indicadores().totalPublicaciones }}</span
+                  >{{ dashboard().publicacionesActivas }} /
+                  {{ dashboard().totalPublicaciones }}</span
                 >
                 <span class="kpi-etiqueta">Publicaciones activas</span>
               </div>
             </article>
 
             <article class="tarjeta-kpi">
-              <div class="kpi-icono"><i class="pi pi-users"></i></div>
+              <div class="kpi-icono"><i class="pi pi-calendar"></i></div>
               <div class="kpi-datos">
-                <span class="kpi-valor">{{ indicadores().totalUsuarios }}</span>
-                <span class="kpi-etiqueta"
-                  >Usuarios ({{ indicadores().usuariosRestringidos }} restringidos)</span
-                >
+                <span class="kpi-valor">{{ dashboard().totalReservas }}</span>
+                <span class="kpi-etiqueta">Reservas</span>
               </div>
             </article>
 
             <article class="tarjeta-kpi">
-              <div class="kpi-icono"><i class="pi pi-star"></i></div>
+              <div class="kpi-icono"><i class="pi pi-wallet"></i></div>
               <div class="kpi-datos">
-                <span class="kpi-valor">{{ indicadores().totalResenas }}</span>
-                <span class="kpi-etiqueta"
-                  >Reseñas ({{ indicadores().resenasOcultas }} ocultas)</span
+                <span class="kpi-valor"
+                  >${{ dashboard().ingresosEstimados | number: '1.0-0' }}</span
                 >
+                <span class="kpi-etiqueta">Ingresos estimados</span>
               </div>
             </article>
+          </div>
 
-            <article class="tarjeta-kpi">
-              <div class="kpi-icono"><i class="pi pi-shield"></i></div>
-              <div class="kpi-datos">
-                <span class="kpi-valor">{{ indicadores().totalEventos }}</span>
-                <span class="kpi-etiqueta">Eventos en auditoría</span>
-              </div>
+          <div class="grid-detalle-dashboard">
+            <article class="tarjeta-detalle">
+              <h2 class="subtitulo-tabla">Reservas por estado</h2>
+              <ul class="lista-resumen">
+                <li *ngFor="let par of reservasPorEstado()">
+                  <span class="insignia neutra">{{ par[0] }}</span>
+                  <span class="mono">{{ par[1] }}</span>
+                </li>
+              </ul>
+            </article>
+
+            <article class="tarjeta-detalle">
+              <h2 class="subtitulo-tabla">Ciudades con mayor demanda</h2>
+              <p class="texto-tenue" *ngIf="dashboard().ciudadesDemanda.length === 0">
+                Aún no hay reservas para calcular la demanda.
+              </p>
+              <ul class="lista-resumen" *ngIf="dashboard().ciudadesDemanda.length > 0">
+                <li *ngFor="let ciudad of dashboard().ciudadesDemanda">
+                  <span>
+                    <strong>{{ ciudad.ciudad }}</strong>
+                    <span class="texto-tenue"> · {{ ciudad.reservas }} reservas</span>
+                  </span>
+                  <span class="mono">${{ ciudad.ingresos | number: '1.0-0' }}</span>
+                </li>
+              </ul>
             </article>
           </div>
         </ng-container>
@@ -157,54 +194,58 @@
         <div class="cabecera-seccion">
           <div>
             <h1>Reportes y Exportación</h1>
-            <p>Genera archivos descargables y registra la solicitud en la entidad REPORTE.</p>
+            <p>
+              Exporta los indicadores del dashboard. Cada exportación queda registrada con quién la
+              solicitó y cuándo.
+            </p>
           </div>
         </div>
 
         <div class="tarjeta-formulario-reporte">
           <div class="campo">
-            <label for="tipoReporte">Tipo de reporte</label>
-            <select id="tipoReporte" [(ngModel)]="tipoReporteSeleccionado">
-              <option value="Reservas e Ingresos">Reservas e Ingresos</option>
-              <option value="Actividad de Usuarios">Actividad de Usuarios</option>
-              <option value="Publicaciones Activas">Publicaciones Activas</option>
+            <label for="formatoExportacion">Formato de salida</label>
+            <select id="formatoExportacion" [(ngModel)]="formatoExportacion">
+              <option value="PDF">PDF</option>
+              <option value="EXCEL">Excel</option>
             </select>
           </div>
 
-          <div class="campo">
-            <label for="formatoReporte">Formato de salida</label>
-            <select id="formatoReporte" [(ngModel)]="formatoReporteSeleccionado">
-              <option value="CSV">CSV (Excel / Hojas de cálculo)</option>
-              <option value="JSON">JSON (Estructurado)</option>
-            </select>
-          </div>
-
-          <button type="button" class="boton-dorado" (click)="generarReporte()">
-            <i class="pi pi-download"></i> Generar y descargar
+          <button
+            type="button"
+            class="boton-dorado"
+            (click)="exportarIndicadores(formatoExportacion)"
+          >
+            <i class="pi pi-download"></i> Exportar indicadores
           </button>
         </div>
 
-        <h2 class="subtitulo-tabla">Historial de solicitudes (REPORTE)</h2>
-        <div class="tabla-contenedor" *ngIf="historialReportes().length > 0; else sinReportes">
+        <h2 class="subtitulo-tabla">Historial de exportaciones</h2>
+        <div class="tabla-contenedor" *ngIf="exportaciones().length > 0; else sinReportes">
           <table class="tabla-admin">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Tipo</th>
-                <th>Formato</th>
+                <th>Fecha</th>
                 <th>Solicitado por</th>
-                <th>Fecha_Solicitud</th>
+                <th>Detalle</th>
+                <th>Resultado</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let rep of historialReportes()">
-                <td class="mono">#{{ rep.idReporte }}</td>
-                <td>{{ rep.tipo }}</td>
+              <tr *ngFor="let exp of exportaciones()">
+                <td class="mono">{{ exp.fechaHora | date: 'd MMM yyyy, HH:mm' : '' : 'es-CO' }}</td>
+                <td>{{ exp.correoUsuario }}</td>
+                <td>{{ exp.descripcion }}</td>
                 <td>
-                  <span class="insignia neutra">{{ rep.formato }}</span>
+                  <span
+                    class="insignia"
+                    [ngClass]="{
+                      exito: exp.resultado === 'EXITO',
+                      aviso: exp.resultado === 'FALLIDO',
+                      peligro: exp.resultado === 'DENEGADO',
+                    }"
+                    >{{ exp.resultado }}</span
+                  >
                 </td>
-                <td>{{ rep.solicitadoPor }}</td>
-                <td class="mono">{{ rep.fechaSolicitud }}</td>
               </tr>
             </tbody>
           </table>
@@ -213,8 +254,8 @@
         <ng-template #sinReportes>
           <div class="estado-vacio">
             <i class="pi pi-file"></i>
-            <h2>No se han generado reportes</h2>
-            <p>Selecciona un tipo y formato arriba para exportar el primer reporte.</p>
+            <h2>No se han exportado indicadores</h2>
+            <p>Elige un formato arriba para generar la primera exportación.</p>
           </div>
         </ng-template>
       </section>
@@ -224,13 +265,55 @@
           <div>
             <h1>Moderación de Publicaciones</h1>
             <p>
-              Supervisa los alojamientos publicados y pausa o retira aquellos que infrinjan
-              políticas.
+              Revisa los alojamientos publicados y bloquea los que tengan información engañosa. Los
+              borradores no aparecen aquí.
             </p>
           </div>
         </div>
 
-        <div class="tabla-contenedor" *ngIf="publicaciones().length > 0; else sinPublicaciones">
+        <div class="filtros-estado" role="tablist" aria-label="Filtrar por estado">
+          <button
+            type="button"
+            role="tab"
+            class="filtro"
+            [class.activo]="filtroEstadoPublicacion() === 'TODAS'"
+            (click)="seleccionarFiltroPublicacion('TODAS')"
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="filtro"
+            [class.activo]="filtroEstadoPublicacion() === 'ACTIVA'"
+            (click)="seleccionarFiltroPublicacion('ACTIVA')"
+          >
+            Activas
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="filtro"
+            [class.activo]="filtroEstadoPublicacion() === 'PAUSADA'"
+            (click)="seleccionarFiltroPublicacion('PAUSADA')"
+          >
+            Pausadas
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="filtro"
+            [class.activo]="filtroEstadoPublicacion() === 'BLOQUEADA'"
+            (click)="seleccionarFiltroPublicacion('BLOQUEADA')"
+          >
+            Bloqueadas
+          </button>
+        </div>
+
+        <div
+          class="tabla-contenedor"
+          *ngIf="publicacionesFiltradas().length > 0; else sinPublicaciones"
+        >
           <table class="tabla-admin">
             <thead>
               <tr>
@@ -239,17 +322,18 @@
                 <th>Anfitrión</th>
                 <th>Tarifa / noche</th>
                 <th>Estado</th>
+                <th>Reservas futuras</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let pub of publicaciones()">
+              <tr *ngFor="let pub of publicacionesFiltradas()">
                 <td class="mono">#{{ pub.idPublicacion }}</td>
                 <td>
                   <strong>{{ pub.titulo }}</strong>
                   <div class="texto-tenue">{{ pub.ciudad }}</div>
                 </td>
-                <td>{{ pub.anfitrion }}</td>
+                <td>{{ pub.nombreAnfitrion }}</td>
                 <td>${{ pub.precioNoche | number: '1.0-0' }}</td>
                 <td>
                   <span
@@ -257,36 +341,16 @@
                     [ngClass]="{
                       exito: pub.estado === 'ACTIVA',
                       aviso: pub.estado === 'PAUSADA',
-                      peligro: pub.estado === 'RETIRADA',
+                      peligro: pub.estado === 'BLOQUEADA',
                     }"
                   >
                     {{ pub.estado }}
                   </span>
                 </td>
-                <td class="celda-acciones">
-                  <button
-                    *ngIf="pub.estado !== 'ACTIVA'"
-                    type="button"
-                    class="boton-mini"
-                    (click)="cambiarEstadoPublicacion(pub, 'ACTIVA')"
-                  >
-                    Aprobar / Activar
-                  </button>
-                  <button
-                    *ngIf="pub.estado === 'ACTIVA'"
-                    type="button"
-                    class="boton-mini aviso"
-                    (click)="cambiarEstadoPublicacion(pub, 'PAUSADA')"
-                  >
-                    Pausar
-                  </button>
-                  <button
-                    *ngIf="pub.estado !== 'RETIRADA'"
-                    type="button"
-                    class="boton-mini peligro"
-                    (click)="cambiarEstadoPublicacion(pub, 'RETIRADA')"
-                  >
-                    Retirar
+                <td class="mono">{{ pub.totalReservasFuturas }}</td>
+                <td>
+                  <button type="button" class="boton-mini" (click)="abrirRevision(pub)">
+                    <i class="pi pi-search"></i> Revisar
                   </button>
                 </td>
               </tr>
@@ -297,7 +361,7 @@
         <ng-template #sinPublicaciones>
           <div class="estado-vacio">
             <i class="pi pi-home"></i>
-            <h2>No hay publicaciones registradas</h2>
+            <h2>No hay publicaciones con este estado</h2>
           </div>
         </ng-template>
       </section>
@@ -307,25 +371,40 @@
           <div>
             <h1>Moderación de Reseñas</h1>
             <p>
-              Oculta reseñas que incumplen las normas (Visible = false) o vuelve a hacerlas
-              públicas.
+              Elige un alojamiento para ver sus reseñas, incluidas las ocultas. Una reseña oculta no
+              se puede volver a mostrar desde este panel.
             </p>
           </div>
         </div>
 
-        <div class="lista-tarjetas-mod" *ngIf="resenas().length > 0; else sinResenas">
+        <div class="filtros-auditoria">
+          <select
+            class="select-filtro"
+            aria-label="Alojamiento"
+            [ngModel]="alojamientoSeleccionado()"
+            (ngModelChange)="seleccionarAlojamiento($event)"
+          >
+            <option *ngFor="let pub of publicaciones()" [ngValue]="pub.idPublicacion">
+              #{{ pub.idPublicacion }} · {{ pub.titulo }}
+            </option>
+          </select>
+        </div>
+
+        <div class="lista-tarjetas-mod" *ngIf="resenasDelAlojamiento().length > 0; else sinResenas">
           <article
             class="tarjeta-resena-mod"
-            *ngFor="let res of resenas()"
+            *ngFor="let res of resenasDelAlojamiento()"
             [class.oculta]="!res.visible"
           >
             <div class="resena-cabecera">
               <div>
                 <span class="mono">#{{ res.idResena }}</span> · <strong>{{ res.autor }}</strong>
-                <span class="texto-tenue"> en {{ res.alojamiento }} ({{ res.fecha }})</span>
+                <span class="texto-tenue">
+                  ({{ res.fecha | date: 'd MMM yyyy' : '' : 'es-CO' }})</span
+                >
               </div>
               <span class="insignia" [ngClass]="res.visible ? 'exito' : 'peligro'">
-                {{ res.visible ? 'Visible en detalle' : 'Oculta (Visible = false)' }}
+                {{ res.visible ? 'Visible en el detalle' : 'Oculta' }}
               </span>
             </div>
 
@@ -335,15 +414,27 @@
               <span class="estrellas-doradas">
                 <i class="pi pi-star-fill"></i> {{ res.calificacion }} / 5
               </span>
-              <button
-                type="button"
-                class="boton-mini"
-                [class.peligro]="res.visible"
-                (click)="alternarVisibilidadResena(res)"
-              >
-                <i class="pi" [ngClass]="res.visible ? 'pi-eye-slash' : 'pi-eye'"></i>
-                {{ res.visible ? 'Ocultar reseña' : 'Volver a mostrar' }}
-              </button>
+
+              <ng-container *ngIf="res.visible">
+                <button
+                  *ngIf="resenaEnConfirmacion() !== res.idResena"
+                  type="button"
+                  class="boton-mini peligro"
+                  (click)="pedirConfirmacionOcultar(res)"
+                >
+                  <i class="pi pi-eye-slash"></i> Ocultar reseña
+                </button>
+
+                <span class="confirmacion-inline" *ngIf="resenaEnConfirmacion() === res.idResena">
+                  <span class="texto-tenue">¿Ocultar esta reseña?</span>
+                  <button type="button" class="boton-mini peligro" (click)="ocultarResena(res)">
+                    Confirmar
+                  </button>
+                  <button type="button" class="boton-mini" (click)="cancelarOcultar()">
+                    Cancelar
+                  </button>
+                </span>
+              </ng-container>
             </div>
           </article>
         </div>
@@ -351,7 +442,7 @@
         <ng-template #sinResenas>
           <div class="estado-vacio">
             <i class="pi pi-comments"></i>
-            <h2>No hay reseñas para moderar</h2>
+            <h2>Este alojamiento no tiene reseñas</h2>
           </div>
         </ng-template>
       </section>
@@ -361,19 +452,33 @@
           <div>
             <h1>Gestión de Usuarios</h1>
             <p>
-              Restringe cuentas infractoras (Restringido = true) o levanta restricciones existentes.
+              Restringe cuentas infractoras para que no puedan iniciar sesión ni realizar nuevas
+              acciones. No aplica a administradores ni a tu propia cuenta.
             </p>
           </div>
         </div>
 
-        <div class="barra-busqueda">
-          <i class="pi pi-search"></i>
-          <input
-            type="text"
-            placeholder="Buscar por nombre, correo o ID..."
-            [ngModel]="busquedaUsuario()"
-            (ngModelChange)="busquedaUsuario.set($event)"
-          />
+        <div class="filtros-auditoria">
+          <div class="barra-busqueda">
+            <i class="pi pi-search"></i>
+            <input
+              type="text"
+              placeholder="Buscar por nombre, usuario o ID..."
+              [ngModel]="busquedaUsuario()"
+              (ngModelChange)="busquedaUsuario.set($event)"
+            />
+          </div>
+
+          <select
+            class="select-filtro"
+            aria-label="Estado de la cuenta"
+            [ngModel]="filtroEstadoCuenta()"
+            (ngModelChange)="seleccionarFiltroEstadoCuenta($event)"
+          >
+            <option value="TODOS">Todos los estados</option>
+            <option value="ACTIVA">Activas</option>
+            <option value="RESTRINGIDA">Restringidas</option>
+          </select>
         </div>
 
         <div class="tabla-contenedor" *ngIf="usuariosFiltrados().length > 0; else sinUsuarios">
@@ -391,26 +496,58 @@
               <tr *ngFor="let usr of usuariosFiltrados()">
                 <td class="mono">#{{ usr.idUsuario }}</td>
                 <td>
-                  <strong>{{ usr.nombre }}</strong>
-                  <div class="texto-tenue">{{ usr.correo }}</div>
+                  <strong>{{ usr.primerNombre }} {{ usr.primerApellido }}</strong>
+                  <div class="texto-tenue">{{ usr.nombreUsuario }}</div>
                 </td>
                 <td>
-                  <span class="insignia neutra">{{ usr.rol }}</span>
+                  <span class="insignia neutra">{{
+                    usr.role === 'ADMINISTRADOR' ? 'Administrador' : 'Usuario'
+                  }}</span>
                 </td>
                 <td>
-                  <span class="insignia" [ngClass]="usr.restringido ? 'peligro' : 'exito'">
-                    {{ usr.restringido ? 'Restringido' : 'Activo' }}
+                  <span
+                    class="insignia"
+                    [ngClass]="usr.estadoCuenta === 'RESTRINGIDA' ? 'peligro' : 'exito'"
+                  >
+                    {{ usr.estadoCuenta === 'RESTRINGIDA' ? 'Restringida' : 'Activa' }}
                   </span>
                 </td>
                 <td>
-                  <button
-                    type="button"
-                    class="boton-mini"
-                    [class.peligro]="!usr.restringido"
-                    (click)="alternarRestriccionUsuario(usr)"
-                  >
-                    {{ usr.restringido ? 'Levantar restricción' : 'Restringir usuario' }}
-                  </button>
+                  <ng-container *ngIf="puedeRestringirse(usr); else sinAccion">
+                    <button
+                      *ngIf="usuarioEnConfirmacion() !== usr.idUsuario"
+                      type="button"
+                      class="boton-mini peligro"
+                      (click)="pedirConfirmacionRestriccion(usr)"
+                    >
+                      Restringir usuario
+                    </button>
+
+                    <span
+                      class="confirmacion-inline"
+                      *ngIf="usuarioEnConfirmacion() === usr.idUsuario"
+                    >
+                      <span class="texto-tenue">¿Restringir esta cuenta?</span>
+                      <button
+                        type="button"
+                        class="boton-mini peligro"
+                        (click)="restringirUsuario(usr)"
+                      >
+                        Confirmar
+                      </button>
+                      <button type="button" class="boton-mini" (click)="cancelarRestriccion()">
+                        Cancelar
+                      </button>
+                    </span>
+                  </ng-container>
+
+                  <ng-template #sinAccion>
+                    <span class="texto-tenue">{{
+                      usr.role === 'ADMINISTRADOR'
+                        ? 'No aplica a administradores'
+                        : 'Cuenta ya restringida'
+                    }}</span>
+                  </ng-template>
                 </td>
               </tr>
             </tbody>
@@ -421,7 +558,7 @@
           <div class="estado-vacio">
             <i class="pi pi-user-minus"></i>
             <h2>No se encontraron usuarios</h2>
-            <p>Intenta con otro término de búsqueda.</p>
+            <p>Intenta con otro término de búsqueda o cambia el filtro de estado.</p>
           </div>
         </ng-template>
       </section>
@@ -430,32 +567,72 @@
         <div class="cabecera-seccion">
           <div>
             <h1>Log de Auditoría</h1>
-            <p>
-              Vista de solo lectura sobre EVENTO_AUDITORIA con trazabilidad de acciones críticas.
-            </p>
+            <p>Registro de solo lectura de las acciones críticas realizadas en la plataforma.</p>
           </div>
         </div>
 
-        <div class="filtros-auditoria">
-          <div class="barra-busqueda">
-            <i class="pi pi-filter"></i>
+        <div class="panel-filtros">
+          <div class="campo">
+            <label for="filtroDesde">Desde</label>
+            <input id="filtroDesde" type="date" [(ngModel)]="filtroFechaDesde" />
+          </div>
+
+          <div class="campo">
+            <label for="filtroHasta">Hasta</label>
+            <input id="filtroHasta" type="date" [(ngModel)]="filtroFechaHasta" />
+          </div>
+
+          <div class="campo">
+            <label for="filtroCorreo">Usuario</label>
             <input
+              id="filtroCorreo"
               type="text"
-              placeholder="Filtrar por acción, entidad o usuario..."
-              [ngModel]="filtroAccionAuditoria()"
-              (ngModelChange)="filtroAccionAuditoria.set($event)"
+              placeholder="Correo del usuario"
+              [(ngModel)]="filtroCorreo"
             />
           </div>
 
-          <select
-            class="select-filtro"
-            [ngModel]="filtroResultadoAuditoria()"
-            (ngModelChange)="filtroResultadoAuditoria.set($event)"
-          >
-            <option value="TODOS">Todos los resultados</option>
-            <option value="EXITO">Éxito</option>
-            <option value="DENEGADO">Denegado</option>
-          </select>
+          <div class="campo">
+            <label for="filtroAccion">Acción</label>
+            <select id="filtroAccion" [(ngModel)]="filtroAccion">
+              <option value="">Todas</option>
+              <option *ngFor="let accion of accionesAuditoria" [value]="accion">
+                {{ accion }}
+              </option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="filtroEntidad">Entidad</label>
+            <select id="filtroEntidad" [(ngModel)]="filtroEntidad">
+              <option value="">Todas</option>
+              <option *ngFor="let tipo of tiposEntidad" [value]="tipo">{{ tipo }}</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="filtroResultado">Resultado</label>
+            <select id="filtroResultado" [(ngModel)]="filtroResultado">
+              <option value="">Todos</option>
+              <option value="EXITO">Éxito</option>
+              <option value="FALLIDO">Fallido</option>
+              <option value="DENEGADO">Denegado</option>
+            </select>
+          </div>
+
+          <div class="acciones-filtros">
+            <button type="button" class="boton-dorado" (click)="aplicarFiltros()">
+              <i class="pi pi-filter"></i> Filtrar
+            </button>
+            <button type="button" class="boton-secundario" (click)="limpiarFiltros()">
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <div class="alerta-error" *ngIf="errorFiltros()" role="alert">
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ errorFiltros() }}</span>
         </div>
 
         <div class="tabla-contenedor" *ngIf="eventosFiltrados().length > 0; else sinEventos">
@@ -466,33 +643,186 @@
                 <th>Usuario</th>
                 <th>Acción</th>
                 <th>Entidad afectada</th>
+                <th>Detalle</th>
                 <th>Resultado</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let ev of eventosFiltrados()">
-                <td class="mono">{{ ev.fecha }}</td>
-                <td>{{ ev.usuario }}</td>
+              <tr *ngFor="let ev of eventosPagina()">
+                <td class="mono">{{ ev.fechaHora | date: 'd MMM yyyy, HH:mm' : '' : 'es-CO' }}</td>
+                <td>{{ ev.correoUsuario }}</td>
                 <td class="mono">{{ ev.accion }}</td>
-                <td>{{ ev.entidadAfectada }}</td>
                 <td>
-                  <span class="insignia" [ngClass]="ev.resultado === 'EXITO' ? 'exito' : 'peligro'">
-                    {{ ev.resultado }}
-                  </span>
+                  {{ ev.entidadTipo
+                  }}<span *ngIf="ev.entidadId !== null"> #{{ ev.entidadId }}</span>
+                </td>
+                <td>{{ ev.descripcion }}</td>
+                <td>
+                  <span
+                    class="insignia"
+                    [ngClass]="{
+                      exito: ev.resultado === 'EXITO',
+                      aviso: ev.resultado === 'FALLIDO',
+                      peligro: ev.resultado === 'DENEGADO',
+                    }"
+                    >{{ ev.resultado }}</span
+                  >
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
+        <div class="paginacion" *ngIf="eventosFiltrados().length > 0">
+          <span class="texto-tenue"
+            >Página {{ pagina() + 1 }} de {{ totalPaginas() }} ·
+            {{ eventosFiltrados().length }} eventos</span
+          >
+          <div class="botones-paginacion">
+            <button
+              type="button"
+              class="boton-mini"
+              [disabled]="pagina() === 0"
+              (click)="paginaAnterior()"
+            >
+              <i class="pi pi-chevron-left"></i> Anterior
+            </button>
+            <button
+              type="button"
+              class="boton-mini"
+              [disabled]="pagina() >= totalPaginas() - 1"
+              (click)="paginaSiguiente()"
+            >
+              Siguiente <i class="pi pi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
         <ng-template #sinEventos>
           <div class="estado-vacio">
             <i class="pi pi-history"></i>
-            <h2>No hay eventos de auditoría registrados</h2>
-            <p>No se encontraron registros que coincidan con los filtros actuales.</p>
+            <h2>
+              {{
+                eventosAuditoria().length === 0
+                  ? 'No hay eventos de auditoría registrados'
+                  : 'Ningún evento coincide con los filtros'
+              }}
+            </h2>
+            <p *ngIf="eventosAuditoria().length > 0">
+              Prueba con otros criterios o limpia los filtros.
+            </p>
           </div>
         </ng-template>
       </section>
     </main>
+  </div>
+
+  <div
+    class="modal-overlay-admin"
+    *ngIf="publicacionSeleccionada() as pub"
+    (click)="cerrarRevision()"
+  >
+    <div
+      class="modal-admin"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="titulo-revision"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="encabezado-modal">
+        <div>
+          <h2 id="titulo-revision">Publicación #{{ pub.idPublicacion }}</h2>
+          <p class="texto-tenue">
+            {{ pub.titulo }} · {{ pub.ciudad }} · Anfitrión: {{ pub.nombreAnfitrion }}
+          </p>
+        </div>
+        <button type="button" class="boton-cerrar" aria-label="Cerrar" (click)="cerrarRevision()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="fila-estado">
+        <span
+          class="insignia"
+          [ngClass]="{
+            exito: pub.estado === 'ACTIVA',
+            aviso: pub.estado === 'PAUSADA',
+            peligro: pub.estado === 'BLOQUEADA',
+          }"
+          >{{ pub.estado }}</span
+        >
+        <span class="mono">${{ pub.precioNoche | number: '1.0-0' }} / noche</span>
+      </div>
+
+      <div class="bloque-motivo" *ngIf="pub.estado === 'BLOQUEADA' && pub.motivoBloqueo">
+        <strong>Motivo del bloqueo</strong>
+        <p>{{ pub.motivoBloqueo }}</p>
+      </div>
+
+      <h3 class="subtitulo-modal">Reservas futuras confirmadas ({{ pub.totalReservasFuturas }})</h3>
+      <p class="texto-tenue" *ngIf="pub.reservasFuturas.length === 0">
+        Esta publicación no tiene reservas futuras confirmadas.
+      </p>
+
+      <div class="tabla-contenedor" *ngIf="pub.reservasFuturas.length > 0">
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th>Reserva</th>
+              <th>Huésped</th>
+              <th>Llegada</th>
+              <th>Salida</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let reserva of pub.reservasFuturas">
+              <td class="mono">#{{ reserva.idReserva }}</td>
+              <td>{{ reserva.nombreHuesped }}</td>
+              <td>{{ reserva.fechaLlegada | date: 'd MMM yyyy' : '' : 'es-CO' }}</td>
+              <td>{{ reserva.fechaSalida | date: 'd MMM yyyy' : '' : 'es-CO' }}</td>
+              <td>${{ reserva.total | number: '1.0-0' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-container *ngIf="puedeBloquearse(pub)">
+        <h3 class="subtitulo-modal">Bloquear publicación</h3>
+        <p class="texto-tenue">
+          La publicación saldrá de las búsquedas y las reservas futuras se conservarán para revisión
+          manual.
+        </p>
+
+        <div class="campo-motivo">
+          <label for="motivo-bloqueo">Motivo del bloqueo</label>
+          <textarea
+            id="motivo-bloqueo"
+            rows="3"
+            [maxlength]="longitudMaxMotivo"
+            [(ngModel)]="motivoBloqueo"
+            placeholder="Describe la información engañosa que encontraste."
+          ></textarea>
+          <span class="contador-motivo">{{ motivoBloqueo.length }}/{{ longitudMaxMotivo }}</span>
+        </div>
+
+        <div class="alerta-error" *ngIf="errorBloqueo()" role="alert">
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ errorBloqueo() }}</span>
+        </div>
+      </ng-container>
+
+      <div class="pie-modal">
+        <button type="button" class="boton-secundario" (click)="cerrarRevision()">Cerrar</button>
+        <button
+          *ngIf="puedeBloquearse(pub)"
+          type="button"
+          class="boton-peligro"
+          (click)="bloquearPublicacion()"
+        >
+          <i class="pi pi-ban"></i> Bloquear publicación
+        </button>
+      </div>
+    </div>
   </div>
 </div>
