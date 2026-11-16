@@ -11,7 +11,10 @@ import { FormularioResena } from './resenas/formulario-resena/formulario-resena.
 import { Usuario } from './usuarios/usuario/usuario.component';
 import { Anfitrion } from './usuarios/anfitrion/anfitrion.component';
 import { Admin } from './usuarios/admin/admin.component';
-
+import { BandejaNotificaciones } from './notificaciones/bandeja-notificaciones/bandeja-notificaciones.component';
+import { FormularioCancelacion } from './reservas/formulario-cancelacion/formulario-cancelacion.component';
+import { DetalleReserva } from './reservas/detalle-reserva.component/detalle-reserva.component';
+import { CalendarioDisponibilidad } from './usuarios/calendario-disponibilidad/calendario-disponibilidad.component';
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
   { path: 'login', component: Login },
@@ -19,13 +22,17 @@ export const routes: Routes = [
   { path: 'recuperacion', component: Recuperacion },
 
   { path: 'inicio', component: Inicio },
+  { path: 'detalle-reserva/:id', component: DetalleReserva },
   { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
   { path: 'resumen-reserva', component: ResumenReserva },
   { path: 'resultado-reserva', component: ResultadoReserva },
   { path: 'mis-reservas', component: MisReservas },
   { path: 'formulario-resena', component: FormularioResena },
+  { path: 'formulario-cancelacion', component: FormularioCancelacion },
 
   { path: 'usuario', component: Usuario },
   { path: 'anfitrion', component: Anfitrion },
   { path: 'admin', component: Admin },
+  { path: 'calendario-disponibilidad', component: CalendarioDisponibilidad },
+  { path: 'notificaciones', component: BandejaNotificaciones },
 ];

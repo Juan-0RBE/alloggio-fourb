@@ -1,0 +1,134 @@
+<div class="aloggio-detalle-reserva-contenedor">
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo" routerLink="/inicio">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </div>
+
+    <a routerLink="/mis-reservas" class="enlace-volver">
+      <i class="pi pi-arrow-left"></i>
+      <span>Mis reservas</span>
+    </a>
+  </header>
+
+  <main class="cuerpo-detalle-reserva">
+    <div class="estado-pagina" *ngIf="cargando()" role="status">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Cargando tu reserva...</span>
+    </div>
+
+    <div class="estado-pagina error" *ngIf="!cargando() && error() as e" role="alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ e.mensaje }}</span>
+      <a *ngIf="e.sesion" routerLink="/login" class="boton-estado">Iniciar sesión</a>
+      <button *ngIf="!e.sesion" type="button" class="boton-estado" (click)="cargar()">
+        Reintentar
+      </button>
+      <a routerLink="/mis-reservas" class="boton-estado">Volver a mis reservas</a>
+    </div>
+
+    <ng-container *ngIf="!cargando() && !error() && reserva() as r">
+      <div class="encabezado-reserva">
+        <div class="fila-titulo">
+          <h1 class="titulo-pagina">Reserva #{{ r.idReserva }}</h1>
+          <span class="insignia-estado" [ngClass]="'estado-' + r.estado.toLowerCase()">{{
+            etiquetasEstado[r.estado]
+          }}</span>
+        </div>
+        <p class="descripcion-estado">{{ descripcionesEstado[r.estado] }}</p>
+      </div>
+
+      <div class="mensaje-confirmacion" *ngIf="mensajeConfirmacion()" role="status">
+        <i class="pi pi-check-circle"></i>
+        <span>{{ mensajeConfirmacion() }}</span>
+      </div>
+
+      <section class="tarjeta-alojamiento">
+        <div class="miniatura">
+          <img *ngIf="r.imagen; else sinImagen" [src]="r.imagen" [alt]="r.titulo" />
+          <ng-template #sinImagen><i class="pi pi-image"></i></ng-template>
+        </div>
+
+        <div class="info-alojamiento">
+          <h2 class="titulo-alojamiento">{{ r.titulo }}</h2>
+          <p class="ciudad-alojamiento" *ngIf="r.ciudad">
+            <i class="pi pi-map-marker"></i> {{ r.ciudad }}
+          </p>
+          <a [routerLink]="['/detalle-alojamiento', r.idPublicacion]" class="enlace-alojamiento">
+            Ver alojamiento
+          </a>
+        </div>
+      </section>
+
+      <section class="tarjeta-datos">
+        <h2 class="subtitulo-seccion">Detalles de tu estadía</h2>
+        <dl class="datos-reserva">
+          <div class="dato">
+            <dt>Llegada</dt>
+            <dd>{{ r.fechaLlegada | date: 'd MMM, yyyy' : '' : 'es-CO' }}</dd>
+          </div>
+          <div class="dato">
+            <dt>Salida</dt>
+            <dd>{{ r.fechaSalida | date: 'd MMM, yyyy' : '' : 'es-CO' }}</dd>
+          </div>
+          <div class="dato">
+            <dt>Duración</dt>
+            <dd>{{ r.noches }} {{ r.noches === 1 ? 'noche' : 'noches' }}</dd>
+          </div>
+          <div class="dato">
+            <dt>Reservada el</dt>
+            <dd>{{ r.fechaCreacion | date: 'd MMM, yyyy' : '' : 'es-CO' }}</dd>
+          </div>
+          <div class="dato total">
+            <dt>Total pagado</dt>
+            <dd>${{ r.total | number: '1.0-0' }} COP</dd>
+          </div>
+        </dl>
+      </section>
+
+      <div class="acciones-reserva">
+        <button
+          *ngIf="r.estado === 'CONFIRMADA'"
+          type="button"
+          class="boton-peligro-contorno"
+          (click)="abrirCancelacion()"
+        >
+          <i class="pi pi-times-circle"></i>
+          Cancelar reserva
+        </button>
+
+        <button
+          *ngIf="r.estado === 'COMPLETADA'"
+          type="button"
+          class="boton-dorado"
+          (click)="abrirResena()"
+        >
+          <i class="pi pi-star"></i>
+          Escribir reseña
+        </button>
+
+        <a routerLink="/mis-reservas" class="boton-secundario">Volver a mis reservas</a>
+      </div>
+
+      <app-formulario-cancelacion
+        *ngIf="mostrandoCancelacion()"
+        [idReserva]="r.idReserva"
+        [titulo]="r.titulo"
+        [fechaLlegada]="r.fechaLlegada"
+        [total]="r.total"
+        [politica]="politica"
+        [enviando]="cancelando()"
+        [mensajeError]="errorCancelacion()"
+        (confirmarCancelacion)="confirmarCancelacion($event)"
+        (cancelar)="cerrarCancelacion()"
+      ></app-formulario-cancelacion>
+
+      <app-formulario-resena
+        *ngIf="mostrandoResena()"
+        [alojamientoTitulo]="r.titulo"
+        (enviarReseña)="alEnviarResena()"
+        (cancelar)="cerrarResena()"
+      ></app-formulario-resena>
+    </ng-container>
+  </main>
+</div>
