@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormularioCancelacionComponent } from './formulario-cancelacion.component';
+import { FormularioCancelacionComponent } from './formulario-cancelacion';
 
 describe('FormularioCancelacionComponent', () => {
   let component: FormularioCancelacionComponent;

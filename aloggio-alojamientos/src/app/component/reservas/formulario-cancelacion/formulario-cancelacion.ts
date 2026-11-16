@@ -19,8 +19,8 @@ export interface CancelacionPayload {
   selector: 'app-formulario-cancelacion',
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe],
-  templateUrl: './formulario-cancelacion.component.html',
-  styleUrl: './formulario-cancelacion.component.scss',
+  templateUrl: './formulario-cancelacion.html',
+  styleUrl: './formulario-cancelacion.scss',
 })
 export class FormularioCancelacion {
   @Input() idReserva: number = 1042;

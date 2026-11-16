@@ -31,8 +31,8 @@ export const ICONOS_TIPO: Record<TipoNotificacion, string> = {
   selector: 'app-bandeja-notificaciones',
   standalone: true,
   imports: [CommonModule, RouterModule, DatePipe],
-  templateUrl: './bandeja-notificaciones.component.html',
-  styleUrl: './bandeja-notificaciones.component.scss',
+  templateUrl: './bandeja-notificaciones.html',
+  styleUrl: './bandeja-notificaciones.scss',
 })
 export class BandejaNotificaciones implements OnInit {
   readonly filtros: { valor: Filtro; etiqueta: string }[] = [

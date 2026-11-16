@@ -232,6 +232,56 @@ class AuthControllerTest {
             verifyNoInteractions(jwtUtil);
         }
 
+        @Test
+        @DisplayName("CP-004 (variante) - Inicio de sesión exitoso usando correo electrónico")
+        void login_conCorreoValido_retorna200ConToken() {
+            Usuario usuario = usuarioActivo();
+            Authentication autenticacion = mock(Authentication.class);
+            UsuarioDTO req = new UsuarioDTO();
+            req.setCorreoUsuario(CORREO);
+            req.setClaveUsuario(CLAVE_VALIDA);
+
+            when(userService.getByCorreo(CORREO))
+                    .thenReturn(cuentaEnBd(true, true, Usuario.ESTADO_ACTIVA));
+            when(authenticationManager.authenticate(any())).thenReturn(autenticacion);
+            when(autenticacion.getPrincipal()).thenReturn(usuario);
+            when(jwtUtil.generateToken(usuario)).thenReturn("jwt-token");
+
+            ResponseEntity<?> respuesta = authController.login(req);
+
+            assertEquals(200, respuesta.getStatusCode().value());
+            verify(userService).getByCorreo(CORREO);
+            verify(userService, never()).getByNombreUsuario(any());
+        }
+
+        @Test
+        @DisplayName("CP-006 (variante) - Inicio de sesión con correo vacío y sin usuario")
+        void login_correoVacioYSinUsuario_retorna401() {
+            UsuarioDTO req = new UsuarioDTO();
+            req.setCorreoUsuario("");
+            req.setNombreUsuario("");
+            req.setClaveUsuario(CLAVE_VALIDA);
+
+            ResponseEntity<?> respuesta = authController.login(req);
+
+            assertEquals(401, respuesta.getStatusCode().value());
+            verifyNoInteractions(userService, authenticationManager, jwtUtil);
+        }
+
+        @Test
+        @DisplayName("CP-008 - Inicio de sesión con cuenta restringida retorna 403")
+        void login_cuentaRestringida_retorna403() {
+            Authentication autenticacion = mock(Authentication.class);
+            when(userService.getByNombreUsuario(NOMBRE_USUARIO))
+                    .thenReturn(cuentaEnBd(true, true, Usuario.ESTADO_RESTRINGIDA));
+            when(authenticationManager.authenticate(any())).thenReturn(autenticacion);
+
+            ResponseEntity<?> respuesta = authController.login(solicitud(NOMBRE_USUARIO, CLAVE_VALIDA));
+
+            assertEquals(403, respuesta.getStatusCode().value());
+            assertTrue(cuerpo(respuesta).contains("restringida"));
+            verifyNoInteractions(jwtUtil);
+        }
     }
 
     // CU-006 - Activar cuenta
@@ -262,4 +312,5 @@ class AuthControllerTest {
         }
 
     }
+
 }

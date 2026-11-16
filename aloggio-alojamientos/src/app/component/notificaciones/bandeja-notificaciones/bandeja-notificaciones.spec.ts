@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BandejaNotificacionesComponent } from './bandeja-notificaciones.component';
+import { BandejaNotificacionesComponent } from './bandeja-notificaciones';
 
 describe('BandejaNotificacionesComponent', () => {
   let component: BandejaNotificacionesComponent;

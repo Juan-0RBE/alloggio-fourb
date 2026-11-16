@@ -9,230 +9,213 @@
       </div>
 
       <div class="caja-formulario">
-        <div class="indicador-pasos mb-4">
-          <div class="paso" [class.activo]="pasoActual === 1" [class.completado]="pasoActual > 1">
-            <span class="numero-paso">1</span>
-            <span class="texto-paso">Cuenta</span>
+
+        @if (registroExitoso) {
+          <div class="text-center d-flex flex-column gap-3 align-items-center">
+            <div class="icono-beneficio"><i class="pi pi-envelope"></i></div>
+            <h1 class="titulo-principal">¡Cuenta creada!</h1>
+
+            @if (correoEnviado) {
+              <p class="texto-secundario">
+                Enviamos un correo a <strong>{{ formulario.correoUsuario }}</strong>.
+                Revisa tu bandeja (y el spam) para verificar tu cuenta.
+              </p>
+            } @else {
+              <p class="texto-secundario">
+                Tu cuenta se creó, pero no pudimos enviar el correo de verificación.
+                Intenta iniciar sesión más tarde o contacta a soporte.
+              </p>
+            }
+            <button type="button" class="boton-dorado" (click)="irALogin()">Ir a iniciar sesión</button>
           </div>
-          <div class="linea-conector"></div>
-          <div class="paso" [class.activo]="pasoActual === 2">
-            <span class="numero-paso">2</span>
-            <span class="texto-paso">Perfil</span>
+        } @else {
+
+          <div class="indicador-pasos mb-4">
+            <div class="paso" [class.activo]="pasoActual === 1" [class.completado]="pasoActual > 1">
+              <span class="numero-paso">1</span><span class="texto-paso">Cuenta</span>
+            </div>
+            <div class="linea-conector"></div>
+            <div class="paso" [class.activo]="pasoActual === 2">
+              <span class="numero-paso">2</span><span class="texto-paso">Perfil</span>
+            </div>
           </div>
-        </div>
 
-        <form (ngSubmit)="alRegistrar()" class="formulario">
-          <div *ngIf="pasoActual === 1" class="d-flex flex-column gap-3">
-            <div class="mb-2">
-              <h1 class="titulo-principal">Crea tu cuenta gratis</h1>
-              <p class="texto-secundario">Configura tus credenciales de acceso a Aloggio.</p>
-            </div>
+          <form (ngSubmit)="alRegistrar()" class="formulario" novalidate>
 
-            <div class="campo-formulario">
-              <label for="nombreUsuario" class="etiqueta-campo">Nombre de Usuario</label>
-              <div class="grupo-input">
-                <span class="icono-input"><i class="pi pi-at"></i></span>
-                <input
-                  id="nombreUsuario"
-                  [(ngModel)]="formulario.nombreUsuario"
-                  name="nombreUsuario"
-                  type="text"
-                  class="entrada-control"
-                  placeholder="usuario123"
-                  required
-                />
+            <!-- ============ PASO 1 ============ -->
+            @if (pasoActual === 1) {
+              <div class="d-flex flex-column gap-3">
+                <div class="mb-2">
+                  <h1 class="titulo-principal">Crea tu cuenta gratis</h1>
+                  <p class="texto-secundario">Configura tus credenciales de acceso a Aloggio.</p>
+                </div>
+
+                <div class="campo-formulario">
+                  <label for="nombreUsuario" class="etiqueta-campo">Nombre de Usuario</label>
+                  <div class="grupo-input">
+                    <span class="icono-input"><i class="pi pi-at"></i></span>
+                    <input id="nombreUsuario" name="nombreUsuario" type="text" class="entrada-control"
+                           placeholder="usuario123" maxlength="20" autocomplete="username"
+                           [(ngModel)]="formulario.nombreUsuario"
+                           (input)="filtrar($event, 'nombreUsuario', 'usuario')" />
+                  </div>
+                </div>
+
+                <div class="campo-formulario">
+                  <label for="correoUsuario" class="etiqueta-campo">Correo Electrónico</label>
+                  <div class="grupo-input">
+                    <span class="icono-input"><i class="pi pi-envelope"></i></span>
+                    <input id="correoUsuario" name="correoUsuario" type="email" class="entrada-control"
+                           placeholder="nombre@correo.com" maxlength="100" autocomplete="email"
+                           [(ngModel)]="formulario.correoUsuario"
+                           (input)="filtrar($event, 'correoUsuario', 'sinEspacios')" />
+                  </div>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-6 campo-formulario">
+                    <label for="claveUsuario" class="etiqueta-campo">Contraseña</label>
+                    <div class="grupo-input">
+                      <input id="claveUsuario" name="claveUsuario" class="entrada-control ps-3"
+                             placeholder="••••••••" maxlength="20" autocomplete="new-password"
+                             [type]="mostrarClavePrincipal ? 'text' : 'password'"
+                             [(ngModel)]="formulario.claveUsuario"
+                             (input)="filtrar($event, 'claveUsuario', 'sinEspacios')" />
+                      <button type="button" class="boton-peek"
+                              (click)="mostrarClavePrincipal = !mostrarClavePrincipal">
+                        <i class="pi" [class.pi-eye]="!mostrarClavePrincipal"
+                           [class.pi-eye-slash]="mostrarClavePrincipal"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="col-6 campo-formulario">
+                    <label for="confirmarClave" class="etiqueta-campo">Confirmar</label>
+                    <div class="grupo-input">
+                      <input id="confirmarClave" name="confirmarClave" class="entrada-control ps-3"
+                             placeholder="••••••••" maxlength="20" autocomplete="new-password"
+                             [type]="mostrarClaveConfirmar ? 'text' : 'password'"
+                             [(ngModel)]="formulario.confirmarClave"
+                             (input)="filtrar($event, 'confirmarClave', 'sinEspacios')" />
+                      <button type="button" class="boton-peek"
+                              (click)="mostrarClaveConfirmar = !mostrarClaveConfirmar">
+                        <i class="pi" [class.pi-eye]="!mostrarClaveConfirmar"
+                           [class.pi-eye-slash]="mostrarClaveConfirmar"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <small class="texto-secundario">
+                  6-20 caracteres, con mayúscula, minúscula, número y carácter especial.
+                </small>
+
+                @if (mensajeError) { <p class="text-danger small mb-0" role="alert">{{ mensajeError }}</p> }
+
+                <button type="button" class="boton-dorado mt-2" (click)="siguientePaso()">
+                  Siguiente: Datos Personales &rarr;
+                </button>
               </div>
-            </div>
+            }
 
-            <div class="campo-formulario">
-              <label for="correoUsuario" class="etiqueta-campo">Correo Electrónico</label>
-              <div class="grupo-input">
-                <span class="icono-input"><i class="pi pi-envelope"></i></span>
-                <input
-                  id="correoUsuario"
-                  [(ngModel)]="formulario.correoUsuario"
-                  name="correoUsuario"
-                  type="email"
-                  class="entrada-control"
-                  placeholder="nombre@correo.com"
-                  required
-                />
-              </div>
-            </div>
+            <!-- ============ PASO 2 ============ -->
+            @if (pasoActual === 2) {
+              <div class="d-flex flex-column gap-3">
+                <div class="mb-2">
+                  <h1 class="titulo-principal">Información Personal</h1>
+                  <p class="texto-secundario">Requerida para validar tus reservas o publicaciones.</p>
+                </div>
 
-            <div class="row g-2">
-              <div class="col-6 campo-formulario">
-                <label for="claveUsuario" class="etiqueta-campo">Contraseña</label>
-                <div class="grupo-input">
-                  <input
-                    id="claveUsuario"
-                    [(ngModel)]="formulario.claveUsuario"
-                    name="claveUsuario"
-                    [type]="mostrarClavePrincipal ? 'text' : 'password'"
-                    class="entrada-control ps-3"
-                    placeholder="••••••••"
-                    required
-                  />
-                  <button
-                    type="button"
-                    class="boton-peek"
-                    (click)="mostrarClavePrincipal = !mostrarClavePrincipal"
-                  >
-                    <i class="pi {{ mostrarClavePrincipal ? 'pi-eye-slash' : 'pi-eye' }}"></i>
+                <div class="row g-2">
+                  <div class="col-6 campo-formulario">
+                    <label for="primerNombre" class="etiqueta-campo">Primer Nombre</label>
+                    <input id="primerNombre" name="primerNombre" type="text" class="entrada-control"
+                           placeholder="Carlos" maxlength="30" autocomplete="given-name"
+                           [(ngModel)]="formulario.primerNombre"
+                           (input)="filtrar($event, 'primerNombre', 'letras')" />
+                  </div>
+                  <div class="col-6 campo-formulario">
+                    <label for="segundoNombre" class="etiqueta-campo">
+                      Segundo Nombre <span class="opcional">(Opcional)</span>
+                    </label>
+                    <input id="segundoNombre" name="segundoNombre" type="text" class="entrada-control"
+                           placeholder="Andrés" maxlength="30"
+                           [(ngModel)]="formulario.segundoNombre"
+                           (input)="filtrar($event, 'segundoNombre', 'letras')" />
+                  </div>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-6 campo-formulario">
+                    <label for="primerApellido" class="etiqueta-campo">Primer Apellido</label>
+                    <input id="primerApellido" name="primerApellido" type="text" class="entrada-control"
+                           placeholder="Pérez" maxlength="30" autocomplete="family-name"
+                           [(ngModel)]="formulario.primerApellido"
+                           (input)="filtrar($event, 'primerApellido', 'letras')" />
+                  </div>
+                  <div class="col-6 campo-formulario">
+                    <label for="segundoApellido" class="etiqueta-campo">
+                      Segundo Apellido <span class="opcional">(Opcional)</span>
+                    </label>
+                    <input id="segundoApellido" name="segundoApellido" type="text" class="entrada-control"
+                           placeholder="Gómez" maxlength="30"
+                           [(ngModel)]="formulario.segundoApellido"
+                           (input)="filtrar($event, 'segundoApellido', 'letras')" />
+                  </div>
+                </div>
+
+                <div class="campo-formulario">
+                  <label for="documentoIdentidad" class="etiqueta-campo">Documento de Identidad</label>
+                  <div class="grupo-input">
+                    <span class="icono-input"><i class="pi pi-id-card"></i></span>
+                    <input id="documentoIdentidad" name="documentoIdentidad" type="text"
+                           inputmode="numeric" class="entrada-control"
+                           placeholder="1098765432" maxlength="10"
+                           [(ngModel)]="formulario.documentoIdentidad"
+                           (input)="filtrar($event, 'documentoIdentidad', 'numeros')" />
+                  </div>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-6 campo-formulario">
+                    <label for="numeroTelefono" class="etiqueta-campo">Teléfono</label>
+                    <div class="grupo-input">
+                      <span class="icono-input"><i class="pi pi-phone"></i></span>
+                      <input id="numeroTelefono" name="numeroTelefono" type="tel"
+                             inputmode="numeric" class="entrada-control"
+                             placeholder="3001234567" maxlength="10" autocomplete="tel"
+                             [(ngModel)]="formulario.numeroTelefono"
+                             (input)="filtrar($event, 'numeroTelefono', 'numeros')" />
+                    </div>
+                  </div>
+
+                  <div class="col-6 campo-formulario">
+                    <label for="fechaNacimiento" class="etiqueta-campo">Nacimiento</label>
+                    <div class="grupo-input">
+                      <span class="icono-input"><i class="pi pi-calendar"></i></span>
+                      <input id="fechaNacimiento" name="fechaNacimiento" type="date"
+                             class="entrada-control border-0 ps-0"
+                             [min]="fechaMinima" [max]="fechaMaxima"
+                             [(ngModel)]="formulario.fechaNacimiento" />
+                    </div>
+                  </div>
+                </div>
+
+                @if (mensajeError) { <p class="text-danger small mb-0" role="alert">{{ mensajeError }}</p> }
+
+                <div class="d-flex gap-2 mt-2">
+                  <button type="button" class="boton-secundario w-50" (click)="volver()">&larr; Volver</button>
+                  <button type="submit" class="boton-dorado w-50" [disabled]="cargando">
+                    {{ cargando ? 'Registrando...' : 'Finalizar Registro' }}
                   </button>
                 </div>
               </div>
-
-              <div class="col-6 campo-formulario">
-                <label for="confirmarClave" class="etiqueta-campo">Confirmar</label>
-                <div class="grupo-input">
-                  <input
-                    id="confirmarClave"
-                    [(ngModel)]="formulario.confirmarClave"
-                    name="confirmarClave"
-                    [type]="mostrarClaveConfirmar ? 'text' : 'password'"
-                    class="entrada-control ps-3"
-                    placeholder="••••••••"
-                    required
-                  />
-                  <button
-                    type="button"
-                    class="boton-peek"
-                    (click)="mostrarClaveConfirmar = !mostrarClaveConfirmar"
-                  >
-                    <i class="pi {{ mostrarClaveConfirmar ? 'pi-eye-slash' : 'pi-eye' }}"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <button type="button" class="boton-dorado mt-3" (click)="siguientePaso()">
-              Siguiente: Datos Personales &rarr;
-            </button>
-          </div>
-
-          <div *ngIf="pasoActual === 2" class="d-flex flex-column gap-3">
-            <div class="mb-2">
-              <h1 class="titulo-principal">Información Personal</h1>
-              <p class="texto-secundario">Requerida para validar tus reservas o publicaciones.</p>
-            </div>
-
-            <div class="row g-2">
-              <div class="col-6 campo-formulario">
-                <label for="primerNombre" class="etiqueta-campo">Primer Nombre</label>
-                <input
-                  id="primerNombre"
-                  [(ngModel)]="formulario.primerNombre"
-                  name="primerNombre"
-                  type="text"
-                  class="entrada-control"
-                  placeholder="Carlos"
-                  required
-                />
-              </div>
-              <div class="col-6 campo-formulario">
-                <label for="segundoNombre" class="etiqueta-campo"
-                  >Segundo Nombre <span class="opcional">(Opcional)</span></label
-                >
-                <input
-                  id="segundoNombre"
-                  [(ngModel)]="formulario.segundoNombre"
-                  name="segundoNombre"
-                  type="text"
-                  class="entrada-control"
-                  placeholder="Andrés"
-                />
-              </div>
-            </div>
-
-            <div class="row g-2">
-              <div class="col-6 campo-formulario">
-                <label for="primerApellido" class="etiqueta-campo">Primer Apellido</label>
-                <input
-                  id="primerApellido"
-                  [(ngModel)]="formulario.primerApellido"
-                  name="primerApellido"
-                  type="text"
-                  class="entrada-control"
-                  placeholder="Pérez"
-                  required
-                />
-              </div>
-              <div class="col-6 campo-formulario">
-                <label for="segundoApellido" class="etiqueta-campo"
-                  >Segundo Apellido <span class="opcional">(Opcional)</span></label
-                >
-                <input
-                  id="segundoApellido"
-                  [(ngModel)]="formulario.segundoApellido"
-                  name="segundoApellido"
-                  type="text"
-                  class="entrada-control"
-                  placeholder="Gómez"
-                />
-              </div>
-            </div>
-
-            <div class="campo-formulario">
-              <label for="documentoIdentidad" class="etiqueta-campo">Documento de Identidad</label>
-              <div class="grupo-input">
-                <span class="icono-input"><i class="pi pi-id-card"></i></span>
-                <input
-                  id="documentoIdentidad"
-                  [(ngModel)]="formulario.documentoIdentidad"
-                  name="documentoIdentidad"
-                  type="text"
-                  class="entrada-control"
-                  placeholder="1098765432"
-                  required
-                />
-              </div>
-            </div>
-
-            <div class="row g-2">
-              <div class="col-6 campo-formulario">
-                <label for="numeroTelefono" class="etiqueta-campo">Teléfono</label>
-                <div class="grupo-input">
-                  <span class="icono-input"><i class="pi pi-phone"></i></span>
-                  <input
-                    id="numeroTelefono"
-                    [(ngModel)]="formulario.numeroTelefono"
-                    name="numeroTelefono"
-                    type="tel"
-                    class="entrada-control"
-                    placeholder="3001234567"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div class="campo-formulario">
-                <label for="fechaNacimiento" class="etiqueta-campo">Nacimiento</label>
-                <div class="grupo-input">
-                  <span class="icono-input"><i class="pi pi-calendar"></i></span>
-                  <input
-                    id="fechaNacimiento"
-                    [(ngModel)]="formulario.fechaNacimiento"
-                    name="fechaNacimiento"
-                    type="date"
-                    class="entrada-control border-0 ps-0"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="d-flex gap-2 mt-3">
-              <button type="button" class="boton-secundario w-50" (click)="pasoActual = 1">
-                &larr; Volver
-              </button>
-              <button type="submit" class="boton-dorado w-50">Finalizar Registro</button>
-            </div>
-          </div>
-        </form>
+            }
+          </form>
+        }
       </div>
-
       <div class="pie-pagina" align="center">
-        <span class="texto-secundario">¿Ya tienes cuenta?</span>
+        <span class="texto-secundario">¿Ya tienes cuenta? </span>
         <a routerLink="/login" class="enlace-dorado">Inicia sesión &rarr;</a>
       </div>
     </div>
@@ -280,68 +263,6 @@
             </p>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-  <div
-    class="modal-backdrop-aloggio"
-    *ngIf="mostrarModalVerificacion"
-    (click)="mostrarModalVerificacion = false"
-  >
-    <div class="modal-tarjeta" (click)="$event.stopPropagation()">
-      <button type="button" class="boton-cerrar" (click)="mostrarModalVerificacion = false">
-        <i class="pi pi-times"></i>
-      </button>
-
-      <div class="text-center mb-4">
-        <div
-          class="icono-circular mb-3 mx-auto"
-          style="
-            width: 50px;
-            height: 50px;
-            background: rgba(229, 184, 105, 0.1);
-            border: 1px solid rgba(229, 184, 105, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <i class="pi pi-envelope text-dorado fs-4" style="color: #e5b869"></i>
-        </div>
-        <h2 class="titulo-principal h4 text-white">Verifica tu correo</h2>
-        <p class="texto-secundario small">
-          Hemos enviado un código de 6 dígitos a
-          <strong class="text-white">{{ formulario.correoUsuario }}</strong
-          >.
-        </p>
-      </div>
-
-      <form (ngSubmit)="verificarCodigo()" class="d-flex flex-column gap-3">
-        <div class="campo-formulario">
-          <label class="etiqueta-campo text-center d-block mb-1">Código de Verificación</label>
-          <input
-            type="text"
-            [(ngModel)]="codigoVerificacion"
-            name="codigoVerificacion"
-            class="entrada-control text-center fs-4 tracking-widest"
-            placeholder="123456"
-            maxlength="6"
-            required
-          />
-        </div>
-
-        <button type="submit" class="boton-dorado py-2 mt-2 fw-semibold">Confirmar cuenta</button>
-      </form>
-
-      <div class="text-center mt-3">
-        <button
-          type="button"
-          class="btn btn-link enlace-dorado small text-decoration-none p-0 border-0 bg-transparent"
-          (click)="reenviarCodigo()"
-        >
-          ¿No recibiste el código? Reenviar
-        </button>
       </div>
     </div>
   </div>
