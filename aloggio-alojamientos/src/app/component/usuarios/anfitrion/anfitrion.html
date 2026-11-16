@@ -45,7 +45,15 @@
       </button>
     </div>
 
-    <div class="grid-mis-alojamientos" *ngIf="misAlojamientos().length > 0; else sinAlojamientos">
+    <div class="estado-vacio" *ngIf="cargando()">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Cargando tus alojamientos...</p>
+    </div>
+
+    <div
+      class="grid-mis-alojamientos"
+      *ngIf="!cargando() && misAlojamientos().length > 0; else sinAlojamientos"
+    >
       <div class="tarjeta-propiedad" *ngFor="let aloj of misAlojamientos()">
         <div class="imagen-contenedor">
           <img
@@ -158,7 +166,7 @@
     </div>
 
     <ng-template #sinAlojamientos>
-      <div class="estado-vacio">
+      <div class="estado-vacio" *ngIf="!cargando()">
         <i class="pi pi-home"></i>
         <h2>Aún no tienes alojamientos publicados</h2>
         <p>Empieza a compartir tus espacios con miles de viajeros hoy mismo.</p>
@@ -397,8 +405,19 @@
 
       <div class="modal-acciones">
         <button class="boton-secundario" type="button" (click)="cerrarModal()">Cancelar</button>
-        <button class="boton-dorado" type="button" (click)="guardarAlojamiento()">
-          {{ editandoId() !== null ? 'Guardar cambios' : 'Guardar borrador' }}
+        <button
+          class="boton-dorado"
+          type="button"
+          [disabled]="guardando()"
+          (click)="guardarAlojamiento()"
+        >
+          {{
+            guardando()
+              ? 'Guardando...'
+              : editandoId() !== null
+                ? 'Guardar cambios'
+                : 'Guardar borrador'
+          }}
         </button>
       </div>
     </div>
