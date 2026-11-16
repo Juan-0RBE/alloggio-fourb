@@ -9,6 +9,7 @@ import { ResultadoReserva } from './component/reservas/resultado-reserva/resulta
 import { MisReservas } from './component/reservas/mis-reservas/mis-reservas';
 import { FormularioResena } from './component/resenas/formulario-resena/formulario-resena';
 import { Usuario } from './component/usuarios/usuario/usuario';
+import { ReactivarCuenta } from './component/autenticacion/reactivar-cuenta/reactivar-cuenta';
 import { Anfitrion } from './component/usuarios/anfitrion/anfitrion';
 import { Admin } from './component/usuarios/admin/admin';
 import { adminGuard, userGuard } from './service/auth.guard';
@@ -30,7 +31,8 @@ export const routes: Routes = [
       { path: 'mis-reservas', component: MisReservas },
       { path: 'formulario-resena', component: FormularioResena },
       { path: 'usuario', component: Usuario },
-      { path: 'anfitrion', component: Anfitrion }
+      { path: 'anfitrion', component: Anfitrion },
+      { path: 'reactivar-cuenta', component: ReactivarCuenta },
     ],
   },
 

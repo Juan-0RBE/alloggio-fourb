@@ -1,12 +1,12 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ETIQUETAS_ESTADO, ReservaVista } from '../mis-reservas/mis-reservas.component';
+import { ETIQUETAS_ESTADO, ReservaVista } from '../mis-reservas/mis-reservas';
 import {
   CancelacionPayload,
   FormularioCancelacion,
 } from '../formulario-cancelacion/formulario-cancelacion.component';
-import { FormularioResena } from '../../resenas/formulario-resena/formulario-resena.component';
+import { FormularioResena } from '../../resenas/formulario-resena/formulario-resena';
 
 const DESCRIPCIONES_ESTADO: Record<ReservaVista['estado'], string> = {
   CONFIRMADA: 'Tu reserva está confirmada y las fechas están bloqueadas para ti.',
