@@ -1,10 +1,13 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { UsuarioService } from '../../../service/usuario.service';
+import { AuthService } from '../../../service/auth.service';
 
 const REGEX_NOMBRE = /^\p{L}[\p{L} '\-]{0,49}$/u;
-const REGEX_TELEFONO = /^\+?\d{7,15}$/;
+const REGEX_TELEFONO = /^\+?\d{10}$/;
 const REGEX_CARACTER_ESPECIAL = /[!@#$%^&*(),.?":{}|<>]/;
 
 type SeccionPerfil = 'informacion' | 'seguridad' | 'cuenta';
@@ -94,6 +97,12 @@ export class Usuario {
   datosGuardados: FormularioPerfil = this.crearFormularioVacio();
   formulario: FormularioPerfil = { ...this.datosGuardados };
   intentoGuardar: boolean = false;
+  guardandoClave: boolean = false;
+  errorClave: string = '';
+  exitoClave: string = '';
+
+  desactivando: boolean = false;
+  errorCuenta: string = '';
 
   // Seguridad
   readonly camposClave: { campo: CampoClave; etiqueta: string }[] = [
@@ -195,7 +204,7 @@ export class Usuario {
     if (!valor) {
       return this.intentoGuardar ? 'El número de teléfono es obligatorio.' : '';
     }
-    return REGEX_TELEFONO.test(valor) ? '' : 'Ingresa de 7 a 15 dígitos (puede iniciar con +).';
+    return REGEX_TELEFONO.test(valor) ? '' : 'El teléfono debe tener 10 dígitos';
   }
 
   restablecerFormulario() {
@@ -203,31 +212,60 @@ export class Usuario {
     this.intentoGuardar = false;
   }
 
-  alGuardarPerfil() {
-    this.intentoGuardar = true;
-    if (!this.informacionValida) {
-      return;
-    }
-    console.log('Guardando perfil...');
-  }
-
   alCambiarClave() {
-    if (!this.claveValida) {
-      return;
-    }
-    console.log('Actualizando contraseña...');
-  }
+    this.errorClave = '';
+    this.exitoClave = '';
+    if (!this.claveValida || this.guardandoClave) return;
 
+    this.guardandoClave = true;
+    this.usuarioServ
+      .cambiarClave(this.cambioClave.claveActual, this.cambioClave.claveNueva)
+      .subscribe({
+        next: (mensaje) => {
+          this.guardandoClave = false;
+          this.exitoClave = mensaje;
+          this.cambioClave = { claveActual: '', claveNueva: '', confirmarClave: '' };
+          this.mostrarClave = { claveActual: false, claveNueva: false, confirmarClave: false };
+          this.cdr.detectChanges();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.guardandoClave = false;
+
+          // 401/403 aquí = contraseña actual incorrecta, NO sesión expirada
+          if (err.status === 401 || err.status === 403) {
+            this.errorClave =
+              typeof err.error === 'string' && err.error
+                ? err.error
+                : 'La contraseña actual no es correcta.';
+          } else {
+            this.manejarError(err, 'errorClave');
+          }
+          this.cdr.detectChanges();
+        },
+      });
+  }
   cancelarDesactivacion() {
     this.mostrarConfirmacion = false;
     this.confirmarDesactivacion = false;
   }
 
   alDesactivarCuenta() {
-    if (!this.confirmarDesactivacion) {
+    if (!this.confirmarDesactivacion || this.desactivando) {
       return;
     }
-    console.log('Desactivando cuenta...');
+    this.errorCuenta = '';
+    this.desactivando = true;
+
+    this.usuarioServ.desactivarCuenta().subscribe({
+      next: () => {
+        this.desactivando = false;
+        this.authServ.logout();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.desactivando = false;
+        this.manejarError(err, 'errorCuenta');
+      },
+    });
   }
 
   private esNombreValido(valor: string, obligatorio: boolean): boolean {
@@ -243,5 +281,131 @@ export class Usuario {
       segundoApellido: '',
       numeroTelefono: '',
     };
+  }
+
+  cargandoPerfil: boolean = false;
+  guardando: boolean = false;
+  errorCarga: string = '';
+  errorGuardar: string = '';
+  mensajeExito: string = '';
+
+  constructor(
+    private usuarioServ: UsuarioService,
+    private authServ: AuthService,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  ngOnInit() {
+    this.cargarPerfil();
+  }
+
+  cargarPerfil() {
+    this.cargandoPerfil = true;
+    this.errorCarga = '';
+
+    this.usuarioServ.obtenerPerfil().subscribe({
+      next: (p) => {
+        this.perfil = {
+          correoUsuario: p.correoUsuario ?? '',
+          nombreUsuario: p.nombreUsuario ?? '',
+          documentoIdentidad: p.documentoIdentidad ?? '',
+          fechaNacimiento: p.fechaNacimiento ?? '',
+          isVerified: !!p.isVerified,
+          role: p.role ?? 'USUARIO',
+        };
+        this.datosGuardados = {
+          primerNombre: p.primerNombre ?? '',
+          segundoNombre: p.segundoNombre ?? '',
+          primerApellido: p.primerApellido ?? '',
+          segundoApellido: p.segundoApellido ?? '',
+          numeroTelefono: p.numeroTelefono ?? '',
+        };
+        this.formulario = { ...this.datosGuardados };
+        this.cargandoPerfil = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cargandoPerfil = false;
+        this.manejarError(err, 'errorCarga');
+      },
+    });
+  }
+
+  alGuardarPerfil() {
+    this.intentoGuardar = true;
+    this.errorGuardar = '';
+    this.mensajeExito = '';
+
+    if (!this.informacionValida || this.guardando) {
+      return;
+    }
+
+    const f = this.formulario;
+    const limpio: FormularioPerfil = {
+      primerNombre: f.primerNombre.trim(),
+      segundoNombre: f.segundoNombre.trim(),
+      primerApellido: f.primerApellido.trim(),
+      segundoApellido: f.segundoApellido.trim(),
+      numeroTelefono: f.numeroTelefono.trim(),
+    };
+
+    this.guardando = true;
+    this.usuarioServ
+      .actualizarPerfil({
+        ...limpio,
+        // Los opcionales vacíos se envían como null
+        segundoNombre: limpio.segundoNombre || null,
+        segundoApellido: limpio.segundoApellido || null,
+      })
+      .subscribe({
+        next: (mensaje) => {
+          this.guardando = false;
+          this.datosGuardados = limpio;
+          this.formulario = { ...limpio };
+          this.intentoGuardar = false;
+          this.mensajeExito = mensaje;
+          this.cdr.detectChanges();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.guardando = false;
+          this.manejarError(err, 'errorGuardar');
+        },
+      });
+  }
+
+  private manejarError(
+    err: HttpErrorResponse,
+    destino: 'errorCarga' | 'errorGuardar' | 'errorClave' | 'errorCuenta',
+  ) {
+    if (err.status === 401 || err.status === 403) {
+      this.authServ.logout();
+      return;
+    }
+    this[destino] =
+      typeof err.error === 'string' && err.error
+        ? err.error
+        : 'No se pudo conectar con el servidor.';
+    this.cdr.detectChanges();
+  }
+
+  soloLetras(event: Event, campo: string): void {
+    const input = event.target as HTMLInputElement;
+    const limpio = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]/g, '');
+
+    if (input.value !== limpio) {
+      input.value = limpio
+    }
+    // @ts-ignore
+    this.formulario[campo] = limpio;
+  }
+
+  soloNumeros(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const limpio = input.value.replace(/\D/g, ''); // \D = todo lo que no sea dígito
+
+    if (input.value !== limpio) {
+      input.value = limpio;
+    }
+    this.formulario.numeroTelefono = limpio;
   }
 }

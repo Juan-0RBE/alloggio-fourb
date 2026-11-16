@@ -24,6 +24,7 @@ public class UsuarioDTO {
     private String estadoCuenta;
     private Boolean estaActivo;
     private Boolean isVerified;
+    private String claveActual;
     private Role role;
 
     /**
@@ -72,8 +73,48 @@ public class UsuarioDTO {
         this.estadoCuenta = estadoCuenta;
         this.estaActivo = estaActivo;
     }
+    
+    
 
-    public Long getIdUsuario() {
+    public UsuarioDTO(String correoUsuario, String nombreUsuario, String claveUsuario, String documentoIdentidad,
+			String primerNombre, String segundoNombre, String primerApellido, String segundoApellido,
+			LocalDate fechaNacimiento, Integer edad, String numeroTelefono, String estadoCuenta, Boolean estaActivo,
+			Boolean isVerified, String claveActual, Role role, Boolean confirmar) {
+		super();
+		this.correoUsuario = correoUsuario;
+		this.nombreUsuario = nombreUsuario;
+		this.claveUsuario = claveUsuario;
+		this.documentoIdentidad = documentoIdentidad;
+		this.primerNombre = primerNombre;
+		this.segundoNombre = segundoNombre;
+		this.primerApellido = primerApellido;
+		this.segundoApellido = segundoApellido;
+		this.fechaNacimiento = fechaNacimiento;
+		this.edad = edad;
+		this.numeroTelefono = numeroTelefono;
+		this.estadoCuenta = estadoCuenta;
+		this.estaActivo = estaActivo;
+		this.isVerified = isVerified;
+		this.claveActual = claveActual;
+		this.role = role;
+		this.confirmar = confirmar;
+	}
+
+	/**
+	 * @return the claveActual
+	 */
+	public String getClaveActual() {
+		return claveActual;
+	}
+
+	/**
+	 * @param claveActual the claveActual to set
+	 */
+	public void setClaveActual(String claveActual) {
+		this.claveActual = claveActual;
+	}
+
+	public Long getIdUsuario() {
         return idUsuario;
     }
 
