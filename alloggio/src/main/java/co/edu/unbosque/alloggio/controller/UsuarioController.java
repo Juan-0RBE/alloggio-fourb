@@ -291,5 +291,28 @@ public class UsuarioController {
             return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    @Operation(summary = "Cambiar la contraseña del usuario autenticado")
+    @PutMapping("/perfil/clave")
+    public ResponseEntity<String> cambiarClave(Authentication authentication, @RequestBody UsuarioDTO datos) {
+        int status = usuarioServ.cambiarClave(authentication.getName(), datos.getClaveActual(),
+                datos.getClaveUsuario());
+
+        if (status == 0) {
+            return new ResponseEntity<>("Contraseña actualizada exitosamente", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("Usuario no encontrado", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("La contraseña actual es incorrecta", HttpStatus.BAD_REQUEST);
+        } else if (status == 3) {
+            return new ResponseEntity<>("La contraseña no cumple con los requisitos de complejidad",
+                    HttpStatus.BAD_REQUEST);
+        } else if (status == 4) {
+            return new ResponseEntity<>("La nueva contraseña debe ser diferente a la actual",
+                    HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }

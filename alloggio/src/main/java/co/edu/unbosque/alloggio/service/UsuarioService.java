@@ -193,6 +193,35 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
         return 0; // Contraseña actualizada exitosamente
 
     }
+    
+    /**
+     * Cambia la contraseña del usuario autenticado verificando la actual.
+     *
+     * @return 0 si es exitoso, 1 si el usuario no existe, 2 si la clave actual es
+     *         incorrecta, 3 si la nueva no cumple los requisitos, 4 si la nueva es
+     *         igual a la actual
+     */
+    public int cambiarClave(String nombreUsuario, String claveActual, String claveNueva) {
+        Optional<Usuario> found = usuarioRepo.findByNombreUsuario(nombreUsuario);
+        if (!found.isPresent()) {
+            return 1;
+        }
+        Usuario usuario = found.get();
+
+        if (claveActual == null || !passwordEncoder.matches(claveActual, usuario.getClaveUsuario())) {
+            return 2;
+        }
+        if (claveNueva == null || !claveNueva.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$")) {
+            return 3;
+        }
+        if (passwordEncoder.matches(claveNueva, usuario.getClaveUsuario())) {
+            return 4;
+        }
+
+        usuario.setClaveUsuario(passwordEncoder.encode(claveNueva));
+        usuarioRepo.save(usuario);
+        return 0;
+    }
 
     /**
      * Cuenta la cantidad de usuarios.

@@ -56,7 +56,7 @@ public class SecurityConfig {
                         .hasRole("ADMINISTRADOR")
 
                         // Del módulo de usuarios, solo estos dos son para cualquier autenticado
-                        .requestMatchers("/usuario/perfil", "/usuario/desactivar").authenticated()
+                        .requestMatchers("/usuario/perfil", "/usuario/desactivar", "/usuario/perfil/clave").authenticated()
                         .requestMatchers("/usuario/**").hasRole("ADMINISTRADOR")
 
                         .requestMatchers("/cotizacion/**", "/notificacion/**", "/publicacion/**", "/resena/**")
