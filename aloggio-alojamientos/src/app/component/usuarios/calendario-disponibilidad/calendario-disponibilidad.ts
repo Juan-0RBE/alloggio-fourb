@@ -29,8 +29,8 @@ export const ETIQUETAS_PERIODO: Record<TipoPeriodo, string> = {
   selector: 'app-calendario-disponibilidad',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, DatePipe],
-  templateUrl: './calendario-disponibilidad.component.html',
-  styleUrl: './calendario-disponibilidad.component.scss',
+  templateUrl: './calendario-disponibilidad.html',
+  styleUrl: './calendario-disponibilidad.scss',
 })
 export class CalendarioDisponibilidad implements OnInit {
   readonly etiquetasPeriodo = ETIQUETAS_PERIODO;

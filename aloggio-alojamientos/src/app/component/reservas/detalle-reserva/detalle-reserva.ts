@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import {
   CancelacionPayload,
   FormularioCancelacion,
-} from '../formulario-cancelacion/formulario-cancelacion.component';
+} from '../formulario-cancelacion/formulario-cancelacion';
 import { FormularioResena } from '../../resenas/formulario-resena/formulario-resena';
 import { ETIQUETAS_ESTADO, ReservaVista } from '../mis-reservas/mis-reservas';
 
@@ -18,8 +18,8 @@ const DESCRIPCIONES_ESTADO: Record<ReservaVista['estado'], string> = {
   selector: 'app-detalle-reserva',
   standalone: true,
   imports: [CommonModule, RouterModule, DatePipe, FormularioCancelacion, FormularioResena],
-  templateUrl: './detalle-reserva.component.html',
-  styleUrl: './detalle-reserva.component.scss',
+  templateUrl: './detalle-reserva.html',
+  styleUrl: './detalle-reserva.scss',
 })
 export class DetalleReserva implements OnInit {
   readonly etiquetasEstado = ETIQUETAS_ESTADO;

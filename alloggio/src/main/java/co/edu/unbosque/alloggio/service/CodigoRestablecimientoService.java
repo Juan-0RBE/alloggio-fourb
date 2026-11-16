@@ -83,9 +83,26 @@ public class CodigoRestablecimientoService {
     }
 
     /**
+     * Busca el código vigente del usuario y comprueba que coincida y no haya expirado.
+     */
+    private Optional<CodigoRestablecimiento> obtenerCodigoValido(Usuario usuario, String codigo) {
+        if (codigo == null) {
+            return Optional.empty();
+        }
+        Optional<CodigoRestablecimiento> vigente = codigoRepo
+                .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(usuario);
+
+        if (!vigente.isPresent()
+                || !vigente.get().getCodigo().equals(codigo.trim())
+                || vigente.get().getFechaExpiracion().isBefore(LocalDateTime.now())) {
+            return Optional.empty();
+        }
+        return vigente;
+    }
+
+    /**
      * Valida el código y, si es correcto, actualiza la contraseña.
      *
-     * @param dto correo, código y nueva contraseña
      * @return 0 si es exitoso, 1 si el correo no está registrado, 2 si el código es
      *         inválido o expiró, 3 si la contraseña no cumple los requisitos
      */
@@ -93,15 +110,13 @@ public class CodigoRestablecimientoService {
     public int confirmarCambio(CodigoRestablecimientoDTO dto) {
         Optional<Usuario> found = usuarioRepo.findByCorreoUsuario(dto.getCorreoUsuario());
         if (!found.isPresent()) {
-            return 1; // No hay una cuenta asociada al correo
+            return 1;
         }
         Usuario usuario = found.get();
 
-        Optional<CodigoRestablecimiento> vigente = codigoRepo
-                .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(usuario);
-        if (!vigente.isPresent() || !vigente.get().getCodigo().equals(dto.getCodigo())
-                || vigente.get().getFechaExpiracion().isBefore(LocalDateTime.now())) {
-            return 2; // Código inválido o expirado
+        Optional<CodigoRestablecimiento> vigente = obtenerCodigoValido(usuario, dto.getCodigo());
+        if (!vigente.isPresent()) {
+            return 2;
         }
 
         if (dto.getNuevaClave() == null) {
@@ -110,13 +125,27 @@ public class CodigoRestablecimientoService {
         UsuarioDTO claveDTO = new UsuarioDTO();
         claveDTO.setClaveUsuario(dto.getNuevaClave());
         if (usuarioServ.updatePasswordById(usuario.getIdUsuario(), claveDTO) != 0) {
-            return 3; // La contraseña no cumple los requisitos; el código sigue vigente
+            return 3;
         }
 
         CodigoRestablecimiento codigo = vigente.get();
         codigo.setUsado(true);
         codigoRepo.save(codigo);
-        return 0; // Contraseña actualizada
+        return 0;
+    }
+
+    /**
+     * Comprueba que el código sea válido sin consumirlo ni cambiar la contraseña.
+     *
+     * @return 0 si el código es válido, 1 si el correo no está registrado, 2 si el
+     *         código es inválido o expiró
+     */
+    public int verificarCodigo(String correo, String codigo) {
+        Optional<Usuario> found = usuarioRepo.findByCorreoUsuario(correo);
+        if (!found.isPresent()) {
+            return 1;
+        }
+        return obtenerCodigoValido(found.get(), codigo).isPresent() ? 0 : 2;
     }
 
 }

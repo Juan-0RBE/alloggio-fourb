@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CalendarioDisponibilidadComponent } from './calendario-disponibilidad.component';
+import { CalendarioDisponibilidadComponent } from './calendario-disponibilidad';
 
 describe('CalendarioDisponibilidadComponent', () => {
   let component: CalendarioDisponibilidadComponent;

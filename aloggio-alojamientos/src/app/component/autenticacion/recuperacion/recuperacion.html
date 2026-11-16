@@ -42,7 +42,7 @@
           <span class="icono-input"><i class="pi pi-envelope"></i></span>
           <input
             id="correo"
-            [(ngModel)]="correo"
+            [(ngModel)]="correoUsuario"
             name="correo"
             type="email"
             class="entrada-control"
@@ -51,8 +51,10 @@
           />
         </div>
       </div>
-
-      <button type="submit" class="boton-dorado py-2 mt-2 fw-semibold">Enviar instrucciones</button>
+      @if (errorCorreo()) { <p class="text-danger small mb-0" role="alert">{{ errorCorreo() }}</p> }
+      <button type="submit" class="boton-dorado py-2 mt-2 fw-semibold" [disabled]="cargando()">
+        Enviar instrucciones
+      </button>
     </form>
 
     <div class="text-center mt-4">
@@ -63,9 +65,9 @@
   </div>
 </div>
 
-<div class="modal-backdrop-aloggio" *ngIf="mostrarModalVerificacion">
+<div class="modal-backdrop-aloggio" *ngIf="mostrarModalVerificacion()">
   <div class="modal-tarjeta" (click)="$event.stopPropagation()">
-    <button type="button" class="boton-cerrar" (click)="mostrarModalVerificacion = false">
+    <button type="button" class="boton-cerrar" (click)="cerrarModalVerificacion()">
       <i class="pi pi-times"></i>
     </button>
 
@@ -87,7 +89,7 @@
       </div>
       <h2 class="titulo-principal h4 text-white">Código de verificación</h2>
       <p class="texto-secundario small">
-        Ingresa el código de 6 dígitos enviado a <strong class="text-white">{{ correo }}</strong
+        Ingresa el código de 6 dígitos enviado a <strong class="text-white">{{ correoUsuario }}</strong
         >.
       </p>
     </div>
@@ -101,6 +103,9 @@
             type="text"
             [(ngModel)]="codigoVerificacion"
             name="codigoVerificacion"
+            (input)="soloNumeros($event)"
+            inputmode="numeric"
+            autocomplete="one-time-code"
             class="entrada-control text-center fs-4 tracking-widest"
             placeholder="123456"
             maxlength="6"
@@ -108,8 +113,11 @@
           />
         </div>
       </div>
-
-      <button type="submit" class="boton-dorado py-2 mt-2 fw-semibold">Verificar código</button>
+      @if (errorCodigo()) { <p class="text-danger small mb-0" role="alert">{{ errorCodigo() }}</p> }
+      @if (infoCodigo()) { <p class="text-success small mb-0">{{ infoCodigo() }}</p> }
+      <button type="submit" class="boton-dorado py-2 mt-2 fw-semibold" [disabled]="cargando()">
+        Verificar código
+      </button>
     </form>
 
     <div class="text-center mt-3">
@@ -124,9 +132,9 @@
   </div>
 </div>
 
-<div class="modal-backdrop-aloggio" *ngIf="mostrarModalNuevaClave">
+<div class="modal-backdrop-aloggio" *ngIf="mostrarModalNuevaClave()">
   <div class="modal-tarjeta" (click)="$event.stopPropagation()">
-    <button type="button" class="boton-cerrar" (click)="mostrarModalNuevaClave = false">
+    <button type="button" class="boton-cerrar" (click)="cerrarModalNuevaClave()">
       <i class="pi pi-times"></i>
     </button>
 
@@ -192,8 +200,8 @@
           </button>
         </div>
       </div>
-
-      <button type="submit" class="boton-dorado py-2 mt-2 fw-semibold">
+      @if (errorClave()) { <p class="text-danger small mb-0" role="alert">{{ errorClave() }}</p> }
+      <button type="submit" class="boton-dorado py-2 mt-2 fw-semibold" [disabled]="cargando()">
         Guardar nueva contraseña
       </button>
     </form>
