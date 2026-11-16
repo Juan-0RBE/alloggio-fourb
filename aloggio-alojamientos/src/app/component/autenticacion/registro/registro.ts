@@ -11,10 +11,12 @@ import { RouterLink } from '@angular/router';
 })
 export class Registro {
   mostrarContrasena: boolean = false;
-
   pasoActual: number = 1;
   mostrarClavePrincipal: boolean = false;
   mostrarClaveConfirmar: boolean = false;
+
+  mostrarModalVerificacion: boolean = false;
+  codigoVerificacion: string = '';
 
   formulario = {
     correoUsuario: '',
@@ -40,6 +42,16 @@ export class Registro {
   }
 
   alRegistrar() {
-    console.log('Registro exitoso...');
+    console.log('Enviando datos al backend...', this.formulario);
+    this.mostrarModalVerificacion = true;
+  }
+
+  verificarCodigo() {
+    console.log('Código ingresado:', this.codigoVerificacion);
+    alert('¡Cuenta verificada con éxito!');
+  }
+
+  reenviarCodigo() {
+    alert('Nuevo código enviado a tu correo.');
   }
 }

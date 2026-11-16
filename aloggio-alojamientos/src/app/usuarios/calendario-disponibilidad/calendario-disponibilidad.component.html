@@ -1,0 +1,151 @@
+<div class="aloggio-calendario-contenedor">
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo" routerLink="/inicio">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </div>
+
+    <a routerLink="/anfitrion" class="enlace-volver">
+      <i class="pi pi-arrow-left"></i>
+      <span>Mis alojamientos</span>
+    </a>
+  </header>
+
+  <main class="cuerpo-calendario">
+    <div class="encabezado-pagina">
+      <h1 class="titulo-pagina">Calendario de disponibilidad</h1>
+      <p class="subtitulo-pagina">{{ titulo }}</p>
+    </div>
+
+    <div class="estado-pagina" *ngIf="cargando()" role="status">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Cargando el calendario...</span>
+    </div>
+
+    <div class="estado-pagina error" *ngIf="!cargando() && error() as e" role="alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ e.mensaje }}</span>
+      <a *ngIf="e.sesion" routerLink="/login" class="boton-estado">Iniciar sesión</a>
+      <button *ngIf="!e.sesion" type="button" class="boton-estado" (click)="cargar()">
+        Reintentar
+      </button>
+      <a routerLink="/anfitrion" class="boton-estado">Volver a mis alojamientos</a>
+    </div>
+
+    <ng-container *ngIf="!cargando() && !error()">
+      <div class="mensaje-confirmacion" *ngIf="mensajeConfirmacion()" role="status">
+        <i class="pi pi-check-circle"></i>
+        <span>{{ mensajeConfirmacion() }}</span>
+      </div>
+
+      <div class="rejilla-calendario">
+        <section class="tarjeta-calendario">
+          <div class="control-mes">
+            <button
+              type="button"
+              class="boton-mes"
+              aria-label="Mes anterior"
+              (click)="mesAnterior()"
+            >
+              <i class="pi pi-chevron-left"></i>
+            </button>
+            <h2 class="nombre-mes">{{ mesVisible() | date: 'MMMM yyyy' : '' : 'es-CO' }}</h2>
+            <button
+              type="button"
+              class="boton-mes"
+              aria-label="Mes siguiente"
+              (click)="mesSiguiente()"
+            >
+              <i class="pi pi-chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="cuadricula-dias" role="grid">
+            <span class="cabecera-dia" *ngFor="let dia of diasSemana">{{ dia }}</span>
+
+            <ng-container *ngFor="let celda of celdas()">
+              <span class="dia vacio" *ngIf="!celda"></span>
+              <span
+                class="dia"
+                *ngIf="celda"
+                [ngClass]="'estado-' + celda.estado.toLowerCase()"
+                [attr.aria-label]="celda.fecha + ': ' + celda.estado.toLowerCase()"
+                >{{ celda.numero }}</span
+              >
+            </ng-container>
+          </div>
+
+          <ul class="leyenda">
+            <li><span class="muestra estado-libre"></span> Libre</li>
+            <li><span class="muestra estado-bloqueado"></span> Bloqueado por ti</li>
+            <li><span class="muestra estado-reservado"></span> Reservado</li>
+          </ul>
+        </section>
+
+        <section class="tarjeta-bloqueo">
+          <h2 class="subtitulo-seccion">Bloquear fechas</h2>
+          <p class="texto-ayuda">
+            Las fechas bloqueadas no aparecen disponibles en búsquedas ni cotizaciones. La fecha de
+            fin es el día de salida y no se incluye.
+          </p>
+
+          <div class="campo">
+            <label for="fecha-inicio">Desde</label>
+            <input id="fecha-inicio" type="date" [min]="hoy" [(ngModel)]="fechaInicio" />
+          </div>
+
+          <div class="campo">
+            <label for="fecha-fin">Hasta (sin incluir)</label>
+            <input id="fecha-fin" type="date" [min]="fechaInicio || hoy" [(ngModel)]="fechaFin" />
+          </div>
+
+          <div class="alerta-error" *ngIf="errorFormulario()" role="alert">
+            <i class="pi pi-exclamation-circle"></i>
+            <span>{{ errorFormulario() }}</span>
+          </div>
+
+          <button type="button" class="boton-dorado" (click)="bloquearRango()">
+            <i class="pi pi-lock"></i>
+            Bloquear fechas
+          </button>
+        </section>
+      </div>
+
+      <section class="tarjeta-periodos">
+        <h2 class="subtitulo-seccion">Periodos bloqueados y reservados</h2>
+
+        <p class="texto-ayuda" *ngIf="periodosOrdenados().length === 0">
+          Aún no tienes fechas bloqueadas ni reservas en este alojamiento.
+        </p>
+
+        <ul class="lista-periodos" *ngIf="periodosOrdenados().length > 0">
+          <li class="periodo" *ngFor="let periodo of periodosOrdenados()">
+            <div class="info-periodo">
+              <span class="insignia-periodo" [ngClass]="'tipo-' + periodo.tipo.toLowerCase()">{{
+                etiquetasPeriodo[periodo.tipo]
+              }}</span>
+              <span class="fechas-periodo">
+                {{ periodo.fechaInicio | date: 'd MMM' : '' : 'es-CO' }} –
+                {{ periodo.fechaFin | date: 'd MMM, yyyy' : '' : 'es-CO' }} · {{ noches(periodo) }}
+                {{ noches(periodo) === 1 ? 'noche' : 'noches' }}
+              </span>
+              <span class="detalle-periodo" *ngIf="periodo.idReserva">
+                Reserva #{{ periodo.idReserva }}
+              </span>
+            </div>
+
+            <button
+              *ngIf="periodo.tipo === 'BLOQUEADO'"
+              type="button"
+              class="boton-secundario"
+              (click)="desbloquear(periodo)"
+            >
+              <i class="pi pi-lock-open"></i>
+              Desbloquear
+            </button>
+          </li>
+        </ul>
+      </section>
+    </ng-container>
+  </main>
+</div>

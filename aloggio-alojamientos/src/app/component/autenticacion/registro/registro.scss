@@ -150,3 +150,44 @@ input[type='date'].entrada-control {
   color-scheme: dark;
   accent-color: #e5b869;
 }
+
+.modal-backdrop-aloggio {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(18, 20, 23, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.modal-tarjeta {
+  position: relative;
+  background-color: $fondo-tarjeta;
+  border: 1px solid $borde-contenedor;
+  border-radius: 14px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+
+  .boton-cerrar {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    background: transparent;
+    border: none;
+    color: $texto-secundario;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: color 0.2s;
+
+    &:hover {
+      color: $dorado-acento;
+    }
+  }
+}

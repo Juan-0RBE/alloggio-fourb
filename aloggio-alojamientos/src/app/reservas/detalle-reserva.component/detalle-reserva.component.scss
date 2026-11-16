@@ -1,0 +1,375 @@
+@use '../../../styles.scss' as *;
+
+$exito: #5fc788;
+$peligro: #e74c3c;
+
+.aloggio-detalle-reserva-contenedor {
+  min-height: 100vh;
+  background-color: $fondo-principal;
+  color: $texto-principal;
+  display: flex;
+  flex-direction: column;
+}
+
+.encabezado-navegacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 2rem;
+  background-color: rgba($fondo-tarjeta, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid $borde-contenedor;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .contenedor-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+
+    .icono-logo {
+      font-size: 1.5rem;
+      color: $dorado-acento;
+    }
+
+    .texto-logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: $texto-principal;
+    }
+  }
+
+  .enlace-volver {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $texto-secundario;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $dorado-acento;
+    }
+  }
+}
+
+.cuerpo-detalle-reserva {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.estado-pagina {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: $texto-secundario;
+
+  > i {
+    font-size: 1.6rem;
+    color: $dorado-acento;
+  }
+
+  &.error > i {
+    color: $peligro;
+  }
+
+  .boton-estado {
+    display: inline-block;
+    background-color: transparent;
+    border: 1px solid $borde-contenedor;
+    color: $texto-principal;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      background-color: $fondo-entrada;
+    }
+  }
+}
+
+.encabezado-reserva {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  .fila-titulo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    .titulo-pagina {
+      margin: 0;
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+  }
+
+  .descripcion-estado {
+    margin: 0;
+    font-size: 0.9rem;
+    color: $texto-secundario;
+  }
+}
+
+.mensaje-confirmacion {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: $exito;
+  background-color: rgba($exito, 0.1);
+  border: 1px solid rgba($exito, 0.3);
+}
+
+.tarjeta-alojamiento {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1.1rem;
+  align-items: center;
+  padding: 0.85rem;
+  background-color: $fondo-tarjeta;
+  border: 1px solid $borde-contenedor;
+  border-radius: 14px;
+
+  .miniatura {
+    width: 140px;
+    height: 104px;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: $fondo-entrada;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $texto-secundario;
+    font-size: 1.4rem;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .info-alojamiento {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+
+    .titulo-alojamiento {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .ciudad-alojamiento {
+      margin: 0;
+      font-size: 0.85rem;
+      color: $texto-secundario;
+
+      i {
+        color: $dorado-acento;
+        margin-right: 0.2rem;
+      }
+    }
+
+    .enlace-alojamiento {
+      align-self: flex-start;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: $dorado-acento;
+      text-decoration: none;
+
+      &:hover {
+        color: $dorado-hover;
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        outline: 2px solid $dorado-acento;
+        outline-offset: 2px;
+      }
+    }
+  }
+}
+
+.tarjeta-datos {
+  padding: 1.25rem;
+  background-color: $fondo-tarjeta;
+  border: 1px solid $borde-contenedor;
+  border-radius: 14px;
+
+  .subtitulo-seccion {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .datos-reserva {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+
+    .dato {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid rgba($borde-contenedor, 0.6);
+      font-size: 0.9rem;
+
+      dt {
+        color: $texto-secundario;
+        font-weight: 500;
+      }
+
+      dd {
+        margin: 0;
+        font-weight: 600;
+        text-align: right;
+      }
+
+      &.total {
+        border-bottom: none;
+        padding-bottom: 0;
+
+        dd {
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: $dorado-acento;
+        }
+      }
+    }
+  }
+}
+
+.acciones-reserva {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  .boton-dorado,
+  .boton-secundario,
+  .boton-peligro-contorno {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+
+    &:focus-visible {
+      outline: 2px solid $dorado-acento;
+      outline-offset: 2px;
+    }
+  }
+
+  .boton-dorado {
+    background-color: $dorado-acento;
+    border: 1px solid $dorado-acento;
+    color: #121417;
+    font-weight: 700;
+
+    &:hover {
+      background-color: $dorado-hover;
+    }
+  }
+
+  .boton-secundario {
+    background-color: transparent;
+    border: 1px solid $borde-contenedor;
+    color: $texto-principal;
+
+    &:hover {
+      background-color: $fondo-entrada;
+    }
+  }
+
+  .boton-peligro-contorno {
+    background-color: transparent;
+    border: 1px solid rgba($peligro, 0.5);
+    color: $peligro;
+
+    &:hover {
+      background-color: rgba($peligro, 0.1);
+    }
+  }
+}
+
+.insignia-estado {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+
+  &.estado-confirmada {
+    color: $dorado-acento;
+    background-color: rgba(229, 184, 105, 0.1);
+    border-color: rgba(229, 184, 105, 0.3);
+  }
+
+  &.estado-completada {
+    color: $exito;
+    background-color: rgba(95, 199, 136, 0.1);
+    border-color: rgba(95, 199, 136, 0.3);
+  }
+
+  &.estado-cancelada {
+    color: $peligro;
+    background-color: rgba(231, 76, 60, 0.1);
+    border-color: rgba(231, 76, 60, 0.3);
+  }
+}
+
+@media (max-width: 640px) {
+  .encabezado-navegacion {
+    padding: 0.8rem 1rem;
+  }
+
+  .tarjeta-alojamiento {
+    grid-template-columns: 1fr;
+
+    .miniatura {
+      width: 100%;
+      height: 160px;
+    }
+  }
+
+  .acciones-reserva {
+    flex-direction: column;
+
+    .boton-dorado,
+    .boton-secundario,
+    .boton-peligro-contorno {
+      justify-content: center;
+    }
+  }
+}

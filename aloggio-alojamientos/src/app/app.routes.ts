@@ -24,13 +24,13 @@ export const routes: Routes = [
     path: '',
     canActivate: [userGuard],
     children: [
-        { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
-        { path: 'resumen-reserva', component: ResumenReserva },
-        { path: 'resultado-reserva', component: ResultadoReserva },
-        { path: 'mis-reservas', component: MisReservas },
-        { path: 'formulario-resena', component: FormularioResena },
-        { path: 'usuario', component: Usuario },
-        { path: 'anfitrion', component: Anfitrion }
+      { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
+      { path: 'resumen-reserva', component: ResumenReserva },
+      { path: 'resultado-reserva', component: ResultadoReserva },
+      { path: 'mis-reservas', component: MisReservas },
+      { path: 'formulario-resena', component: FormularioResena },
+      { path: 'usuario', component: Usuario },
+      { path: 'anfitrion', component: Anfitrion }
     ],
   },
 
