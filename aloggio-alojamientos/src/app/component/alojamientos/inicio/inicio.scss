@@ -1,0 +1,456 @@
+@use 'sass:color';
+@use 'styles' as *;
+
+.aloggio-principal {
+  min-height: 100vh;
+  background-color: $fondo-principal;
+  color: $texto-principal;
+  display: flex;
+  flex-direction: column;
+}
+
+.encabezado-navegacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 2rem;
+  background-color: rgba($fondo-tarjeta, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid $borde-contenedor;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .contenedor-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+
+    .icono-logo {
+      font-size: 1.5rem;
+      color: $dorado-acento;
+    }
+
+    .texto-logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: $texto-principal;
+    }
+  }
+}
+
+.barra-busqueda-central {
+  display: flex;
+  align-items: center;
+  background-color: $fondo-entrada;
+  border: 1px solid $borde-contenedor;
+  border-radius: 40px;
+  padding: 0.3rem 0.4rem 0.3rem 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  .campo-busqueda {
+    display: flex;
+    flex-direction: column;
+    padding: 0 0.6rem;
+
+    .etiqueta-busqueda {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: $texto-secundario;
+      text-transform: uppercase;
+    }
+
+    input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: $texto-principal;
+      font-size: 0.8rem;
+      width: 105px;
+
+      &::placeholder {
+        color: color.adjust($texto-secundario, $lightness: -20%);
+      }
+    }
+  }
+
+  .separador-vertical {
+    width: 1px;
+    height: 22px;
+    background-color: $borde-contenedor;
+  }
+
+  .boton-buscar {
+    background-color: $dorado-acento;
+    border: none;
+    border-radius: 30px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #121417;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease;
+
+    &:hover {
+      background-color: $dorado-hover;
+      transform: scale(1.02);
+    }
+  }
+}
+
+.acciones-usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .boton-icono {
+    background: transparent;
+    border: none;
+    color: $texto-secundario;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+
+    &:hover {
+      background-color: $fondo-entrada;
+      color: $texto-principal;
+    }
+  }
+
+  .boton-anfitrion {
+    background: transparent;
+    border: none;
+    color: $texto-principal;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.4rem 0.7rem;
+    border-radius: 20px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: $fondo-entrada;
+    }
+  }
+
+  .menu-perfil-contenedor {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background-color: $fondo-tarjeta;
+    border: 1px solid $borde-contenedor;
+    padding: 0.25rem 0.35rem 0.25rem 0.7rem;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: color.adjust($borde-contenedor, $lightness: 15%);
+    }
+
+    .icono-menu {
+      color: $texto-secundario;
+      font-size: 0.85rem;
+    }
+
+    .avatar-usuario {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background-color: $fondo-entrada;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $texto-secundario;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+.cuerpo-principal {
+  display: flex;
+  flex: 1;
+}
+
+.barra-lateral-filtros {
+  width: 260px;
+  background-color: $fondo-tarjeta;
+  border-right: 1px solid $borde-contenedor;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: calc(100vh - 69px);
+  position: sticky;
+  top: 69px;
+  overflow-y: auto;
+
+  .encabezado-filtros {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .titulo-seccion-filtros {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: $texto-principal;
+      margin: 0;
+    }
+
+    .boton-limpiar-filtros {
+      background: transparent;
+      border: none;
+      color: $dorado-acento;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        color: $dorado-hover;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .grupo-filtro {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+
+    .titulo-grupo {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: $texto-principal;
+      margin: 0;
+    }
+
+    .contenedor-input-precio {
+      display: flex;
+      align-items: center;
+      background-color: $fondo-entrada;
+      border: 1px solid $borde-contenedor;
+      border-radius: 8px;
+      padding: 0.4rem 0.6rem;
+      gap: 0.3rem;
+
+      span {
+        font-size: 0.8rem;
+        color: $texto-secundario;
+      }
+
+      input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: $texto-principal;
+        font-size: 0.8rem;
+        width: 100%;
+      }
+    }
+
+    .opciones-checkbox {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .etiqueta-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.8rem;
+        color: $texto-secundario;
+        cursor: pointer;
+        user-select: none;
+
+        input[type='checkbox'] {
+          accent-color: $dorado-acento;
+          width: 15px;
+          height: 15px;
+          cursor: pointer;
+        }
+
+        &:hover {
+          color: $texto-principal;
+        }
+      }
+    }
+  }
+}
+
+.contenedor-contenido {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .barra-resultado-info {
+    .contador-alojamientos {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: $texto-secundario;
+    }
+  }
+}
+
+.contenedor-grid-alojamientos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.tarjeta-alojamiento {
+  background-color: $fondo-tarjeta;
+  border: 1px solid $borde-contenedor;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .contenedor-imagen {
+    position: relative;
+    width: 100%;
+    height: 180px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .boton-favorito {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(18, 20, 23, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $texto-principal;
+      cursor: pointer;
+
+      &.marcado {
+        color: #e74c3c;
+      }
+    }
+
+    .badge-etiqueta {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: $dorado-acento;
+      color: #121417;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+  }
+
+  .detalles-alojamiento {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+
+    .info-principal {
+      .titulo-alojamiento {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: $texto-principal;
+        margin: 0 0 0.2rem 0;
+      }
+
+      .ubicacion-alojamiento {
+        font-size: 0.75rem;
+        color: $texto-secundario;
+        margin: 0 0 0.6rem 0;
+      }
+
+      .badge-servicio {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        background-color: $fondo-entrada;
+        border: 1px solid $borde-contenedor;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        color: $dorado-acento;
+        margin-bottom: 1rem;
+      }
+    }
+
+    .pie-tarjeta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid $borde-contenedor;
+      padding-top: 0.8rem;
+
+      .contenedor-precio {
+        display: flex;
+        align-items: baseline;
+        gap: 0.2rem;
+
+        .monto-precio {
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: $texto-principal;
+        }
+
+        .texto-periodo {
+          font-size: 0.75rem;
+          color: $texto-secundario;
+        }
+      }
+
+      .boton-ver-detalle {
+        background-color: transparent;
+        border: 1px solid $dorado-acento;
+        color: $dorado-acento;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          background-color 0.2s ease,
+          color 0.2s ease;
+
+        &:hover {
+          background-color: $dorado-acento;
+          color: #121417;
+        }
+      }
+    }
+  }
+}

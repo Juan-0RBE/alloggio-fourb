@@ -29,7 +29,6 @@ public class OpenApiConfig {
                 // Crear la descripción principal con HTML correctamente formateado
                 String mainDescription = "<h2>Guía para API del proyecto \"Alloggio\"</h2>"
                                 + "<p>Esta API proporciona funcionalidades para gestionar usuarios y autenticación mediante JWT.</p>"
-                                + "<p>Esta API proporciona funcionalidades de consumo de la API oficial de Virus total</p>"
                                 + "<h3>Conceptos básicos:</h3>" + "<ul>    "
                                 + "<li><strong>JWT (JSON Web Token)</strong>: Un estándar para"
                                 + " crear tokens de acceso. Cuando inicias sesión,         recibirás un token que debes"
@@ -44,7 +43,7 @@ public class OpenApiConfig {
                                 + "<li>Incluye el token en el encabezado de autorización de tus peticiones: <code>Authorization: Bearer"
                                 + " tu_token_jwt</code></li>    "
                                 + "<li>Usa los endpoints de usuario para gestionar usuarios (requiere autenticación)</li>"
-                                + "<li>Usa los endpoints de los diferentes usuarios para consumir los endpoints relacionados a Virus Total  <code>/api/virustotal</code></li>"
+                                + "<li>Usa los endpoints de los diferentes usuarios para consumir los endpoints</li>"
                                 + "</ol>" + "<h3>Roles de usuario:</h3>" + "<ul>   "
                                 + " <li><strong>USUARIO</strong>: Representa un usuario normal, es decir un huesped o anfitrión, pueden crear y consultar reservas</li>   "
                                 + " <li><strong>ADMINISTRADOR</strong>: Puede crear, actualizar y eliminar usuarios además de"

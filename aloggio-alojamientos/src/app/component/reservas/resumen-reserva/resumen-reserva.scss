@@ -1,0 +1,382 @@
+@use 'sass:color';
+@use 'styles' as *;
+
+
+.aloggio-resumen-contenedor {
+  min-height: 100vh;
+  background-color: $fondo-principal;
+  color: $texto-principal;
+  display: flex;
+  flex-direction: column;
+}
+
+.encabezado-navegacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 2rem;
+  background-color: rgba($fondo-tarjeta, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid $borde-contenedor;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .contenedor-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+
+    .icono-logo {
+      font-size: 1.5rem;
+      color: $dorado-acento;
+    }
+
+    .texto-logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: $texto-principal;
+    }
+  }
+
+  .paso-checkout-indicador {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: $texto-secundario;
+
+    i {
+      color: $dorado-acento;
+    }
+  }
+}
+
+.cuerpo-resumen {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .encabezado-seccion-pagos {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .boton-volver {
+      background: transparent;
+      border: 1px solid $borde-contenedor;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $texto-principal;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: $fondo-entrada;
+      }
+    }
+
+    .titulo-pagina {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: $texto-principal;
+      margin: 0;
+    }
+  }
+}
+
+.grid-resumen-compra {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 3.5rem;
+  align-items: start;
+
+  .columna-formulario-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .subtitulo-seccion {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: $texto-principal;
+      margin: 0 0 1rem 0;
+    }
+
+    .divisor-seccion {
+      border: none;
+      height: 1px;
+      background-color: $borde-contenedor;
+      margin: 0;
+    }
+
+    .bloque-informacion-viaje {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      .fila-dato-viaje {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .textos-dato {
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+
+          .etiqueta-dato {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: $texto-principal;
+          }
+
+          .valor-dato {
+            font-size: 0.85rem;
+            color: $texto-secundario;
+          }
+        }
+
+        .boton-editar-dato {
+          background: transparent;
+          border: none;
+          color: $dorado-acento;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          text-decoration: underline;
+
+          &:hover {
+            color: $dorado-hover;
+          }
+        }
+      }
+    }
+
+    .bloque-metodo-pago {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+
+      .formulario-tarjeta-campos {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        background-color: $fondo-tarjeta;
+        border: 1px solid $borde-contenedor;
+        padding: 1.2rem;
+        border-radius: 12px;
+
+        .campo-input-full {
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+
+          label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: $texto-secundario;
+            text-transform: uppercase;
+          }
+
+          input {
+            background-color: $fondo-entrada;
+            border: 1px solid $borde-contenedor;
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            color: $texto-principal;
+            font-size: 0.85rem;
+            outline: none;
+
+            &::placeholder {
+              color: color.adjust($texto-secundario, $lightness: -20%);
+            }
+          }
+        }
+
+        .stripe-elemento-contenedor {
+          background-color: $fondo-entrada;
+          border: 1px solid $borde-contenedor;
+          border-radius: 8px;
+          padding: 0.75rem 0.8rem;
+          min-height: 48px;
+          width: 100%;
+        }
+        .alerta-error-stripe {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.8rem;
+          color: #e74c3c;
+          margin-top: 0.2rem;
+
+          i {
+            font-size: 0.9rem;
+          }
+        }
+      }
+    }
+
+    .bloque-politicas-confirmacion {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+
+      .texto-politica-resumen {
+        font-size: 0.85rem;
+        color: $texto-secundario;
+        line-height: 1.5;
+        margin: 0;
+
+        strong {
+          color: $texto-principal;
+        }
+      }
+
+      .checkbox-acepta-terminos {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        font-size: 0.8rem;
+        color: $texto-secundario;
+        cursor: pointer;
+
+        input[type='checkbox'] {
+          accent-color: $dorado-acento;
+          margin-top: 0.15rem;
+        }
+      }
+
+      .boton-confirmar-pago {
+        background-color: $dorado-acento;
+        border: none;
+        border-radius: 12px;
+        padding: 0.9rem;
+        color: #121417;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition:
+          background-color 0.2s ease,
+          transform 0.2s ease;
+
+        &:hover:not(:disabled) {
+          background-color: $dorado-hover;
+          transform: scale(1.01);
+        }
+
+        &:disabled {
+          background-color: color.adjust($borde-contenedor, $lightness: 5%);
+          color: color.adjust($texto-secundario, $lightness: -20%);
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  .columna-preview-publicacion {
+    position: sticky;
+    top: 90px;
+
+    .tarjeta-resumen-alojamiento {
+      background-color: $fondo-tarjeta;
+      border: 1px solid $borde-contenedor;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      .encabezado-mini-alojamiento {
+        display: flex;
+        gap: 1rem;
+
+        .imagen-mini-alojamiento {
+          width: 90px;
+          height: 90px;
+          border-radius: 10px;
+          object-fit: cover;
+        }
+
+        .info-mini-textos {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+
+          .tipo-mini {
+            font-size: 0.75rem;
+            color: $texto-secundario;
+          }
+
+          .titulo-mini {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: $texto-principal;
+            margin: 0;
+            line-height: 1.3;
+          }
+
+          .calificacion-mini {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.75rem;
+            color: $texto-principal;
+
+            i {
+              color: $dorado-acento;
+            }
+          }
+        }
+      }
+
+      .divisor-desglose {
+        border: none;
+        height: 1px;
+        background-color: $borde-contenedor;
+        margin: 0.25rem 0;
+      }
+
+      .seccion-desglose-precio {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        .titulo-desglose {
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: $texto-principal;
+          margin: 0 0 0.25rem 0;
+        }
+
+        .fila-precio {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.85rem;
+          color: $texto-secundario;
+
+          &.total-final {
+            font-size: 1rem;
+            font-weight: 700;
+            color: $texto-principal;
+          }
+        }
+      }
+    }
+  }
+}

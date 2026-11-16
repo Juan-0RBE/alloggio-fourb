@@ -1,31 +1,39 @@
 import { Routes } from '@angular/router';
-import { Login } from './autenticacion/login/login.component';
-import { Registro } from './autenticacion/registro/registro.component';
-import { Recuperacion } from './autenticacion/recuperacion/recuperacion.component';
-import { Inicio } from './alojamientos/inicio/inicio.component';
-import { DetalleAlojamiento } from './alojamientos/detalle-alojamiento/detalle-alojamiento.component';
-import { ResumenReserva } from './reservas/resumen-reserva/resumen-reserva.component';
-import { ResultadoReserva } from './reservas/resultado-reserva/resultado-reserva.component';
-import { MisReservas } from './reservas/mis-reservas/mis-reservas.component';
-import { FormularioResena } from './resenas/formulario-resena/formulario-resena.component';
-import { Usuario } from './usuarios/usuario/usuario.component';
-import { Anfitrion } from './usuarios/anfitrion/anfitrion.component';
-import { Admin } from './usuarios/admin/admin.component';
+import { Login } from './component/autenticacion/login/login';
+import { Registro } from './component/autenticacion/registro/registro';
+import { Recuperacion } from './component/autenticacion/recuperacion/recuperacion';
+import { Inicio } from './component/alojamientos/inicio/inicio';
+import { DetalleAlojamiento } from './component/alojamientos/detalle-alojamiento/detalle-alojamiento';
+import { ResumenReserva } from './component/reservas/resumen-reserva/resumen-reserva';
+import { ResultadoReserva } from './component/reservas/resultado-reserva/resultado-reserva';
+import { MisReservas } from './component/reservas/mis-reservas/mis-reservas';
+import { FormularioResena } from './component/resenas/formulario-resena/formulario-resena';
+import { Usuario } from './component/usuarios/usuario/usuario';
+import { Anfitrion } from './component/usuarios/anfitrion/anfitrion';
+import { Admin } from './component/usuarios/admin/admin';
+import { adminGuard, userGuard } from './service/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'registro', component: Registro },
   { path: 'recuperacion', component: Recuperacion },
-
   { path: 'inicio', component: Inicio },
-  { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
-  { path: 'resumen-reserva', component: ResumenReserva },
-  { path: 'resultado-reserva', component: ResultadoReserva },
-  { path: 'mis-reservas', component: MisReservas },
-  { path: 'formulario-resena', component: FormularioResena },
 
-  { path: 'usuario', component: Usuario },
-  { path: 'anfitrion', component: Anfitrion },
-  { path: 'admin', component: Admin },
+  {
+    path: '',
+    canActivate: [userGuard],
+    children: [
+        { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
+        { path: 'resumen-reserva', component: ResumenReserva },
+        { path: 'resultado-reserva', component: ResultadoReserva },
+        { path: 'mis-reservas', component: MisReservas },
+        { path: 'formulario-resena', component: FormularioResena },
+        { path: 'usuario', component: Usuario },
+        { path: 'anfitrion', component: Anfitrion }
+    ],
+  },
+
+  { path: 'admin', component: Admin, canActivate: [adminGuard] },
+  { path: '**', redirectTo: 'login' },
 ];
