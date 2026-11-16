@@ -62,5 +62,21 @@ public class CodigoRestablecimientoController {
             return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    @Operation(summary = "Verificar si el código es válido sin cambiar la contraseña")
+    @PostMapping("/verificar")
+    public ResponseEntity<String> verificarCodigo(@RequestBody CodigoRestablecimientoDTO data) {
+        int status = codigoServ.verificarCodigo(data.getCorreoUsuario(), data.getCodigo());
+
+        if (status == 0) {
+            return new ResponseEntity<>("Código válido", HttpStatus.OK);
+        } else if (status == 1) {
+            return new ResponseEntity<>("No existe una cuenta asociada al correo", HttpStatus.NOT_FOUND);
+        } else if (status == 2) {
+            return new ResponseEntity<>("El código es inválido o expiró, solicita uno nuevo", HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity<>("Error desconocido", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }
