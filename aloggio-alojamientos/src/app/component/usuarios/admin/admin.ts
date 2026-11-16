@@ -1,7 +1,9 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { AdminService } from '../../../service/admin.service';
 
 type SeccionAdmin =
   'dashboard' | 'reportes' | 'publicaciones' | 'resenas' | 'usuarios' | 'auditoria';
@@ -91,6 +93,7 @@ interface FiltrosAuditoria {
 
 const LONGITUD_MAX_MOTIVO = 500;
 const TAMANO_PAGINA = 10;
+const MAX_EVENTOS_AUDITORIA = 100;
 
 const ACCIONES_AUDITORIA = [
   'REGISTRO_USUARIO',
@@ -156,42 +159,30 @@ const DASHBOARD_VACIO: DashboardVista = {
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
 })
-export class Admin {
-  readonly adminActual = 'admin@aloggio.co';
-  readonly idAdminActual = 100;
+export class Admin implements OnInit {
+  private adminService = inject(AdminService);
+
   readonly longitudMaxMotivo = LONGITUD_MAX_MOTIVO;
   readonly accionesAuditoria = ACCIONES_AUDITORIA;
   readonly tiposEntidad = TIPOS_ENTIDAD;
 
+  adminActual = signal('');
+
   seccionActiva = signal<SeccionAdmin>('dashboard');
   mensajeConfirmacion = signal('');
+  mensajeError = signal('');
 
   // Dashboard y exportación (CA51, CA52, CA53)
 
-  dashboard = signal<DashboardVista>({
-    totalUsuarios: 5,
-    usuariosPorEstadoCuenta: { ACTIVA: 4, RESTRINGIDA: 1 },
-    totalPublicaciones: 4,
-    publicacionesActivas: 2,
-    publicacionesPorEstado: { ACTIVA: 2, PAUSADA: 1, BLOQUEADA: 1 },
-    totalReservas: 6,
-    reservasPorEstado: { CONFIRMADA: 3, COMPLETADA: 2, CANCELADA: 1 },
-    ingresosEstimados: 8450000,
-    ciudadesDemanda: [
-      { ciudad: 'Medellín', reservas: 3, ingresos: 4200000 },
-      { ciudad: 'Cartagena', reservas: 2, ingresos: 2900000 },
-      { ciudad: 'Guatapé', reservas: 1, ingresos: 1350000 },
-    ],
-    sinDatos: false,
-  });
+  // Mientras llegan los datos del backend se muestran los contadores en cero
+  dashboard = signal<DashboardVista>({ ...DASHBOARD_VACIO, sinDatos: false });
+  cargandoDashboard = signal(false);
+  exportando = signal(false);
 
   reservasPorEstado = computed(() => Object.entries(this.dashboard().reservasPorEstado));
 
   formatoExportacion: FormatoExportacion = 'PDF';
-
-  exportaciones = computed(() =>
-    this.eventosOrdenados().filter((ev) => ev.accion === 'EXPORTAR_INDICADORES'),
-  );
+  exportaciones = signal<EventoAuditoriaVista[]>([]);
 
   // Moderación de publicaciones (CA46, CA47)
 
@@ -199,76 +190,10 @@ export class Admin {
   publicacionSeleccionada = signal<PublicacionMod | null>(null);
   errorBloqueo = signal('');
   motivoBloqueo = '';
+  bloqueando = signal(false);
 
-  publicaciones = signal<PublicacionMod[]>([
-    {
-      idPublicacion: 1,
-      titulo: 'Villa Moderna Vista al Valle y Montaña',
-      ciudad: 'Medellín',
-      precioNoche: 550000,
-      estado: 'ACTIVA',
-      motivoBloqueo: null,
-      nombreAnfitrion: 'Carlos Mendoza',
-      totalReservasFuturas: 1,
-      reservasFuturas: [
-        {
-          idReserva: 1042,
-          fechaLlegada: '2026-12-10',
-          fechaSalida: '2026-12-15',
-          total: 2835000,
-          nombreHuesped: 'Sofía Martínez',
-        },
-      ],
-    },
-    {
-      idPublicacion: 2,
-      titulo: 'Cabaña Alpina en el Bosque',
-      ciudad: 'Guatapé',
-      precioNoche: 350000,
-      estado: 'ACTIVA',
-      motivoBloqueo: null,
-      nombreAnfitrion: 'Laura Gómez',
-      totalReservasFuturas: 0,
-      reservasFuturas: [],
-    },
-    {
-      idPublicacion: 3,
-      titulo: 'Apartamento con fiesta permitida 24/7',
-      ciudad: 'Cartagena',
-      precioNoche: 290000,
-      estado: 'PAUSADA',
-      motivoBloqueo: null,
-      nombreAnfitrion: 'Andrés Rojas',
-      totalReservasFuturas: 2,
-      reservasFuturas: [
-        {
-          idReserva: 1050,
-          fechaLlegada: '2026-12-20',
-          fechaSalida: '2026-12-23',
-          total: 1015000,
-          nombreHuesped: 'Sofía Martínez',
-        },
-        {
-          idReserva: 1058,
-          fechaLlegada: '2027-01-04',
-          fechaSalida: '2027-01-06',
-          total: 700000,
-          nombreHuesped: 'Camilo Duarte',
-        },
-      ],
-    },
-    {
-      idPublicacion: 4,
-      titulo: 'Habitación en el centro histórico',
-      ciudad: 'Cartagena',
-      precioNoche: 180000,
-      estado: 'BLOQUEADA',
-      motivoBloqueo: 'Las fotos no corresponden al alojamiento publicado.',
-      nombreAnfitrion: 'Andrés Rojas',
-      totalReservasFuturas: 0,
-      reservasFuturas: [],
-    },
-  ]);
+  publicaciones = signal<PublicacionMod[]>([]);
+  cargandoPublicaciones = signal(false);
 
   publicacionesFiltradas = computed(() => {
     const estado = this.filtroEstadoPublicacion();
@@ -278,91 +203,21 @@ export class Admin {
 
   // Moderación de reseñas (CA45)
 
-  alojamientoSeleccionado = signal<number | null>(1);
+  alojamientoSeleccionado = signal<number | null>(null);
   resenaEnConfirmacion = signal<number | null>(null);
+  resenas = signal<ResenaMod[]>([]);
+  cargandoResenas = signal(false);
 
-  resenas = signal<ResenaMod[]>([
-    {
-      idResena: 88,
-      idPublicacion: 1,
-      autor: 'sofia.martinez',
-      calificacion: 5,
-      comentario: 'Excelente estadía, la vista es espectacular y todo estaba impecable.',
-      fecha: '2026-11-05',
-      visible: true,
-    },
-    {
-      idResena: 89,
-      idPublicacion: 1,
-      autor: 'usuario_spam99',
-      calificacion: 1,
-      comentario: 'Visiten mi página externa para descuentos falsos http://spam-link.test',
-      fecha: '2026-11-10',
-      visible: false,
-    },
-    {
-      idResena: 90,
-      idPublicacion: 2,
-      autor: 'camilo.duarte',
-      calificacion: 4,
-      comentario: 'Muy tranquila, ideal para descansar. El camino de llegada es algo largo.',
-      fecha: '2026-11-08',
-      visible: true,
-    },
-  ]);
-
-  resenasDelAlojamiento = computed(() =>
-    this.resenas().filter((r) => r.idPublicacion === this.alojamientoSeleccionado()),
-  );
+  // Las reseñas cargadas siempre corresponden al alojamiento seleccionado
+  resenasDelAlojamiento = computed(() => this.resenas());
 
   // Gestión de usuarios (CA48)
 
   busquedaUsuario = signal('');
   filtroEstadoCuenta = signal<'TODOS' | EstadoCuenta>('TODOS');
   usuarioEnConfirmacion = signal<number | null>(null);
-
-  usuarios = signal<UsuarioMod[]>([
-    {
-      idUsuario: 100,
-      nombreUsuario: 'admin',
-      primerNombre: 'Administrador',
-      primerApellido: 'Aloggio',
-      role: 'ADMINISTRADOR',
-      estadoCuenta: 'ACTIVA',
-    },
-    {
-      idUsuario: 101,
-      nombreUsuario: 'carlos.mendoza',
-      primerNombre: 'Carlos',
-      primerApellido: 'Mendoza',
-      role: 'USUARIO',
-      estadoCuenta: 'ACTIVA',
-    },
-    {
-      idUsuario: 102,
-      nombreUsuario: 'sofia.martinez',
-      primerNombre: 'Sofía',
-      primerApellido: 'Martínez',
-      role: 'USUARIO',
-      estadoCuenta: 'ACTIVA',
-    },
-    {
-      idUsuario: 103,
-      nombreUsuario: 'andres.rojas',
-      primerNombre: 'Andrés',
-      primerApellido: 'Rojas',
-      role: 'USUARIO',
-      estadoCuenta: 'RESTRINGIDA',
-    },
-    {
-      idUsuario: 104,
-      nombreUsuario: 'laura.gomez',
-      primerNombre: 'Laura',
-      primerApellido: 'Gómez',
-      role: 'USUARIO',
-      estadoCuenta: 'ACTIVA',
-    },
-  ]);
+  usuarios = signal<UsuarioMod[]>([]);
+  cargandoUsuarios = signal(false);
 
   usuariosFiltrados = computed(() => {
     const termino = this.busquedaUsuario().trim().toLowerCase();
@@ -392,74 +247,15 @@ export class Admin {
   errorFiltros = signal('');
   pagina = signal(0);
 
-  eventosAuditoria = signal<EventoAuditoriaVista[]>([
-    {
-      idAuditoria: 1001,
-      correoUsuario: 'admin@aloggio.co',
-      accion: 'OCULTAR_RESENA',
-      entidadTipo: 'RESENA',
-      entidadId: 89,
-      fechaHora: '2026-11-10T09:15:00',
-      descripcion: 'Reseña ocultada por incumplir las normas',
-      resultado: 'EXITO',
-    },
-    {
-      idAuditoria: 1002,
-      correoUsuario: 'admin@aloggio.co',
-      accion: 'RESTRINGIR_USUARIO',
-      entidadTipo: 'USUARIO',
-      entidadId: 103,
-      fechaHora: '2026-11-11T16:40:00',
-      descripcion: 'Cuenta restringida por un administrador',
-      resultado: 'EXITO',
-    },
-    {
-      idAuditoria: 1003,
-      correoUsuario: 'admin@aloggio.co',
-      accion: 'BLOQUEAR_PUBLICACION',
-      entidadTipo: 'PUBLICACION',
-      entidadId: 4,
-      fechaHora: '2026-11-11T17:05:00',
-      descripcion: 'Publicación bloqueada: las fotos no corresponden al alojamiento',
-      resultado: 'EXITO',
-    },
-    {
-      idAuditoria: 1004,
-      correoUsuario: 'admin@aloggio.co',
-      accion: 'EXPORTAR_INDICADORES',
-      entidadTipo: 'REPORTE',
-      entidadId: null,
-      fechaHora: '2026-11-12T14:30:00',
-      descripcion: 'Exportación de indicadores en PDF',
-      resultado: 'EXITO',
-    },
-    {
-      idAuditoria: 1005,
-      correoUsuario: 'admin@aloggio.co',
-      accion: 'RESTRINGIR_USUARIO',
-      entidadTipo: 'USUARIO',
-      entidadId: 100,
-      fechaHora: '2026-11-13T10:20:00',
-      descripcion: 'Intento de restringir a un administrador',
-      resultado: 'DENEGADO',
-    },
-  ]);
+  eventosAuditoria = signal<EventoAuditoriaVista[]>([]);
+  cargandoAuditoria = signal(false);
 
-  eventosOrdenados = computed(() =>
-    [...this.eventosAuditoria()].sort((a, b) => b.fechaHora.localeCompare(a.fechaHora)),
-  );
-
+  // Las fechas, acción, entidad y resultado se filtran en el backend;
+  // el correo se filtra aquí para admitir coincidencias parciales
   eventosFiltrados = computed(() => {
-    const f = this.filtrosAplicados();
-    const correo = f.correoUsuario.trim().toLowerCase();
-    return this.eventosOrdenados().filter(
-      (ev) =>
-        (!f.fechaDesde || ev.fechaHora.slice(0, 10) >= f.fechaDesde) &&
-        (!f.fechaHasta || ev.fechaHora.slice(0, 10) <= f.fechaHasta) &&
-        (!correo || ev.correoUsuario.toLowerCase().includes(correo)) &&
-        (!f.accion || ev.accion === f.accion) &&
-        (!f.entidadTipo || ev.entidadTipo === f.entidadTipo) &&
-        (!f.resultado || ev.resultado === f.resultado),
+    const correo = this.filtrosAplicados().correoUsuario.trim().toLowerCase();
+    return this.eventosAuditoria().filter(
+      (ev) => !correo || ev.correoUsuario.toLowerCase().includes(correo),
     );
   });
 
@@ -472,31 +268,166 @@ export class Admin {
     return this.eventosFiltrados().slice(inicio, inicio + TAMANO_PAGINA);
   });
 
+  ngOnInit(): void {
+    this.adminService.getPerfil().subscribe({
+      next: (perfil) => this.adminActual.set(perfil?.correoUsuario ?? perfil?.nombreUsuario ?? ''),
+      error: () => this.adminActual.set(''),
+    });
+    this.cargarDashboard();
+  }
+
+  // Cada sección carga sus datos al abrirse
   cambiarSeccion(seccion: SeccionAdmin): void {
     this.mensajeConfirmacion.set('');
+    this.mensajeError.set('');
     this.seccionActiva.set(seccion);
+
+    switch (seccion) {
+      case 'dashboard':
+        this.cargarDashboard();
+        break;
+      case 'reportes':
+        this.cargarExportaciones();
+        break;
+      case 'publicaciones':
+        this.cargarPublicaciones();
+        break;
+      case 'resenas':
+        this.cargarPublicaciones(() => this.seleccionarPrimerAlojamiento());
+        break;
+      case 'usuarios':
+        this.cargarUsuarios();
+        break;
+      case 'auditoria':
+        this.cargarAuditoria();
+        break;
+    }
   }
 
   // Dashboard y exportación
 
+  cargarDashboard(): void {
+    this.cargandoDashboard.set(true);
+    this.adminService.getIndicadores().subscribe({
+      next: (res) => {
+        this.dashboard.set({
+          totalUsuarios: res.totalUsuarios ?? 0,
+          usuariosPorEstadoCuenta: res.usuariosPorEstadoCuenta ?? {},
+          totalPublicaciones: res.totalPublicaciones ?? 0,
+          publicacionesActivas: res.publicacionesActivas ?? 0,
+          publicacionesPorEstado: res.publicacionesPorEstado ?? {},
+          totalReservas: res.totalReservas ?? 0,
+          reservasPorEstado: res.reservasPorEstado ?? {},
+          ingresosEstimados: Number(res.ingresosEstimados ?? 0),
+          ciudadesDemanda: (res.ciudadesDemanda ?? []).map((c: any) => ({
+            ciudad: c.ciudad,
+            reservas: c.reservas,
+            ingresos: Number(c.ingresos ?? 0),
+          })),
+          sinDatos: !!res.sinDatos,
+        });
+        this.cargandoDashboard.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cargandoDashboard.set(false);
+        this.mensajeError.set(this.textoError(err, 'No se pudieron cargar los indicadores.'));
+      },
+    });
+  }
+
+  // Solo para demostrar el estado vacío (CA52)
   simularDashboardVacio(): void {
     this.dashboard.set({ ...DASHBOARD_VACIO });
   }
 
   exportarIndicadores(formato: FormatoExportacion): void {
-    this.registrarAuditoria(
-      'EXPORTAR_INDICADORES',
-      'REPORTE',
-      null,
-      `Exportación de indicadores en ${formato}`,
-      'EXITO',
-    );
-    this.mensajeConfirmacion.set(
-      `Exportación en ${formato} solicitada. Quedó registrada en el log de auditoría.`,
-    );
+    if (this.exportando()) return;
+    this.exportando.set(true);
+    this.mensajeConfirmacion.set('');
+    this.mensajeError.set('');
+
+    this.adminService.exportarIndicadores(formato).subscribe({
+      next: (archivo: Blob) => {
+        this.descargarArchivo(archivo, formato);
+        this.mensajeConfirmacion.set(
+          `Exportación en ${formato} generada. Quedó registrada en el log de auditoría.`,
+        );
+        this.exportando.set(false);
+        this.cargarExportaciones();
+      },
+      error: async (err: HttpErrorResponse) => {
+        // Con responseType 'blob', el mensaje de error del backend llega como Blob
+        let detalle = '';
+        if (err.error instanceof Blob) {
+          try {
+            detalle = await err.error.text();
+          } catch {
+            detalle = '';
+          }
+        }
+        this.mensajeError.set(
+          detalle || this.textoError(err, `No se pudo exportar el archivo ${formato}.`),
+        );
+        this.exportando.set(false);
+      },
+    });
+  }
+
+  // El historial de exportaciones son los eventos de auditoría EXPORTAR_INDICADORES
+  cargarExportaciones(): void {
+    this.adminService
+      .consultarAuditoria({ accion: 'EXPORTAR_INDICADORES', pagina: 0, tamano: 20 })
+      .subscribe({
+        next: (lista) => this.exportaciones.set((lista ?? []).map((e) => this.aEventoVista(e))),
+        error: (err: HttpErrorResponse) =>
+          this.mensajeError.set(this.textoError(err, 'No se pudo cargar el historial.')),
+      });
+  }
+
+  private descargarArchivo(archivo: Blob, formato: FormatoExportacion): void {
+    const extension = formato === 'PDF' ? 'pdf' : 'xlsx';
+    const url = URL.createObjectURL(archivo);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = `indicadores.${extension}`;
+    enlace.click();
+    URL.revokeObjectURL(url);
   }
 
   // Publicaciones
+
+  cargarPublicaciones(alTerminar?: () => void): void {
+    this.cargandoPublicaciones.set(true);
+    this.adminService.listarPublicaciones().subscribe({
+      next: (lista) => {
+        this.publicaciones.set(
+          (lista ?? []).map((p: any) => ({
+            idPublicacion: p.idPublicacion,
+            titulo: p.titulo ?? '',
+            ciudad: p.ciudad ?? '',
+            precioNoche: Number(p.precioNoche ?? 0),
+            estado: p.estado,
+            motivoBloqueo: p.motivoBloqueo ?? null,
+            nombreAnfitrion: p.nombreAnfitrion || p.nombreUsuarioAnfitrion || '',
+            totalReservasFuturas: p.totalReservasFuturas ?? 0,
+            reservasFuturas: (p.reservasFuturas ?? []).map((r: any) => ({
+              idReserva: r.idReserva,
+              fechaLlegada: r.fechaLlegada,
+              fechaSalida: r.fechaSalida,
+              total: Number(r.total ?? 0),
+              nombreHuesped: r.nombreHuesped || r.nombreUsuarioHuesped || '',
+            })),
+          })),
+        );
+        this.cargandoPublicaciones.set(false);
+        alTerminar?.();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cargandoPublicaciones.set(false);
+        this.mensajeError.set(this.textoError(err, 'No se pudieron cargar las publicaciones.'));
+      },
+    });
+  }
 
   seleccionarFiltroPublicacion(estado: 'TODAS' | EstadoPublicacion): void {
     this.filtroEstadoPublicacion.set(estado);
@@ -518,7 +449,7 @@ export class Admin {
 
   bloquearPublicacion(): void {
     const pub = this.publicacionSeleccionada();
-    if (!pub || !this.puedeBloquearse(pub)) return;
+    if (!pub || !this.puedeBloquearse(pub) || this.bloqueando()) return;
 
     const motivo = this.motivoBloqueo.trim();
     if (motivo.length === 0 || motivo.length > LONGITUD_MAX_MOTIVO) {
@@ -528,31 +459,77 @@ export class Admin {
       return;
     }
 
-    this.publicaciones.update((lista) =>
-      lista.map((p) =>
-        p.idPublicacion === pub.idPublicacion
-          ? { ...p, estado: 'BLOQUEADA' as EstadoPublicacion, motivoBloqueo: motivo }
-          : p,
-      ),
-    );
-    this.registrarAuditoria(
-      'BLOQUEAR_PUBLICACION',
-      'PUBLICACION',
-      pub.idPublicacion,
-      `Publicación bloqueada: ${motivo}`,
-      'EXITO',
-    );
-    this.publicacionSeleccionada.set(null);
-    this.mensajeConfirmacion.set(
-      `Publicación bloqueada. Reservas futuras conservadas para revisión manual: ${pub.totalReservasFuturas}.`,
-    );
+    this.bloqueando.set(true);
+    this.adminService.bloquearPublicacion(pub.idPublicacion, motivo).subscribe({
+      next: () => {
+        this.publicaciones.update((lista) =>
+          lista.map((p) =>
+            p.idPublicacion === pub.idPublicacion
+              ? { ...p, estado: 'BLOQUEADA' as EstadoPublicacion, motivoBloqueo: motivo }
+              : p,
+          ),
+        );
+        this.bloqueando.set(false);
+        this.publicacionSeleccionada.set(null);
+        this.mensajeConfirmacion.set(
+          `Publicación bloqueada. Reservas futuras conservadas para revisión manual: ${pub.totalReservasFuturas}.`,
+        );
+      },
+      error: (err: HttpErrorResponse) => {
+        this.bloqueando.set(false);
+        this.errorBloqueo.set(this.textoError(err, 'No se pudo bloquear la publicación.'));
+      },
+    });
   }
 
   // Reseñas
 
+  private seleccionarPrimerAlojamiento(): void {
+    const actual = this.alojamientoSeleccionado();
+    const existe = this.publicaciones().some((p) => p.idPublicacion === actual);
+    if (existe && actual !== null) {
+      this.cargarResenas(actual);
+      return;
+    }
+    const primera = this.publicaciones()[0];
+    if (primera) {
+      this.seleccionarAlojamiento(primera.idPublicacion);
+    } else {
+      this.alojamientoSeleccionado.set(null);
+      this.resenas.set([]);
+    }
+  }
+
   seleccionarAlojamiento(idPublicacion: number): void {
     this.resenaEnConfirmacion.set(null);
     this.alojamientoSeleccionado.set(idPublicacion);
+    this.cargarResenas(idPublicacion);
+  }
+
+  private cargarResenas(idPublicacion: number): void {
+    this.cargandoResenas.set(true);
+    this.adminService.listarResenas(idPublicacion).subscribe({
+      next: (lista) => {
+        // Se ignora la respuesta si el administrador ya eligió otro alojamiento
+        if (this.alojamientoSeleccionado() !== idPublicacion) return;
+        this.resenas.set(
+          (lista ?? []).map((r: any) => ({
+            idResena: r.idResena,
+            idPublicacion,
+            autor: r.autor ?? '',
+            calificacion: r.calificacion,
+            comentario: r.comentario ?? '',
+            fecha: r.fecha,
+            visible: r.visible ?? true,
+          })),
+        );
+        this.cargandoResenas.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cargandoResenas.set(false);
+        this.mensajeError.set(this.textoError(err, 'No se pudieron cargar las reseñas.'));
+      },
+    });
   }
 
   pedirConfirmacionOcultar(resena: ResenaMod): void {
@@ -565,34 +542,57 @@ export class Admin {
 
   ocultarResena(resena: ResenaMod): void {
     if (!resena.visible) return;
-    this.resenas.update((lista) =>
-      lista.map((r) => (r.idResena === resena.idResena ? { ...r, visible: false } : r)),
-    );
-    this.registrarAuditoria(
-      'OCULTAR_RESENA',
-      'RESENA',
-      resena.idResena,
-      'Reseña ocultada por incumplir las normas',
-      'EXITO',
-    );
-    this.resenaEnConfirmacion.set(null);
-    this.mensajeConfirmacion.set(
-      'Reseña ocultada. Ya no se muestra en el detalle del alojamiento.',
-    );
+    this.mensajeError.set('');
+
+    this.adminService.ocultarResena(resena.idResena).subscribe({
+      next: () => {
+        this.resenas.update((lista) =>
+          lista.map((r) => (r.idResena === resena.idResena ? { ...r, visible: false } : r)),
+        );
+        this.resenaEnConfirmacion.set(null);
+        this.mensajeConfirmacion.set(
+          'Reseña ocultada. Ya no se muestra en el detalle del alojamiento.',
+        );
+      },
+      error: (err: HttpErrorResponse) => {
+        this.resenaEnConfirmacion.set(null);
+        this.mensajeError.set(this.textoError(err, 'No se pudo ocultar la reseña.'));
+      },
+    });
   }
 
   // Usuarios
+
+  cargarUsuarios(): void {
+    this.cargandoUsuarios.set(true);
+    this.adminService.listarUsuarios().subscribe({
+      next: (lista) => {
+        this.usuarios.set(
+          (lista ?? []).map((u: any) => ({
+            idUsuario: u.idUsuario,
+            nombreUsuario: u.nombreUsuario ?? '',
+            primerNombre: u.primerNombre ?? '',
+            primerApellido: u.primerApellido ?? '',
+            role: u.role,
+            estadoCuenta: u.estadoCuenta,
+          })),
+        );
+        this.cargandoUsuarios.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cargandoUsuarios.set(false);
+        this.mensajeError.set(this.textoError(err, 'No se pudieron cargar los usuarios.'));
+      },
+    });
+  }
 
   seleccionarFiltroEstadoCuenta(estado: 'TODOS' | EstadoCuenta): void {
     this.filtroEstadoCuenta.set(estado);
   }
 
+  // El backend no permite restringir administradores (ni al propio), por eso basta con el rol
   puedeRestringirse(usuario: UsuarioMod): boolean {
-    return (
-      usuario.role !== 'ADMINISTRADOR' &&
-      usuario.idUsuario !== this.idAdminActual &&
-      usuario.estadoCuenta !== 'RESTRINGIDA'
-    );
+    return usuario.role !== 'ADMINISTRADOR' && usuario.estadoCuenta !== 'RESTRINGIDA';
   }
 
   pedirConfirmacionRestriccion(usuario: UsuarioMod): void {
@@ -605,27 +605,56 @@ export class Admin {
 
   restringirUsuario(usuario: UsuarioMod): void {
     if (!this.puedeRestringirse(usuario)) return;
-    this.usuarios.update((lista) =>
-      lista.map((u) =>
-        u.idUsuario === usuario.idUsuario
-          ? { ...u, estadoCuenta: 'RESTRINGIDA' as EstadoCuenta }
-          : u,
-      ),
-    );
-    this.registrarAuditoria(
-      'RESTRINGIR_USUARIO',
-      'USUARIO',
-      usuario.idUsuario,
-      `Cuenta restringida: ${usuario.nombreUsuario}`,
-      'EXITO',
-    );
-    this.usuarioEnConfirmacion.set(null);
-    this.mensajeConfirmacion.set(
-      'Cuenta restringida. El usuario ya no puede iniciar sesión ni realizar nuevas acciones.',
-    );
+    this.mensajeError.set('');
+
+    this.adminService.restringirUsuario(usuario.idUsuario).subscribe({
+      next: () => {
+        this.usuarios.update((lista) =>
+          lista.map((u) =>
+            u.idUsuario === usuario.idUsuario
+              ? { ...u, estadoCuenta: 'RESTRINGIDA' as EstadoCuenta }
+              : u,
+          ),
+        );
+        this.usuarioEnConfirmacion.set(null);
+        this.mensajeConfirmacion.set(
+          'Cuenta restringida. El usuario ya no puede iniciar sesión ni realizar nuevas acciones.',
+        );
+      },
+      error: (err: HttpErrorResponse) => {
+        this.usuarioEnConfirmacion.set(null);
+        this.mensajeError.set(this.textoError(err, 'No se pudo restringir la cuenta.'));
+      },
+    });
   }
 
   // Auditoría
+
+  cargarAuditoria(): void {
+    const f = this.filtrosAplicados();
+    this.cargandoAuditoria.set(true);
+    this.adminService
+      .consultarAuditoria({
+        fechaDesde: f.fechaDesde,
+        fechaHasta: f.fechaHasta,
+        accion: f.accion,
+        entidadTipo: f.entidadTipo,
+        resultado: f.resultado,
+        pagina: 0,
+        tamano: MAX_EVENTOS_AUDITORIA,
+      })
+      .subscribe({
+        next: (lista) => {
+          this.eventosAuditoria.set((lista ?? []).map((e) => this.aEventoVista(e)));
+          this.pagina.set(0);
+          this.cargandoAuditoria.set(false);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.cargandoAuditoria.set(false);
+          this.mensajeError.set(this.textoError(err, 'No se pudo consultar la auditoría.'));
+        },
+      });
+  }
 
   aplicarFiltros(): void {
     const fechasInvertidas =
@@ -637,7 +666,6 @@ export class Admin {
       return;
     }
     this.errorFiltros.set('');
-    this.pagina.set(0);
     this.filtrosAplicados.set({
       fechaDesde: this.filtroFechaDesde,
       fechaHasta: this.filtroFechaHasta,
@@ -646,6 +674,7 @@ export class Admin {
       entidadTipo: this.filtroEntidad,
       resultado: this.filtroResultado,
     });
+    this.cargarAuditoria();
   }
 
   limpiarFiltros(): void {
@@ -656,8 +685,8 @@ export class Admin {
     this.filtroEntidad = '';
     this.filtroResultado = '';
     this.errorFiltros.set('');
-    this.pagina.set(0);
     this.filtrosAplicados.set({ ...FILTROS_AUDITORIA_VACIOS });
+    this.cargarAuditoria();
   }
 
   paginaAnterior(): void {
@@ -668,29 +697,25 @@ export class Admin {
     if (this.pagina() < this.totalPaginas() - 1) this.pagina.update((p) => p + 1);
   }
 
-  private registrarAuditoria(
-    accion: string,
-    entidadTipo: string,
-    entidadId: number | null,
-    descripcion: string,
-    resultado: ResultadoAuditoria,
-  ): void {
-    const nuevoEvento: EventoAuditoriaVista = {
-      idAuditoria: Date.now() % 100000,
-      correoUsuario: this.adminActual,
-      accion,
-      entidadTipo,
-      entidadId,
-      fechaHora: this.fechaHoraActual(),
-      descripcion,
-      resultado,
+  // Utilidades
+
+  private aEventoVista(e: any): EventoAuditoriaVista {
+    return {
+      idAuditoria: e.idAuditoria,
+      correoUsuario: e.correoUsuario ?? '',
+      accion: e.accion,
+      entidadTipo: e.entidadTipo,
+      entidadId: e.entidadId ?? null,
+      fechaHora: e.fechaHora,
+      descripcion: e.descripcion ?? '',
+      resultado: e.resultado,
     };
-    this.eventosAuditoria.update((lista) => [nuevoEvento, ...lista]);
   }
 
-  private fechaHoraActual(): string {
-    const d = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  // Los errores del backend llegan como texto; si no hay, se usa el mensaje por defecto
+  private textoError(err: HttpErrorResponse, porDefecto: string): string {
+    if (err.status === 0) return 'No fue posible conectar con el servidor.';
+    if (typeof err.error === 'string' && err.error) return err.error;
+    return porDefecto;
   }
 }

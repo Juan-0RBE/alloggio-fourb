@@ -70,10 +70,15 @@
             <label for="recordar" class="texto-secundario">Recordar en este equipo</label>
           </div>
 
-          <button type="submit" class="boton-dorado" [disabled]="loginForm.invalid">Iniciar Sesión</button>
+          <button type="submit" class="boton-dorado" [disabled]="loginForm.invalid">
+            Iniciar Sesión
+          </button>
           <div *ngIf="errorMessage" class="mensaje-error">
             {{ errorMessage }}
           </div>
+          <a *ngIf="cuentaInactiva" routerLink="/reactivar-cuenta" class="enlace-dorado">
+            Reactivar mi cuenta &rarr;
+          </a>
           <div *ngIf="successMessage" class="mensaje-exito">
             {{ successMessage }}
           </div>
