@@ -12,7 +12,7 @@ import { Usuario } from './component/usuarios/usuario/usuario';
 import { ReactivarCuenta } from './component/autenticacion/reactivar-cuenta/reactivar-cuenta';
 import { Anfitrion } from './component/usuarios/anfitrion/anfitrion';
 import { Admin } from './component/usuarios/admin/admin';
-import { adminGuard, userGuard } from './service/auth.guard';
+//import { adminGuard, userGuard } from './service/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -20,10 +20,11 @@ export const routes: Routes = [
   { path: 'registro', component: Registro },
   { path: 'recuperacion', component: Recuperacion },
   { path: 'inicio', component: Inicio },
+  { path: 'reactivar-cuenta', component: ReactivarCuenta },
 
   {
     path: '',
-    canActivate: [userGuard],
+    //    canActivate: [userGuard],
     children: [
       { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
       { path: 'resumen-reserva', component: ResumenReserva },
@@ -32,10 +33,9 @@ export const routes: Routes = [
       { path: 'formulario-resena', component: FormularioResena },
       { path: 'usuario', component: Usuario },
       { path: 'anfitrion', component: Anfitrion },
-      { path: 'reactivar-cuenta', component: ReactivarCuenta },
     ],
   },
 
-  { path: 'admin', component: Admin, canActivate: [adminGuard] },
+  { path: 'admin', component: Admin /*canActivate: [adminGuard] */ },
   { path: '**', redirectTo: 'login' },
 ];

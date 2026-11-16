@@ -6,7 +6,7 @@
     </div>
 
     <div class="info-sesion-admin">
-      <span class="correo-admin"><i class="pi pi-shield"></i> {{ adminActual }}</span>
+      <span class="correo-admin"><i class="pi pi-shield"></i> {{ adminActual() }}</span>
       <a routerLink="/inicio" class="enlace-volver">
         <i class="pi pi-arrow-left"></i>
         <span>Salir del panel</span>
@@ -81,6 +81,11 @@
       <div class="mensaje-confirmacion" *ngIf="mensajeConfirmacion()" role="status">
         <i class="pi pi-check-circle"></i>
         <span>{{ mensajeConfirmacion() }}</span>
+      </div>
+
+      <div class="alerta-error" style="margin-bottom: 1.25rem" *ngIf="mensajeError()" role="alert">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ mensajeError() }}</span>
       </div>
 
       <section *ngIf="seccionActiva() === 'dashboard'" class="bloque-seccion">

@@ -20,16 +20,18 @@ export class Login {
   isLoading = false;
   errorMessage = '';
   successMessage: string = '';
+  cuentaInactiva = false;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   onSubmit() {
     this.errorMessage = '';
     this.successMessage = '';
+    this.cuentaInactiva = false;
 
     if (!this.loginData.correo || !this.loginData.password) {
       this.errorMessage = 'Completa todos los campos';
@@ -38,13 +40,12 @@ export class Login {
     if (this.isLoading) return;
     this.isLoading = true;
 
-    // En tu componente .ts
-    const esCorreo = this.loginData.correo.includes('@'); // Verificamos si tiene @
+    const esCorreo = this.loginData.correo.includes('@');
 
     const loginRequest = {
-      nombreUsuario: esCorreo ? null : this.loginData.correo, // Si no es correo, va aquí
-      correoUsuario: esCorreo ? this.loginData.correo : null,       // Si es correo, va aquí
-      claveUsuario: this.loginData.password
+      nombreUsuario: esCorreo ? null : this.loginData.correo,
+      correoUsuario: esCorreo ? this.loginData.correo : null,
+      claveUsuario: this.loginData.password,
     };
 
     console.log('Enviando al back:', loginRequest);
@@ -60,6 +61,10 @@ export class Login {
       error: (error) => {
         this.isLoading = false;
         this.errorMessage = this.getErrorMessage(error);
+        this.cuentaInactiva =
+          error.status === 403 &&
+          typeof error.error === 'string' &&
+          error.error.includes('inactiva');
         this.cdr.detectChanges();
       },
     });
@@ -67,12 +72,20 @@ export class Login {
 
   private getErrorMessage(error: any): string {
     switch (error.status) {
-      case 0:   return 'No hay conexión con el servidor.';
-      case 400: return 'Datos inválidos. Revisa el formato.';
-      case 401: return 'Usuario o contraseña incorrectos.';
-      case 403: return 'No tienes permiso para acceder.';
-      case 500: return 'Error interno del servidor. Intenta más tarde.';
-      default:  return error.error?.message || 'Error al iniciar sesión.';
+      case 0:
+        return 'No hay conexión con el servidor.';
+      case 400:
+        return 'Datos inválidos. Revisa el formato.';
+      case 401:
+        return 'Usuario o contraseña incorrectos.';
+      case 403:
+        return typeof error.error === 'string' && error.error
+          ? error.error
+          : 'No tienes permiso para acceder.';
+      case 500:
+        return 'Error interno del servidor. Intenta más tarde.';
+      default:
+        return error.error?.message || 'Error al iniciar sesión.';
     }
   }
 }
