@@ -58,4 +58,8 @@ export class AuthService {
   homeUrl(): string {
     return this.isAdmin() ? '/admin' : '/inicio';
   }
+
+  reactivarCuenta(user: UsuarioDTO): Observable<string>{
+    return this.http.post(`${API_URL}/auth/reactivar`, user, { responseType: 'text' });
+  }
 }
