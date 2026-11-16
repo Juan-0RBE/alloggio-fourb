@@ -22,24 +22,32 @@
     </div>
 
     <div class="sub-info-cabecera">
-      <div class="calificacion-resenas">
+      <div class="calificacion-resenas" *ngIf="hayResenas; else sinCalificacion">
         <i class="pi pi-star-fill icono-estrella"></i>
-        <span class="numero-calificacion">{{ alojamiento.calificacion }}</span>
+        <span class="numero-calificacion">{{
+          alojamiento.promedioCalificacion | number: '1.1-2'
+        }}</span>
         <span class="separador-punto">·</span>
-        <span class="enlace-resenas"
-          >{{ alojamiento.resenasCount }}
-          {{ alojamiento.resenasCount === 1 ? 'reseña' : 'reseñas' }}</span
-        >
+        <button type="button" class="enlace-resenas" (click)="irAResenas()">
+          {{ alojamiento.totalResenas }}
+          {{ alojamiento.totalResenas === 1 ? 'reseña' : 'reseñas' }}
+        </button>
       </div>
+
+      <ng-template #sinCalificacion>
+        <span class="texto-sin-calificacion">Sin reseñas aún</span>
+      </ng-template>
+
       <span class="separador-punto">·</span>
       <span class="ubicacion-texto"
-        ><i class="pi pi-map-marker"></i> {{ alojamiento.ubicacion }}</span
+        ><i class="pi pi-map-marker"></i> {{ alojamiento.ciudad }} ·
+        {{ alojamiento.ubicacion }}</span
       >
     </div>
 
     <div class="galeria-imagenes-grid" *ngIf="alojamiento.imagenes.length">
       <div class="imagen-principal-contenedor" (click)="abrirImagenPorIndice(0)">
-        <img [src]="alojamiento.imagenes[0].url" [alt]="alojamiento.titulo" />
+        <img [src]="alojamiento.imagenes[0].urlImagen" [alt]="alojamiento.titulo" />
       </div>
       <div class="galeria-secundaria-grid">
         <div
@@ -47,7 +55,7 @@
           *ngFor="let img of alojamiento.imagenes.slice(1, 5); let i = index"
           (click)="abrirImagenPorIndice(i + 1)"
         >
-          <img [src]="img.url" [alt]="alojamiento.titulo" />
+          <img [src]="img.urlImagen" [alt]="alojamiento.titulo" />
           <div
             *ngIf="i === 3"
             class="overlay-ver-todas"
@@ -65,18 +73,13 @@
         <div class="bloque-anfitrion-info">
           <div class="textos-anfitrion">
             <h2 class="subtitulo-seccion">
-              {{ alojamiento.tipo }} anfitrión: {{ alojamiento.anfitrionNombre }}
+              {{ etiquetasTipo[alojamiento.tipo] }} en {{ alojamiento.ciudad }}
             </h2>
             <p class="detalles-capacidad">
-              Hasta {{ alojamiento.huespedes }} huéspedes ·
-              {{ alojamiento.habitaciones }} habitaciones · {{ alojamiento.banios }} baños
+              Hasta {{ alojamiento.capacidad }}
+              {{ alojamiento.capacidad === 1 ? 'huésped' : 'huéspedes' }}
             </p>
           </div>
-          <img
-            [src]="alojamiento.anfitrionAvatar"
-            [alt]="alojamiento.anfitrionNombre"
-            class="avatar-anfitrion-grande"
-          />
         </div>
 
         <hr class="divisor-seccion" />
@@ -97,14 +100,11 @@
           </div>
 
           <div class="lista-servicios-grid">
-            <div
-              class="item-servicio-incluido"
-              *ngFor="let servicio of alojamiento.serviciosAdicionales"
-            >
+            <div class="item-servicio-incluido" *ngFor="let servicio of alojamiento.servicios">
               <i class="pi pi-check-circle"></i>
               <span>{{ servicio.nombre }}</span>
-              <strong class="precio-servicio-badge" *ngIf="servicio.precio > 0">
-                (+${{ servicio.precio | number: '1.0-0' }})
+              <strong class="precio-servicio-badge" *ngIf="servicio.esAdicional">
+                (+${{ servicio.costo | number: '1.0-0' }} / noche)
               </strong>
             </div>
           </div>
@@ -112,15 +112,73 @@
 
         <hr class="divisor-seccion" />
 
+        <div class="bloque-calendario">
+          <h3 class="titulo-bloque">Disponibilidad</h3>
+
+          <div class="control-mes">
+            <button
+              type="button"
+              class="boton-mes"
+              aria-label="Mes anterior"
+              [disabled]="!puedeIrMesAnterior"
+              (click)="mesAnterior()"
+            >
+              <i class="pi pi-chevron-left"></i>
+            </button>
+            <span class="nombre-mes">{{ mesVisible | date: 'MMMM yyyy' : '' : 'es-CO' }}</span>
+            <button
+              type="button"
+              class="boton-mes"
+              aria-label="Mes siguiente"
+              (click)="mesSiguiente()"
+            >
+              <i class="pi pi-chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="cuadricula-dias" role="grid">
+            <span class="cabecera-dia" *ngFor="let dia of diasSemana">{{ dia }}</span>
+
+            <ng-container *ngFor="let celda of celdasCalendario">
+              <span class="dia vacio" *ngIf="!celda"></span>
+              <span
+                class="dia"
+                *ngIf="celda"
+                [ngClass]="'estado-' + celda.estado.toLowerCase()"
+                [attr.aria-label]="celda.fecha + ': ' + celda.estado.toLowerCase()"
+                >{{ celda.numero }}</span
+              >
+            </ng-container>
+          </div>
+
+          <ul class="leyenda">
+            <li><span class="muestra estado-libre"></span> Disponible</li>
+            <li><span class="muestra estado-ocupado"></span> No disponible</li>
+          </ul>
+        </div>
+
+        <hr class="divisor-seccion" />
+
+        <div class="bloque-reglas" *ngIf="alojamiento.reglas.length > 0">
+          <h3 class="titulo-bloque">Reglas del alojamiento</h3>
+          <ul class="lista-reglas">
+            <li *ngFor="let regla of alojamiento.reglas">
+              <i class="pi pi-info-circle"></i>
+              <span>{{ regla.descripcion }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <hr class="divisor-seccion" *ngIf="alojamiento.reglas.length > 0" />
+
         <div class="bloque-reglas-politicas">
           <div class="columna-politica">
-            <h3 class="titulo-bloque">Política de cancelación</h3>
+            <h3 class="titulo-bloque">
+              Política de cancelación · {{ alojamiento.politicaCancelacion.nombre }}
+            </h3>
             <p class="texto-politica">
               <i class="pi pi-shield"></i>
-              <span
-                >Mínimo 5 días antes del periodo de reserva y con devolución del 20% del
-                monto.</span
-              >
+              <span>{{ alojamiento.politicaCancelacion.condiciones }}</span>
             </p>
           </div>
         </div>
@@ -162,19 +220,50 @@
                 id="cantidad-huespedes"
                 type="number"
                 min="1"
-                [max]="alojamiento.huespedes"
+                [max]="alojamiento.capacidad"
                 [(ngModel)]="cantidadHuespedes"
               />
             </div>
+
+            <div class="servicios-opcionales" *ngIf="serviciosAdicionales.length > 0">
+              <span class="etiqueta-opcionales">Servicios adicionales</span>
+              <label class="opcion-servicio" *ngFor="let servicio of serviciosAdicionales">
+                <input
+                  type="checkbox"
+                  [checked]="servicioSeleccionado(servicio.idServicio)"
+                  (change)="alternarServicio(servicio.idServicio)"
+                />
+                <span class="nombre-opcion">{{ servicio.nombre }}</span>
+                <span class="precio-opcion">+${{ servicio.costo | number: '1.0-0' }} / noche</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="alerta-disponibilidad" *ngIf="rangoNoDisponible" role="alert">
+            <i class="pi pi-exclamation-circle"></i>
+            <span
+              >El alojamiento no está disponible en las fechas elegidas. Revisa el calendario.</span
+            >
+          </div>
+
+          <div class="alerta-disponibilidad" *ngIf="huespedesInvalidos" role="alert">
+            <i class="pi pi-exclamation-circle"></i>
+            <span>Este alojamiento admite entre 1 y {{ alojamiento.capacidad }} huéspedes.</span>
           </div>
 
           <button
             class="boton-reservar-principal"
             type="button"
-            [disabled]="numeroNoches <= 0"
+            [disabled]="!puedeReservar"
             (click)="reservarAhora()"
           >
-            {{ numeroNoches > 0 ? 'Reservar ahora' : 'Selecciona las fechas' }}
+            {{
+              numeroNoches <= 0
+                ? 'Selecciona las fechas'
+                : rangoNoDisponible
+                  ? 'Fechas no disponibles'
+                  : 'Reservar ahora'
+            }}
           </button>
           <p class="aviso-cobro">No se te cobrará nada por el momento</p>
 
@@ -192,28 +281,32 @@
               <span>${{ tarifaLimpieza | number: '1.0-0' }}</span>
             </div>
 
-            <!-- NUEVO: Servicios adicionales fijos del alojamiento -->
-            <div
-              class="seccion-servicios-incluidos"
-              *ngIf="
-                alojamiento.serviciosAdicionales && alojamiento.serviciosAdicionales.length > 0
-              "
-            >
+            <div class="fila-desglose">
+              <span>Tarifa de servicio</span>
+              <span>${{ tarifaServicio | number: '1.0-0' }}</span>
+            </div>
+
+            <div class="seccion-servicios-incluidos" *ngIf="serviciosSeleccionados.length > 0">
               <div
                 class="fila-desglose servicio-fijo"
-                *ngFor="let servicio of alojamiento.serviciosAdicionales"
+                *ngFor="let servicio of serviciosSeleccionados"
               >
                 <span class="nombre-servicio">
                   <i class="pi pi-check-circle"></i> {{ servicio.nombre }}
                 </span>
-                <span>${{ servicio.precio | number: '1.0-0' }}</span>
+                <span>${{ costoServicio(servicio) | number: '1.0-0' }}</span>
               </div>
+            </div>
+
+            <div class="fila-desglose descuento" *ngIf="descuento > 0">
+              <span>Descuento por estadía larga</span>
+              <span>-${{ descuento | number: '1.0-0' }}</span>
             </div>
 
             <hr class="divisor-desglose" />
 
             <div class="fila-desglose total">
-              <span>Total antes de impuestos</span>
+              <span>Total</span>
               <span>${{ totalReserva | number: '1.0-0' }}</span>
             </div>
           </div>
@@ -228,11 +321,65 @@
         </div>
       </aside>
     </div>
+
+    <section class="seccion-resenas-alojamiento" id="resenas" aria-labelledby="titulo-resenas">
+      <div class="cabecera-resenas">
+        <h2 class="titulo-seccion-resenas" id="titulo-resenas">
+          <ng-container *ngIf="hayResenas; else tituloSinResenas">
+            <i class="pi pi-star-fill icono-estrella-titulo"></i>
+            {{ alojamiento.promedioCalificacion | number: '1.1-2' }} ·
+            {{ alojamiento.totalResenas }}
+            {{ alojamiento.totalResenas === 1 ? 'reseña' : 'reseñas' }}
+          </ng-container>
+          <ng-template #tituloSinResenas>Reseñas</ng-template>
+        </h2>
+      </div>
+
+      <div class="grid-listado-resenas" *ngIf="hayResenas; else sinResenas">
+        <article class="tarjeta-reseña-usuario" *ngFor="let resena of alojamiento.resenas">
+          <div class="encabezado-usuario-reseña">
+            <span class="avatar-inicial" aria-hidden="true">{{
+              resena.autor.charAt(0) | uppercase
+            }}</span>
+            <div class="info-usuario-texto">
+              <h3 class="nombre-usuario">{{ resena.autor }}</h3>
+              <span class="fecha-estancia-reseña">{{
+                resena.fecha | date: 'MMMM yyyy' : '' : 'es-CO'
+              }}</span>
+            </div>
+          </div>
+
+          <div class="estrellas-resena" [attr.aria-label]="resena.calificacion + ' de 5 estrellas'">
+            <i
+              class="pi"
+              *ngFor="let n of estrellas"
+              [ngClass]="n <= resena.calificacion ? 'pi-star-fill' : 'pi-star'"
+            ></i>
+          </div>
+
+          <p class="texto-comentario-reseña">{{ resena.comentario }}</p>
+        </article>
+      </div>
+
+      <p
+        class="nota-resenas"
+        *ngIf="hayResenas && alojamiento.totalResenas > alojamiento.resenas.length"
+      >
+        Mostrando las {{ alojamiento.resenas.length }} reseñas más recientes.
+      </p>
+
+      <ng-template #sinResenas>
+        <div class="mensaje-sin-resenas">
+          <i class="pi pi-comments"></i>
+          <span>Este alojamiento aún no tiene reseñas.</span>
+        </div>
+      </ng-template>
+    </section>
   </main>
 
   <div class="modal-visor-imagen" *ngIf="imagenSeleccionada" (click)="cerrarModal()">
     <div class="contenido-modal" (click)="$event.stopPropagation()">
-      <button class="boton-cerrar-modal" (click)="cerrarModal()" type="button">
+      <button class="boton-cerrar-modal" (click)="cerrarModal()" type="button" aria-label="Cerrar">
         <i class="pi pi-times"></i>
       </button>
 
@@ -240,17 +387,17 @@
         class="boton-navegacion boton-anterior"
         (click)="imagenAnterior($event)"
         type="button"
+        aria-label="Foto anterior"
       >
         <i class="pi pi-chevron-left"></i>
       </button>
 
       <div class="contenedor-imagen-visor">
-        <img [src]="imagenSeleccionada.url" [alt]="alojamiento.titulo" />
+        <img [src]="imagenSeleccionada.urlImagen" [alt]="alojamiento.titulo" />
         <div class="pie-info-visor">
           <span class="contador-fotos"
             >{{ indiceImagenSeleccionada! + 1 }} / {{ alojamiento.imagenes.length }}</span
           >
-          <span class="descripcion-modal">{{ imagenSeleccionada.descripcion }}</span>
         </div>
       </div>
 
@@ -258,6 +405,7 @@
         class="boton-navegacion boton-siguiente"
         (click)="imagenSiguiente($event)"
         type="button"
+        aria-label="Foto siguiente"
       >
         <i class="pi pi-chevron-right"></i>
       </button>

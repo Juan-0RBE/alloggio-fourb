@@ -24,6 +24,27 @@
       </button>
     </div>
 
+    <div
+      class="aviso-accion"
+      *ngIf="aviso() as av"
+      [class.error]="av.tipo === 'error'"
+      [attr.role]="av.tipo === 'error' ? 'alert' : 'status'"
+    >
+      <i
+        class="pi"
+        [ngClass]="av.tipo === 'error' ? 'pi-exclamation-circle' : 'pi-check-circle'"
+      ></i>
+      <span>{{ av.texto }}</span>
+      <button
+        type="button"
+        class="boton-cerrar-aviso"
+        aria-label="Cerrar aviso"
+        (click)="cerrarAviso()"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
     <div class="grid-mis-alojamientos" *ngIf="misAlojamientos().length > 0; else sinAlojamientos">
       <div class="tarjeta-propiedad" *ngFor="let aloj of misAlojamientos()">
         <div class="imagen-contenedor">
@@ -32,24 +53,43 @@
             [src]="aloj.imagenes[0].urlImagen"
             [alt]="aloj.titulo"
           />
-          <span class="insignia-estado" [class.activo]="aloj.estado === 'Activo'">
-            {{ aloj.estado }}
+          <span class="insignia-estado" [ngClass]="'estado-' + aloj.estado.toLowerCase()">
+            {{ etiquetasEstado[aloj.estado] }}
           </span>
         </div>
 
         <div class="info-propiedad">
-          <span class="tipo-alojamiento">{{ aloj.tipo }} · {{ aloj.ubicacion }}</span>
+          <span class="tipo-alojamiento">{{ etiquetaTipo(aloj.tipo) }} · {{ aloj.ciudad }}</span>
           <h3 class="titulo-propiedad">{{ aloj.titulo }}</h3>
           <span class="detalles-capacidad">
-            {{ aloj.huespedes }} huésp. · {{ aloj.habitaciones }} hab. · {{ aloj.banios }} baños
+            {{ aloj.capacidad }} {{ aloj.capacidad === 1 ? 'huésped' : 'huéspedes' }} · Política
+            {{ politicaDe(aloj.idPoliticaCancelacion)?.nombre || 'sin definir' }} ·
+            {{ aloj.reglas.length }} {{ aloj.reglas.length === 1 ? 'regla' : 'reglas' }}
           </span>
+
+          <div class="aviso-bloqueo" *ngIf="aloj.estado === 'BLOQUEADA'">
+            <i class="pi pi-ban"></i>
+            <span>
+              Bloqueada por un administrador<span *ngIf="aloj.motivoBloqueo"
+                >: {{ aloj.motivoBloqueo }}</span
+              >
+            </span>
+          </div>
+
+          <div
+            class="aviso-borrador"
+            *ngIf="aloj.estado === 'BORRADOR' && datosFaltantes(aloj).length > 0"
+          >
+            <i class="pi pi-info-circle"></i>
+            <span>Para activarla falta: {{ datosFaltantes(aloj).join(', ') }}.</span>
+          </div>
 
           <div
             class="servicios-tarjeta"
             *ngIf="aloj.serviciosAdicionales && aloj.serviciosAdicionales.length > 0"
           >
             <span class="etiqueta-servicio" *ngFor="let serv of aloj.serviciosAdicionales">
-              {{ serv.nombre }}: <strong>${{ serv.precio | number: '1.0-0' }}</strong>
+              {{ serv.nombre }}: <strong>${{ serv.costo | number: '1.0-0' }}</strong>
             </span>
           </div>
 
@@ -65,27 +105,51 @@
         </div>
 
         <div class="acciones-propiedad">
+          <a
+            class="boton-accion"
+            [routerLink]="['/anfitrion/calendario', aloj.id]"
+            title="Calendario de disponibilidad"
+            aria-label="Calendario de disponibilidad"
+          >
+            <i class="pi pi-calendar"></i>
+          </a>
           <button
             class="boton-accion"
             type="button"
+            [disabled]="!puedeEditar(aloj)"
             (click)="abrirModalEditar(aloj)"
             title="Editar alojamiento"
+            aria-label="Editar alojamiento"
           >
             <i class="pi pi-pencil"></i>
           </button>
           <button
+            *ngIf="aloj.estado === 'ACTIVA'"
             class="boton-accion"
             type="button"
-            (click)="alternarEstado(aloj.id)"
-            [title]="aloj.estado === 'Activo' ? 'Pausar publicación' : 'Activar publicación'"
+            (click)="pausarAlojamiento(aloj)"
+            title="Pausar publicación"
+            aria-label="Pausar publicación"
           >
-            <i class="pi" [ngClass]="aloj.estado === 'Activo' ? 'pi-pause' : 'pi-play'"></i>
+            <i class="pi pi-pause"></i>
+          </button>
+          <button
+            *ngIf="aloj.estado === 'BORRADOR' || aloj.estado === 'PAUSADA'"
+            class="boton-accion"
+            type="button"
+            (click)="activarAlojamiento(aloj)"
+            title="Activar publicación"
+            aria-label="Activar publicación"
+          >
+            <i class="pi pi-play"></i>
           </button>
           <button
             class="boton-accion peligro"
             type="button"
-            (click)="eliminarAlojamiento(aloj.id)"
+            [disabled]="!puedeEditar(aloj)"
+            (click)="eliminarAlojamiento(aloj)"
             title="Eliminar alojamiento"
+            aria-label="Eliminar alojamiento"
           >
             <i class="pi pi-trash"></i>
           </button>
@@ -106,10 +170,18 @@
   </main>
 
   <div class="modal-fondo" *ngIf="mostrandoModal()" (click)="cerrarModal()">
-    <div class="modal-dialogo" (click)="$event.stopPropagation()">
+    <div
+      class="modal-dialogo"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="titulo-modal"
+      (click)="$event.stopPropagation()"
+    >
       <div class="modal-encabezado">
-        <h2>{{ editandoId() !== null ? 'Editar Alojamiento' : 'Nuevo Alojamiento' }}</h2>
-        <button class="boton-cerrar" type="button" (click)="cerrarModal()">
+        <h2 id="titulo-modal">
+          {{ editandoId() !== null ? 'Editar Alojamiento' : 'Nuevo Alojamiento' }}
+        </h2>
+        <button class="boton-cerrar" type="button" aria-label="Cerrar" (click)="cerrarModal()">
           <i class="pi pi-times"></i>
         </button>
       </div>
@@ -127,59 +199,42 @@
 
         <div class="fila-doble">
           <div class="campo">
-            <label for="ubicacion">Ubicación (Ciudad) *</label>
+            <label for="ciudad">Ciudad *</label>
+            <input id="ciudad" type="text" [(ngModel)]="formCiudad" placeholder="Ej: Medellín" />
+          </div>
+          <div class="campo">
+            <label for="ubicacion">Ubicación *</label>
             <input
               id="ubicacion"
               type="text"
               [(ngModel)]="formUbicacion"
-              placeholder="Ej: Medellín, Antioquia"
+              placeholder="Ej: Barrio El Poblado, cerca al parque"
             />
-          </div>
-          <div class="campo">
-            <label for="tipo">Tipo de espacio</label>
-            <select id="tipo" [(ngModel)]="formTipo">
-              <option value="Villa completa">Villa completa</option>
-              <option value="Apartamento">Apartamento</option>
-              <option value="Cabaña">Cabaña</option>
-              <option value="Habitación privada">Habitación privada</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="fila-triple">
-          <div class="campo">
-            <label for="huespedes">Huéspedes</label>
-            <input id="huespedes" type="number" [(ngModel)]="formHuespedes" min="1" max="20" />
-          </div>
-          <div class="campo">
-            <label for="habitaciones">Habitaciones</label>
-            <input
-              id="habitaciones"
-              type="number"
-              [(ngModel)]="formHabitaciones"
-              min="1"
-              max="15"
-            />
-          </div>
-          <div class="campo">
-            <label for="banios">Baños</label>
-            <input id="banios" type="number" [(ngModel)]="formBanios" min="1" max="15" step="0.5" />
           </div>
         </div>
 
         <div class="fila-doble">
           <div class="campo">
-            <label for="precio">Precio por noche (COP)</label>
-            <input
-              id="precio"
-              type="number"
-              [(ngModel)]="formPrecioNoche"
-              min="50000"
-              step="10000"
-            />
+            <label for="tipo">Tipo de alojamiento *</label>
+            <select id="tipo" [(ngModel)]="formTipo">
+              <option *ngFor="let tipo of tiposAlojamiento" [value]="tipo.valor">
+                {{ tipo.etiqueta }}
+              </option>
+            </select>
           </div>
           <div class="campo">
-            <label for="limpieza">Tarifa de limpieza (COP)</label>
+            <label for="capacidad">Capacidad (huéspedes) *</label>
+            <input id="capacidad" type="number" [(ngModel)]="formCapacidad" min="1" max="20" />
+          </div>
+        </div>
+
+        <div class="fila-doble">
+          <div class="campo">
+            <label for="precio">Precio por noche (COP) *</label>
+            <input id="precio" type="number" [(ngModel)]="formPrecioNoche" min="1" step="10000" />
+          </div>
+          <div class="campo">
+            <label for="limpieza">Tarifa de limpieza (COP) *</label>
             <input
               id="limpieza"
               type="number"
@@ -188,6 +243,19 @@
               step="5000"
             />
           </div>
+        </div>
+
+        <div class="campo">
+          <label for="politica">Política de cancelación *</label>
+          <select id="politica" [(ngModel)]="formIdPolitica">
+            <option [ngValue]="null" disabled>Selecciona una política</option>
+            <option *ngFor="let pol of politicas()" [ngValue]="pol.idPolitica">
+              {{ pol.nombre }} · {{ pol.porcentajeDevolucion }}% de devolución
+            </option>
+          </select>
+          <span class="ayuda-campo" *ngIf="politicaSeleccionadaForm as pol">
+            {{ pol.condiciones }}
+          </span>
         </div>
 
         <div class="campo">
@@ -201,12 +269,12 @@
             />
             <input
               type="number"
-              [(ngModel)]="nuevoServicioPrecio"
-              placeholder="Precio COP"
+              [(ngModel)]="nuevoServicioCosto"
+              placeholder="Costo COP"
               min="0"
               step="5000"
               style="max-width: 130px"
-              name="precioServicio"
+              name="costoServicio"
             />
             <button type="button" class="boton-secundario" (click)="agregarServicioForm()">
               Añadir
@@ -216,8 +284,13 @@
           <div class="lista-servicios-form" *ngIf="formServicios.length > 0">
             <div class="item-servicio-form" *ngFor="let serv of formServicios; let i = index">
               <span class="nombre-serv">{{ serv.nombre }}</span>
-              <span class="precio-serv">${{ serv.precio | number: '1.0-0' }} COP</span>
-              <button type="button" class="boton-quitar-serv" (click)="eliminarServicioForm(i)">
+              <span class="precio-serv">${{ serv.costo | number: '1.0-0' }} COP</span>
+              <button
+                type="button"
+                class="boton-quitar-serv"
+                aria-label="Quitar servicio"
+                (click)="eliminarServicioForm(i)"
+              >
                 <i class="pi pi-trash"></i>
               </button>
             </div>
@@ -246,7 +319,40 @@
         </div>
 
         <div class="campo">
+          <label>Reglas del alojamiento ({{ formReglas.length }})</label>
+          <div class="grupo-agregar-servicio">
+            <input
+              type="text"
+              [(ngModel)]="nuevaReglaTexto"
+              placeholder="Ej: No se permiten mascotas"
+              name="textoRegla"
+              (keydown.enter)="agregarReglaForm()"
+            />
+            <button type="button" class="boton-secundario" (click)="agregarReglaForm()">
+              Añadir
+            </button>
+          </div>
+
+          <div class="lista-servicios-form" *ngIf="formReglas.length > 0">
+            <div class="item-servicio-form" *ngFor="let regla of formReglas; let i = index">
+              <span class="nombre-serv">{{ regla }}</span>
+              <button
+                type="button"
+                class="boton-quitar-serv"
+                aria-label="Quitar regla"
+                (click)="eliminarReglaForm(i)"
+              >
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="campo">
           <label>Galería de Imágenes ({{ formImagenes.length }})</label>
+          <span class="ayuda-campo"
+            >Necesitas al menos una imagen para activar la publicación.</span
+          >
           <div class="grupo-agregar-imagen">
             <input
               type="text"
@@ -261,7 +367,12 @@
           <div class="lista-mini-imagenes" *ngIf="formImagenes.length > 0">
             <div class="item-mini-imagen" *ngFor="let img of formImagenes; let i = index">
               <img [src]="img" alt="Vista previa" />
-              <button type="button" class="boton-quitar-img" (click)="eliminarImagenForm(i)">
+              <button
+                type="button"
+                class="boton-quitar-img"
+                aria-label="Quitar imagen"
+                (click)="eliminarImagenForm(i)"
+              >
                 <i class="pi pi-trash"></i>
               </button>
             </div>
@@ -269,7 +380,7 @@
         </div>
 
         <div class="campo">
-          <label for="descripcion">Descripción del espacio</label>
+          <label for="descripcion">Descripción del espacio *</label>
           <textarea
             id="descripcion"
             rows="3"
@@ -277,12 +388,17 @@
             placeholder="Describe las comodidades, vista y características principales..."
           ></textarea>
         </div>
+
+        <div class="alerta-error" *ngIf="errorFormulario()" role="alert">
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ errorFormulario() }}</span>
+        </div>
       </div>
 
       <div class="modal-acciones">
         <button class="boton-secundario" type="button" (click)="cerrarModal()">Cancelar</button>
         <button class="boton-dorado" type="button" (click)="guardarAlojamiento()">
-          {{ editandoId() !== null ? 'Guardar cambios' : 'Guardar publicación' }}
+          {{ editandoId() !== null ? 'Guardar cambios' : 'Guardar borrador' }}
         </button>
       </div>
     </div>

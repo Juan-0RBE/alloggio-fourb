@@ -1,4 +1,4 @@
-@use '../../../../styles' as *;
+@use '../../../../styles.scss' as *;
 
 $exito: #5fc788;
 $peligro: #e74c3c;
@@ -132,16 +132,26 @@ $peligro: #e74c3c;
       position: absolute;
       top: 12px;
       right: 12px;
-      background-color: rgba(231, 76, 60, 0.85);
+      background-color: rgba(49, 54, 62, 0.92);
       color: #fff;
       font-size: 0.75rem;
       font-weight: 600;
       padding: 0.25rem 0.6rem;
       border-radius: 6px;
 
-      &.activo {
-        background-color: rgba(95, 199, 136, 0.85);
+      &.estado-activa {
+        background-color: rgba(95, 199, 136, 0.9);
         color: #121417;
+      }
+
+      &.estado-pausada {
+        background-color: rgba(229, 184, 105, 0.9);
+        color: #121417;
+      }
+
+      &.estado-bloqueada {
+        background-color: rgba(231, 76, 60, 0.9);
+        color: #fff;
       }
     }
   }
@@ -204,12 +214,19 @@ $peligro: #e74c3c;
       justify-content: center;
       cursor: pointer;
       transition: background-color 0.2s;
+      text-decoration: none;
+      font-size: 0.9rem;
 
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: $fondo-entrada;
       }
 
-      &.peligro:hover {
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      &.peligro:hover:not(:disabled) {
         background-color: rgba(231, 76, 60, 0.15);
         color: $peligro;
         border-color: rgba(231, 76, 60, 0.3);
@@ -500,6 +517,7 @@ textarea {
     font-size: 0.85rem;
 
     .nombre-serv {
+      flex: 1;
       font-weight: 500;
     }
 
@@ -658,4 +676,96 @@ textarea {
       font-weight: 600;
     }
   }
+}
+
+// Avisos, ayudas y errores
+
+.aviso-accion {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: $exito;
+  background-color: rgba($exito, 0.1);
+  border: 1px solid rgba($exito, 0.3);
+
+  &.error {
+    color: $peligro;
+    background-color: rgba($peligro, 0.1);
+    border-color: rgba($peligro, 0.3);
+  }
+
+  span {
+    flex: 1;
+  }
+
+  .boton-cerrar-aviso {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.2rem;
+    border-radius: 50%;
+    opacity: 0.8;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.aviso-bloqueo,
+.aviso-borrador {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+
+  i {
+    margin-top: 0.1rem;
+  }
+}
+
+.aviso-bloqueo {
+  color: $peligro;
+  background-color: rgba($peligro, 0.1);
+  border: 1px solid rgba($peligro, 0.3);
+}
+
+.aviso-borrador {
+  color: $dorado-acento;
+  background-color: rgba(229, 184, 105, 0.1);
+  border: 1px solid rgba(229, 184, 105, 0.3);
+}
+
+.ayuda-campo {
+  font-size: 0.78rem;
+  color: $texto-secundario;
+}
+
+.alerta-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: $peligro;
+  background-color: rgba($peligro, 0.1);
+  border: 1px solid rgba($peligro, 0.3);
+
+  i {
+    margin-top: 0.1rem;
+  }
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid $dorado-acento;
+  outline-offset: 2px;
 }
