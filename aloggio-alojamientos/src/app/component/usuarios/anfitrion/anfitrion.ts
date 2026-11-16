@@ -1,10 +1,17 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 
-type EstadoPublicacion = 'BORRADOR' | 'ACTIVA' | 'PAUSADA' | 'BLOQUEADA';
-type TipoAlojamiento = 'CASA' | 'APARTAMENTO' | 'HABITACION' | 'CABAÑA';
+import { PublicacionService } from '../../../service/publicacion.service';
+import {
+  EstadoPublicacion,
+  PoliticaCancelacionDTO,
+  PublicacionDTO,
+  TipoAlojamiento,
+} from '../../../model/publicacion.model';
 
 interface ImagenAlojamientoAnfitrion {
   id: number;
@@ -22,17 +29,11 @@ interface ReglaAlojamiento {
   descripcion: string;
 }
 
-interface PoliticaCancelacion {
-  idPolitica: number;
-  nombre: string;
-  porcentajeDevolucion: number;
-  plazoCancelacion: number;
-  condiciones: string;
-}
+type PoliticaCancelacion = PoliticaCancelacionDTO;
 
 interface AlojamientoAnfitrion {
   id: number;
-  idAnfitrion: string;
+  idAnfitrion: number | null;
   titulo: string;
   descripcion: string;
   ubicacion: string;
@@ -75,15 +76,18 @@ export const TIPOS_ALOJAMIENTO: { valor: TipoAlojamiento; etiqueta: string }[] =
   templateUrl: './anfitrion.html',
   styleUrl: './anfitrion.scss',
 })
-export class Anfitrion {
+export class Anfitrion implements OnInit {
+  private publicacionService = inject(PublicacionService);
+
   readonly etiquetasEstado = ETIQUETAS_ESTADO;
   readonly tiposAlojamiento = TIPOS_ALOJAMIENTO;
 
-  usuarioActualId = 'anfitrion-123';
   mostrandoModal = signal(false);
   editandoId = signal<number | null>(null);
   errorFormulario = signal('');
   aviso = signal<AvisoAccion | null>(null);
+  cargando = signal(false);
+  guardando = signal(false);
 
   formTitulo = '';
   formDescripcion = '';
@@ -105,114 +109,80 @@ export class Anfitrion {
   nuevaReglaTexto = '';
   formReglas: string[] = [];
 
-  politicas = signal<PoliticaCancelacion[]>([
-    {
-      idPolitica: 1,
-      nombre: 'Flexible',
-      porcentajeDevolucion: 80,
-      plazoCancelacion: 2,
-      condiciones: 'Devolución del 80% si cancelas con al menos 2 días de anticipación.',
-    },
-    {
-      idPolitica: 2,
-      nombre: 'Moderada',
-      porcentajeDevolucion: 50,
-      plazoCancelacion: 5,
-      condiciones: 'Devolución del 50% si cancelas con al menos 5 días de anticipación.',
-    },
-    {
-      idPolitica: 3,
-      nombre: 'Estricta',
-      porcentajeDevolucion: 20,
-      plazoCancelacion: 14,
-      condiciones: 'Devolución del 20% si cancelas con al menos 14 días de anticipación.',
-    },
-  ]);
-
-  alojamientos = signal<AlojamientoAnfitrion[]>([
-    {
-      id: 1,
-      idAnfitrion: 'anfitrion-123',
-      titulo: 'Villa Moderna Vista al Valle y Montaña',
-      descripcion: 'Moderna villa con diseño Dark Premium, piscina privada y vista panorámica.',
-      ubicacion: 'Vereda El Retiro, km 3',
-      ciudad: 'Medellín',
-      tipo: 'CASA',
-      capacidad: 6,
-      precioNoche: 550000,
-      tarifaLimpieza: 85000,
-      idPoliticaCancelacion: 1,
-      estado: 'ACTIVA',
-      motivoBloqueo: null,
-      imagenes: [
-        {
-          id: 1,
-          urlImagen:
-            'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80',
-        },
-      ],
-      serviciosAdicionales: [
-        { id: 1, nombre: 'Piscina climatizada', costo: 100000 },
-        { id: 2, nombre: 'WiFi de alta velocidad', costo: 40000 },
-      ],
-      reglas: [
-        { id: 1, descripcion: 'No se permiten fiestas ni eventos.' },
-        { id: 2, descripcion: 'Silencio después de las 10 p. m.' },
-      ],
-    },
-    {
-      id: 2,
-      idAnfitrion: 'anfitrion-123',
-      titulo: 'Cabaña Alpina en el Bosque',
-      descripcion: 'Cabaña rodeada de bosque, ideal para desconectarse.',
-      ubicacion: 'Sector Los Pinos',
-      ciudad: 'Guatapé',
-      tipo: 'CABAÑA',
-      capacidad: 4,
-      precioNoche: 350000,
-      tarifaLimpieza: 60000,
-      idPoliticaCancelacion: 2,
-      estado: 'BORRADOR',
-      motivoBloqueo: null,
-      imagenes: [],
-      serviciosAdicionales: [],
-      reglas: [],
-    },
-    {
-      id: 3,
-      idAnfitrion: 'anfitrion-123',
-      titulo: 'Habitación en el centro histórico',
-      descripcion: 'Habitación privada a pasos de la ciudad amurallada.',
-      ubicacion: 'Calle de la Moneda',
-      ciudad: 'Cartagena',
-      tipo: 'HABITACION',
-      capacidad: 2,
-      precioNoche: 180000,
-      tarifaLimpieza: 30000,
-      idPoliticaCancelacion: 3,
-      estado: 'BLOQUEADA',
-      motivoBloqueo: 'Las fotos no corresponden al alojamiento publicado.',
-      imagenes: [
-        {
-          id: 1,
-          urlImagen:
-            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
-        },
-      ],
-      serviciosAdicionales: [],
-      reglas: [],
-    },
-  ]);
-
+  politicas = signal<PoliticaCancelacion[]>([]);
   misAlojamientos = signal<AlojamientoAnfitrion[]>([]);
 
-  constructor() {
-    this.filtrarMisAlojamientos();
+  ngOnInit(): void {
+    this.cargarPoliticas();
+    this.cargarMisAlojamientos();
   }
 
-  filtrarMisAlojamientos(): void {
-    const propios = this.alojamientos().filter((a) => a.idAnfitrion === this.usuarioActualId);
-    this.misAlojamientos.set(propios);
+  // Carga de datos desde el back
+
+  cargarPoliticas(): void {
+    this.publicacionService.obtenerPoliticas().subscribe({
+      next: (lista) => this.politicas.set(lista),
+      error: (err) => this.mostrarError(err, 'No se pudieron cargar las políticas de cancelación.'),
+    });
+  }
+
+  cargarMisAlojamientos(): void {
+    this.cargando.set(true);
+    this.publicacionService
+      .obtenerMisPublicaciones()
+      .pipe(
+        switchMap((publicaciones) =>
+          publicaciones.length === 0
+            ? of([] as AlojamientoAnfitrion[])
+            : forkJoin(publicaciones.map((pub) => this.cargarDetalle(pub))),
+        ),
+      )
+      .subscribe({
+        next: (lista) => {
+          // Más recientes primero
+          this.misAlojamientos.set([...lista].sort((a, b) => b.id - a.id));
+          this.cargando.set(false);
+        },
+        error: (err) => {
+          this.cargando.set(false);
+          this.mostrarError(err, 'No se pudieron cargar tus alojamientos.');
+        },
+      });
+  }
+
+  /** Junta la publicación con sus imágenes, servicios y reglas. */
+  private cargarDetalle(pub: PublicacionDTO): Observable<AlojamientoAnfitrion> {
+    const id = pub.idPublicacion!;
+    return forkJoin({
+      imagenes: this.publicacionService.obtenerImagenes(id),
+      servicios: this.publicacionService.obtenerServicios(id),
+      reglas: this.publicacionService.obtenerReglas(id),
+    }).pipe(
+      map(({ imagenes, servicios, reglas }) => ({
+        id,
+        idAnfitrion: pub.idAnfitrion ?? null,
+        titulo: pub.titulo ?? '',
+        descripcion: pub.descripcion ?? '',
+        ubicacion: pub.ubicacion ?? '',
+        ciudad: pub.ciudad ?? '',
+        tipo: pub.tipo,
+        capacidad: pub.capacidad ?? 0,
+        precioNoche: pub.precioNoche ?? 0,
+        tarifaLimpieza: pub.tarifaLimpieza ?? 0,
+        idPoliticaCancelacion: pub.idPoliticaCancelacion ?? null,
+        estado: pub.estado ?? 'BORRADOR',
+        motivoBloqueo: pub.motivoBloqueo ?? null,
+        imagenes: [...imagenes]
+          .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+          .map((img) => ({ id: img.idImagen!, urlImagen: img.urlImagen })),
+        serviciosAdicionales: servicios.map((s) => ({
+          id: s.idServicio!,
+          nombre: s.nombre,
+          costo: s.costo ?? 0,
+        })),
+        reglas: reglas.map((r) => ({ id: r.idRegla!, descripcion: r.descripcion })),
+      })),
+    );
   }
 
   etiquetaTipo(tipo: TipoAlojamiento): string {
@@ -346,7 +316,23 @@ export class Anfitrion {
     return invalidos;
   }
 
+  private construirDTO(): PublicacionDTO {
+    return {
+      titulo: this.formTitulo.trim(),
+      descripcion: this.formDescripcion.trim(),
+      ciudad: this.formCiudad.trim(),
+      ubicacion: this.formUbicacion.trim(),
+      tipo: this.formTipo,
+      capacidad: Number(this.formCapacidad),
+      precioNoche: Number(this.formPrecioNoche),
+      tarifaLimpieza: Number(this.formTarifaLimpieza),
+      idPoliticaCancelacion: this.formIdPolitica,
+    };
+  }
+
   guardarAlojamiento(): void {
+    if (this.guardando()) return;
+
     const invalidos = this.camposInvalidosForm();
     if (invalidos.length > 0) {
       this.errorFormulario.set(
@@ -355,77 +341,184 @@ export class Anfitrion {
       return;
     }
     this.errorFormulario.set('');
+    this.guardando.set(true);
 
     const idEditando = this.editandoId();
-    const imagenes = this.formImagenes.map((url, index) => ({ id: index + 1, urlImagen: url }));
-    const serviciosAdicionales = this.formServicios.map((s, idx) => ({
-      id: idx + 1,
-      nombre: s.nombre,
-      costo: s.costo,
-    }));
-    const reglas = this.formReglas.map((texto, idx) => ({ id: idx + 1, descripcion: texto }));
+    const dto = this.construirDTO();
 
-    if (idEditando !== null) {
-      this.alojamientos.update((lista) =>
-        lista.map((item) =>
-          item.id === idEditando
-            ? {
-                ...item,
-                titulo: this.formTitulo.trim(),
-                descripcion: this.formDescripcion.trim(),
-                ciudad: this.formCiudad.trim(),
-                ubicacion: this.formUbicacion.trim(),
-                tipo: this.formTipo,
-                capacidad: Number(this.formCapacidad),
-                precioNoche: Number(this.formPrecioNoche),
-                tarifaLimpieza: Number(this.formTarifaLimpieza),
-                idPoliticaCancelacion: this.formIdPolitica,
-                imagenes,
-                serviciosAdicionales,
-                reglas,
-              }
-            : item,
-        ),
-      );
-      this.aviso.set({ tipo: 'exito', texto: 'Cambios guardados.' });
-    } else {
-      const nuevoAlojamiento: AlojamientoAnfitrion = {
-        id: Date.now(),
-        idAnfitrion: this.usuarioActualId,
-        titulo: this.formTitulo.trim(),
-        descripcion: this.formDescripcion.trim(),
-        ciudad: this.formCiudad.trim(),
-        ubicacion: this.formUbicacion.trim(),
-        tipo: this.formTipo,
-        capacidad: Number(this.formCapacidad),
-        precioNoche: Number(this.formPrecioNoche),
-        tarifaLimpieza: Number(this.formTarifaLimpieza),
-        idPoliticaCancelacion: this.formIdPolitica,
-        estado: 'BORRADOR',
-        motivoBloqueo: null,
-        imagenes,
-        serviciosAdicionales,
-        reglas,
-      };
+    const operacion$ =
+      idEditando !== null ? this.guardarEdicion(idEditando, dto) : this.guardarNuevo(dto);
 
-      this.alojamientos.update((lista) => [nuevoAlojamiento, ...lista]);
-      this.aviso.set({
-        tipo: 'exito',
-        texto: 'Publicación guardada como borrador. Actívala cuando esté lista.',
-      });
-    }
+    operacion$.subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.aviso.set({
+          tipo: 'exito',
+          texto:
+            idEditando !== null
+              ? 'Cambios guardados.'
+              : 'Publicación guardada como borrador. Actívala cuando esté lista.',
+        });
+        this.cerrarModal();
+        this.cargarMisAlojamientos();
+      },
+      error: (err) => {
+        this.guardando.set(false);
+        // El error se muestra dentro del modal para que el anfitrión pueda corregir
+        this.errorFormulario.set(this.textoError(err, 'No se pudo guardar el alojamiento.'));
+        // Puede que una parte sí se haya guardado (p. ej. la publicación pero no una imagen)
+        this.cargarMisAlojamientos();
+      },
+    });
+  }
 
-    this.filtrarMisAlojamientos();
-    this.cerrarModal();
+  /**
+   * Crea la publicación y luego sus imágenes, servicios y reglas.
+   * El back solo responde texto al crear, así que el id se obtiene
+   * buscando la publicación más reciente del anfitrión.
+   */
+  private guardarNuevo(dto: PublicacionDTO): Observable<unknown> {
+    return this.publicacionService.crear(dto).pipe(
+      switchMap(() => this.publicacionService.obtenerMisPublicaciones()),
+      switchMap((lista) => {
+        const ids = lista.map((p) => p.idPublicacion ?? 0);
+        const idNuevo = Math.max(0, ...ids);
+        if (!idNuevo) throw new Error('No se pudo identificar la publicación creada.');
+        return this.guardarHijos(
+          idNuevo,
+          this.formImagenes,
+          this.formServicios,
+          this.formReglas,
+          0,
+        );
+      }),
+    );
+  }
+
+  /**
+   * Actualiza los datos básicos y sincroniza imágenes, servicios y reglas:
+   * elimina los que el anfitrión quitó y crea los nuevos.
+   */
+  private guardarEdicion(id: number, dto: PublicacionDTO): Observable<unknown> {
+    const original = this.misAlojamientos().find((a) => a.id === id);
+
+    return this.publicacionService.actualizar(id, dto).pipe(
+      switchMap(() => {
+        if (!original) {
+          return this.guardarHijos(id, this.formImagenes, this.formServicios, this.formReglas, 0);
+        }
+
+        // Imágenes
+        const imagenesBorrar = this.diferencia(
+          original.imagenes,
+          this.formImagenes,
+          (img, url) => img.urlImagen === url,
+        );
+        const imagenesNuevas = this.diferencia(
+          this.formImagenes,
+          original.imagenes,
+          (url, img) => url === img.urlImagen,
+        );
+
+        // Servicios
+        const serviciosBorrar = this.diferencia(
+          original.serviciosAdicionales,
+          this.formServicios,
+          (a, b) => a.nombre === b.nombre && Number(a.costo) === Number(b.costo),
+        );
+        const serviciosNuevos = this.diferencia(
+          this.formServicios,
+          original.serviciosAdicionales,
+          (a, b) => a.nombre === b.nombre && Number(a.costo) === Number(b.costo),
+        );
+
+        // Reglas
+        const reglasBorrar = this.diferencia(
+          original.reglas,
+          this.formReglas,
+          (r, texto) => r.descripcion === texto,
+        );
+        const reglasNuevas = this.diferencia(
+          this.formReglas,
+          original.reglas,
+          (texto, r) => texto === r.descripcion,
+        );
+
+        const eliminaciones = [
+          ...imagenesBorrar.map((img) => this.publicacionService.eliminarImagen(img.id)),
+          ...serviciosBorrar.map((s) => this.publicacionService.eliminarServicio(s.id)),
+          ...reglasBorrar.map((r) => this.publicacionService.eliminarRegla(r.id)),
+        ];
+
+        const ordenInicial = original.imagenes.length - imagenesBorrar.length;
+
+        const eliminar$: Observable<unknown> = eliminaciones.length
+          ? forkJoin(eliminaciones)
+          : of(null);
+
+        return eliminar$.pipe(
+          switchMap(() =>
+            this.guardarHijos(id, imagenesNuevas, serviciosNuevos, reglasNuevas, ordenInicial),
+          ),
+        );
+      }),
+    );
+  }
+
+  /** Crea en el back las imágenes, servicios y reglas indicados. */
+  private guardarHijos(
+    idPublicacion: number,
+    imagenes: string[],
+    servicios: { nombre: string; costo: number }[],
+    reglas: string[],
+    ordenInicial: number,
+  ): Observable<unknown> {
+    const peticiones: Observable<string>[] = [
+      ...imagenes.map((url, idx) =>
+        this.publicacionService.agregarImagen(idPublicacion, {
+          urlImagen: url,
+          orden: ordenInicial + idx + 1,
+        }),
+      ),
+      ...servicios.map((s) =>
+        this.publicacionService.agregarServicio(idPublicacion, {
+          nombre: s.nombre,
+          costo: Number(s.costo) || 0,
+          esAdicional: true,
+        }),
+      ),
+      ...reglas.map((texto) =>
+        this.publicacionService.agregarRegla(idPublicacion, { descripcion: texto }),
+      ),
+    ];
+    return peticiones.length ? forkJoin(peticiones) : of(null);
+  }
+
+  /**
+   * Devuelve los elementos de `origen` que no tienen pareja en `contra`
+   * (respetando duplicados: cada elemento de `contra` solo empareja una vez).
+   */
+  private diferencia<A, B>(origen: A[], contra: B[], iguales: (a: A, b: B) => boolean): A[] {
+    const disponibles = [...contra];
+    return origen.filter((item) => {
+      const idx = disponibles.findIndex((otro) => iguales(item, otro));
+      if (idx === -1) return true;
+      disponibles.splice(idx, 1);
+      return false;
+    });
   }
 
   eliminarAlojamiento(aloj: AlojamientoAnfitrion): void {
     if (!this.puedeEditar(aloj)) return;
-    if (confirm('¿Estás seguro de eliminar este alojamiento?')) {
-      this.alojamientos.update((lista) => lista.filter((item) => item.id !== aloj.id));
-      this.filtrarMisAlojamientos();
-      this.aviso.set({ tipo: 'exito', texto: 'Alojamiento eliminado.' });
-    }
+    if (!confirm('¿Estás seguro de eliminar este alojamiento?')) return;
+
+    this.publicacionService.eliminar(aloj.id).subscribe({
+      next: () => {
+        this.misAlojamientos.update((lista) => lista.filter((item) => item.id !== aloj.id));
+        this.aviso.set({ tipo: 'exito', texto: 'Alojamiento eliminado.' });
+      },
+      error: (err) => this.mostrarError(err, 'No se pudo eliminar el alojamiento.'),
+    });
   }
 
   // Estados de la publicación
@@ -446,6 +539,7 @@ export class Anfitrion {
   activarAlojamiento(aloj: AlojamientoAnfitrion): void {
     if (aloj.estado !== 'BORRADOR' && aloj.estado !== 'PAUSADA') return;
 
+    // Validación rápida en el front; el back vuelve a validar
     const faltantes = this.datosFaltantes(aloj);
     if (faltantes.length > 0) {
       this.aviso.set({
@@ -455,25 +549,54 @@ export class Anfitrion {
       return;
     }
 
-    this.cambiarEstado(aloj.id, 'ACTIVA');
-    this.aviso.set({ tipo: 'exito', texto: 'Publicación activada. Ya aparece en las búsquedas.' });
+    this.publicacionService.activar(aloj.id).subscribe({
+      next: () => {
+        this.cambiarEstadoLocal(aloj.id, 'ACTIVA');
+        this.aviso.set({
+          tipo: 'exito',
+          texto: 'Publicación activada. Ya aparece en las búsquedas.',
+        });
+      },
+      error: (err) => this.mostrarError(err, 'No se pudo activar la publicación.'),
+    });
   }
 
   pausarAlojamiento(aloj: AlojamientoAnfitrion): void {
     if (aloj.estado !== 'ACTIVA') return;
 
-    this.cambiarEstado(aloj.id, 'PAUSADA');
-    this.aviso.set({
-      tipo: 'exito',
-      texto: 'Publicación pausada. Las reservas futuras confirmadas se conservan.',
+    this.publicacionService.pausar(aloj.id).subscribe({
+      next: () => {
+        this.cambiarEstadoLocal(aloj.id, 'PAUSADA');
+        this.aviso.set({
+          tipo: 'exito',
+          texto: 'Publicación pausada. Las reservas futuras confirmadas se conservan.',
+        });
+      },
+      error: (err) => this.mostrarError(err, 'No se pudo pausar la publicación.'),
     });
   }
 
-  private cambiarEstado(id: number, nuevoEstado: EstadoPublicacion): void {
-    this.alojamientos.update((lista) =>
+  private cambiarEstadoLocal(id: number, nuevoEstado: EstadoPublicacion): void {
+    this.misAlojamientos.update((lista) =>
       lista.map((item) => (item.id === id ? { ...item, estado: nuevoEstado } : item)),
     );
-    this.filtrarMisAlojamientos();
+  }
+
+  // Manejo de errores
+
+  private textoError(err: unknown, porDefecto: string): string {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 0) return 'No hay conexión con el servidor.';
+      if (typeof err.error === 'string' && err.error.trim()) return err.error;
+      if (err.error?.message) return err.error.message;
+    } else if (err instanceof Error && err.message) {
+      return err.message;
+    }
+    return porDefecto;
+  }
+
+  private mostrarError(err: unknown, porDefecto: string): void {
+    this.aviso.set({ tipo: 'error', texto: this.textoError(err, porDefecto) });
   }
 
   // Totales
