@@ -525,11 +525,14 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
      *         activa, 4 si el usuario no confirmó (no se modifica nada)
      */
     public int reactivarCuenta(UsuarioDTO datos) {
-        if (datos.getNombreUsuario() == null || datos.getClaveUsuario() == null) {
-            return 1; // Credenciales incorrectas
-        }
+    	
+        Optional<Usuario> found = null; 
+    	if (datos.getCorreoUsuario() != null && !datos.getCorreoUsuario().isEmpty()) {
+    	    found = usuarioRepo.findByCorreoUsuario(datos.getCorreoUsuario());
+    	} else if (datos.getNombreUsuario() != null && !datos.getNombreUsuario().isEmpty()) {
+    	    found = usuarioRepo.findByNombreUsuario(datos.getNombreUsuario());
+    	}
 
-        Optional<Usuario> found = usuarioRepo.findByNombreUsuario(datos.getNombreUsuario());
         if (!found.isPresent() || !passwordEncoder.matches(datos.getClaveUsuario(), found.get().getClaveUsuario())) {
             return 1; // Credenciales incorrectas
         }
