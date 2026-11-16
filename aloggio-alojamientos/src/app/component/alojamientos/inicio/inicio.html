@@ -1,6 +1,6 @@
 <div class="aloggio-principal">
   <header class="encabezado-navegacion">
-    <div class="contenedor-logo">
+    <div class="contenedor-logo" routerLink="/inicio">
       <i class="pi pi-building icono-logo"></i>
       <span class="texto-logo">Aloggio</span>
     </div>
@@ -8,43 +8,104 @@
     <div class="barra-busqueda-central">
       <div class="campo-busqueda">
         <span class="etiqueta-busqueda">Ciudad</span>
-        <input type="text" placeholder="¿A dónde vas?" />
+        <input
+          type="text"
+          placeholder="¿A dónde vas?"
+          [(ngModel)]="ciudad"
+          (keyup.enter)="buscar()"
+        />
       </div>
       <div class="separador-vertical"></div>
       <div class="campo-busqueda">
         <span class="etiqueta-busqueda">Llegada</span>
-        <input type="text" placeholder="Agregar fecha" />
+        <input type="date" [min]="hoy" [(ngModel)]="fechaLlegada" />
       </div>
       <div class="separador-vertical"></div>
       <div class="campo-busqueda">
         <span class="etiqueta-busqueda">Salida</span>
-        <input type="text" placeholder="Agregar fecha" />
+        <input type="date" [min]="fechaLlegada || hoy" [(ngModel)]="fechaSalida" />
       </div>
       <div class="separador-vertical"></div>
-      <div class="campo-busqueda">
+      <div class="campo-busqueda campo-huespedes">
         <span class="etiqueta-busqueda">Huéspedes</span>
-        <input type="text" placeholder="¿Cuántos?" />
+        <input
+          type="number"
+          min="1"
+          placeholder="¿Cuántos?"
+          [(ngModel)]="capacidad"
+          (keyup.enter)="buscar()"
+        />
       </div>
-      <button class="boton-buscar" type="button">
+      <button class="boton-buscar" type="button" (click)="buscar()">
         <i class="pi pi-search"></i>
         <span>Buscar</span>
       </button>
     </div>
 
     <div class="acciones-usuario">
-      <button class="boton-icono" title="Reservas" type="button" routerLink="/mis-reservas">
-        <i class="pi pi-calendar"></i>
-      </button>
-      <button class="boton-icono" title="Notificaciones" type="button">
-        <i class="pi pi-bell"></i>
-      </button>
-      <button class="boton-anfitrion" type="button">Modo Anfitrión</button>
-      <div class="menu-perfil-contenedor">
-        <i class="pi pi-bars icono-menu"></i>
-        <div class="avatar-usuario">
-          <i class="pi pi-user"></i>
+      <ng-container *ngIf="auth.isLoggedIn(); else visitante">
+        <button class="boton-icono" title="Reservas" type="button" routerLink="/mis-reservas">
+          <i class="pi pi-calendar"></i>
+        </button>
+        <button
+          class="boton-icono"
+          title="Notificaciones"
+          type="button"
+          routerLink="/notificaciones"
+        >
+          <i class="pi pi-bell"></i>
+        </button>
+        <button class="boton-anfitrion" type="button" routerLink="/anfitrion">
+          Modo Anfitrión
+        </button>
+
+        <div class="menu-perfil-wrapper">
+          <div
+            class="menu-perfil-contenedor"
+            role="button"
+            tabindex="0"
+            aria-haspopup="true"
+            [attr.aria-expanded]="menuAbierto()"
+            (click)="alternarMenu()"
+            (keydown.enter)="alternarMenu()"
+          >
+            <i class="pi pi-bars icono-menu"></i>
+            <div class="avatar-usuario">
+              <i class="pi pi-user"></i>
+            </div>
+          </div>
+
+          <ng-container *ngIf="menuAbierto()">
+            <div class="menu-fondo" (click)="cerrarMenu()"></div>
+            <nav class="menu-desplegable" aria-label="Menú de usuario">
+              <a routerLink="/usuario" (click)="cerrarMenu()">
+                <i class="pi pi-user"></i> Mi perfil
+              </a>
+              <a routerLink="/mis-reservas" (click)="cerrarMenu()">
+                <i class="pi pi-calendar"></i> Mis reservas
+              </a>
+              <a routerLink="/notificaciones" (click)="cerrarMenu()">
+                <i class="pi pi-bell"></i> Notificaciones
+              </a>
+              <a routerLink="/anfitrion" (click)="cerrarMenu()">
+                <i class="pi pi-home"></i> Modo Anfitrión
+              </a>
+              <a *ngIf="auth.isAdmin()" routerLink="/admin" (click)="cerrarMenu()">
+                <i class="pi pi-shield"></i> Panel de administración
+              </a>
+              <hr />
+              <button type="button" class="opcion-salir" (click)="cerrarSesion()">
+                <i class="pi pi-sign-out"></i> Cerrar sesión
+              </button>
+            </nav>
+          </ng-container>
         </div>
-      </div>
+      </ng-container>
+
+      <ng-template #visitante>
+        <a class="enlace-sesion" routerLink="/login">Iniciar sesión</a>
+        <a class="boton-registro" routerLink="/registro">Registrarse</a>
+      </ng-template>
     </div>
   </header>
 
@@ -52,27 +113,23 @@
     <aside class="barra-lateral-filtros">
       <div class="encabezado-filtros">
         <h2 class="titulo-seccion-filtros">Filtros</h2>
-        <button class="boton-limpiar-filtros" type="button">Limpiar</button>
+        <button class="boton-limpiar-filtros" type="button" (click)="limpiarFiltros()">
+          Limpiar
+        </button>
       </div>
 
       <div class="grupo-filtro">
         <h3 class="titulo-grupo">Tipo de alojamiento</h3>
         <div class="opciones-checkbox">
-          <label class="etiqueta-checkbox">
-            <input type="checkbox" checked />
-            <span>Todos</span>
-          </label>
-          <label class="etiqueta-checkbox">
-            <input type="checkbox" />
-            <span>Apartamento</span>
-          </label>
-          <label class="etiqueta-checkbox">
-            <input type="checkbox" />
-            <span>Casa</span>
-          </label>
-          <label class="etiqueta-checkbox">
-            <input type="checkbox" />
-            <span>Finca</span>
+          <label class="etiqueta-checkbox" *ngFor="let tipo of tipos">
+            <input
+              type="radio"
+              name="tipoAlojamiento"
+              [value]="tipo.valor"
+              [(ngModel)]="tipoSeleccionado"
+              (change)="buscar()"
+            />
+            <span>{{ tipo.etiqueta }}</span>
           </label>
         </div>
       </div>
@@ -81,69 +138,120 @@
         <h3 class="titulo-grupo">Precio por noche (máx.)</h3>
         <div class="contenedor-input-precio">
           <span>$</span>
-          <input type="text" placeholder="0 - $Máx COP" />
+          <input
+            type="number"
+            min="0"
+            step="10000"
+            placeholder="Máx. COP"
+            [(ngModel)]="precioMax"
+            (change)="buscar()"
+          />
         </div>
       </div>
 
       <div class="grupo-filtro">
         <h3 class="titulo-grupo">Servicios</h3>
         <div class="opciones-checkbox">
-          <label class="etiqueta-checkbox">
-            <input type="checkbox" />
-            <span>Wi-Fi</span>
-          </label>
-          <label class="etiqueta-checkbox">
-            <input type="checkbox" />
-            <span>Parqueadero</span>
-          </label>
-          <label class="etiqueta-checkbox">
-            <input type="checkbox" />
-            <span>Piscina</span>
+          <label class="etiqueta-checkbox" *ngFor="let servicio of serviciosFiltro">
+            <input
+              type="checkbox"
+              [checked]="servicioMarcado(servicio)"
+              (change)="alternarServicio(servicio)"
+            />
+            <span>{{ servicio }}</span>
           </label>
         </div>
       </div>
     </aside>
 
     <main class="contenedor-contenido">
-      <div class="barra-resultado-info">
-        <span class="contador-alojamientos"
-          >{{ alojamientos.length }} Alojamientos disponibles</span
-        >
+      <div class="alerta-busqueda" *ngIf="error() as mensaje" role="alert">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ mensaje }}</span>
       </div>
 
-      <div class="contenedor-grid-alojamientos">
-        <article *ngFor="let alojamiento of alojamientos" class="tarjeta-alojamiento">
-          <div class="contenedor-imagen">
-            <img [src]="alojamiento.imagenUrl" [alt]="alojamiento.titulo" loading="lazy" />
-            <span *ngIf="alojamiento.etiqueta" class="badge-etiqueta">{{
-              alojamiento.etiqueta
-            }}</span>
-          </div>
-
-          <div class="detalles-alojamiento">
-            <div class="info-principal">
-              <h3 class="titulo-alojamiento">{{ alojamiento.titulo }}</h3>
-              <p class="ubicacion-alojamiento">
-                {{ alojamiento.ciudad }} · {{ alojamiento.tipo }}
-                {{ alojamiento.capacidad }} huéspedes
-              </p>
-
-              <div class="badge-servicio">
-                <i class="pi pi-check-circle"></i>
-                <span>{{ alojamiento.servicioDestacado }}</span>
-              </div>
-            </div>
-
-            <div class="pie-tarjeta">
-              <div class="contenedor-precio">
-                <span class="monto-precio">${{ alojamiento.precioNoche | number: '1.0-0' }}</span>
-                <span class="texto-periodo">/ noche</span>
-              </div>
-              <button class="boton-ver-detalle" type="button">Ver detalle</button>
-            </div>
-          </div>
-        </article>
+      <div class="estado-resultados" *ngIf="cargando()" role="status">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Buscando alojamientos...</span>
       </div>
+
+      <ng-container *ngIf="!cargando() && busquedaRealizada()">
+        <div class="barra-resultado-info" *ngIf="alojamientos().length > 0">
+          <span class="contador-alojamientos">
+            {{ totalElementos() }}
+            {{ totalElementos() === 1 ? 'alojamiento disponible' : 'alojamientos disponibles' }}
+          </span>
+        </div>
+
+        <div class="estado-resultados" *ngIf="alojamientos().length === 0 && !error()">
+          <i class="pi pi-search"></i>
+          <h2>Sin resultados</h2>
+          <p>No encontramos alojamientos que cumplan los criterios elegidos.</p>
+          <button class="boton-ver-detalle" type="button" (click)="limpiarFiltros()">
+            Limpiar filtros
+          </button>
+        </div>
+
+        <div class="contenedor-grid-alojamientos" *ngIf="alojamientos().length > 0">
+          <article *ngFor="let alojamiento of alojamientos()" class="tarjeta-alojamiento">
+            <div class="contenedor-imagen">
+              <img
+                *ngIf="alojamiento.imagenPrincipal; else sinImagen"
+                [src]="alojamiento.imagenPrincipal.urlImagen"
+                [alt]="alojamiento.titulo"
+                loading="lazy"
+              />
+              <ng-template #sinImagen>
+                <div class="imagen-vacia"><i class="pi pi-image"></i></div>
+              </ng-template>
+            </div>
+
+            <div class="detalles-alojamiento">
+              <div class="info-principal">
+                <h3 class="titulo-alojamiento">{{ alojamiento.titulo }}</h3>
+                <p class="ubicacion-alojamiento">
+                  {{ alojamiento.ciudad }} ·
+                  {{ etiquetasTipo[alojamiento.tipo] || alojamiento.tipo }} ·
+                  {{ alojamiento.capacidad }}
+                  {{ alojamiento.capacidad === 1 ? 'huésped' : 'huéspedes' }}
+                </p>
+              </div>
+
+              <div class="pie-tarjeta">
+                <div class="contenedor-precio">
+                  <span class="monto-precio">${{ alojamiento.precioNoche | number: '1.0-0' }}</span>
+                  <span class="texto-periodo">/ noche</span>
+                </div>
+                <a
+                  class="boton-ver-detalle"
+                  [routerLink]="['/detalle-alojamiento', alojamiento.idPublicacion]"
+                  >Ver detalle</a
+                >
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="paginacion" *ngIf="totalPaginas() > 1">
+          <button
+            class="boton-ver-detalle"
+            type="button"
+            [disabled]="pagina() === 0"
+            (click)="cambiarPagina(-1)"
+          >
+            <i class="pi pi-chevron-left"></i> Anterior
+          </button>
+          <span class="texto-pagina">Página {{ pagina() + 1 }} de {{ totalPaginas() }}</span>
+          <button
+            class="boton-ver-detalle"
+            type="button"
+            [disabled]="pagina() + 1 >= totalPaginas()"
+            (click)="cambiarPagina(1)"
+          >
+            Siguiente <i class="pi pi-chevron-right"></i>
+          </button>
+        </div>
+      </ng-container>
     </main>
   </div>
 </div>

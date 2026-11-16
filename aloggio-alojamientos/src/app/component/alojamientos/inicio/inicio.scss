@@ -434,6 +434,8 @@
       }
 
       .boton-ver-detalle {
+        display: inline-block;
+        text-decoration: none;
         background-color: transparent;
         border: 1px solid $dorado-acento;
         color: $dorado-acento;
@@ -452,5 +454,258 @@
         }
       }
     }
+  }
+}
+
+// ---- Campos de fecha y huéspedes de la barra de búsqueda ----
+.barra-busqueda-central .campo-busqueda {
+  input[type='date'] {
+    width: 128px;
+    color-scheme: dark;
+  }
+
+  &.campo-huespedes input {
+    width: 80px;
+  }
+}
+
+.contenedor-input-precio input[type='number'],
+.campo-huespedes input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+// ---- Acciones de visitante ----
+.acciones-usuario {
+  .enlace-sesion {
+    color: $texto-principal;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 0.4rem 0.7rem;
+    border-radius: 20px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: $fondo-entrada;
+    }
+  }
+
+  .boton-registro {
+    background-color: $dorado-acento;
+    color: #121417;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0.45rem 1rem;
+    border-radius: 20px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: $dorado-hover;
+    }
+  }
+}
+
+// ---- Menú desplegable del perfil ----
+.menu-perfil-wrapper {
+  position: relative;
+
+  .menu-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+  }
+
+  .menu-desplegable {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 120;
+    min-width: 230px;
+    background-color: $fondo-tarjeta;
+    border: 1px solid $borde-contenedor;
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+
+    a,
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: transparent;
+      border: none;
+      color: $texto-principal;
+      font-family: inherit;
+      font-size: 0.85rem;
+      text-align: left;
+      text-decoration: none;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      i {
+        color: $texto-secundario;
+        font-size: 0.9rem;
+      }
+
+      &:hover {
+        background-color: $fondo-entrada;
+      }
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid $borde-contenedor;
+      margin: 0.3rem 0;
+    }
+
+    .opcion-salir {
+      color: #e74c3c;
+
+      i {
+        color: #e74c3c;
+      }
+    }
+  }
+}
+
+// ---- Alertas y estados de la lista de resultados ----
+.alerta-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: rgba(231, 76, 60, 0.12);
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  color: #f1948a;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+}
+
+.estado-resultados {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: 4rem 1rem;
+  color: $texto-secundario;
+
+  i {
+    font-size: 2rem;
+    color: $dorado-acento;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $texto-principal;
+    margin: 0;
+  }
+
+  p {
+    font-size: 0.85rem;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .boton-ver-detalle {
+    background-color: transparent;
+    border: 1px solid $dorado-acento;
+    color: $dorado-acento;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: $dorado-acento;
+      color: #121417;
+    }
+  }
+}
+
+.tarjeta-alojamiento .contenedor-imagen .imagen-vacia {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $fondo-entrada;
+  color: $texto-secundario;
+  font-size: 2rem;
+}
+
+// ---- Paginación ----
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 0;
+
+  .texto-pagina {
+    font-size: 0.8rem;
+    color: $texto-secundario;
+  }
+
+  .boton-ver-detalle {
+    background-color: transparent;
+    border: 1px solid $dorado-acento;
+    color: $dorado-acento;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    &:hover:not(:disabled) {
+      background-color: $dorado-acento;
+      color: #121417;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ---- Pantallas pequeñas ----
+@media (max-width: 1100px) {
+  .encabezado-navegacion {
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  .barra-busqueda-central {
+    order: 3;
+    width: 100%;
+    flex-wrap: wrap;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .cuerpo-principal {
+    flex-direction: column;
+  }
+
+  .barra-lateral-filtros {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid $borde-contenedor;
   }
 }
