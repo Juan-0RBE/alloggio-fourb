@@ -1,0 +1,104 @@
+<div class="aloggio-notificaciones-contenedor">
+  <header class="encabezado-navegacion">
+    <div class="contenedor-logo" routerLink="/inicio">
+      <i class="pi pi-building icono-logo"></i>
+      <span class="texto-logo">Aloggio</span>
+    </div>
+
+    <a routerLink="/inicio" class="enlace-volver">
+      <i class="pi pi-arrow-left"></i>
+      <span>Volver al inicio</span>
+    </a>
+  </header>
+
+  <main class="cuerpo-notificaciones">
+    <div class="encabezado-pagina">
+      <h1 class="titulo-pagina">Notificaciones</h1>
+      <span class="resumen-no-leidas" *ngIf="noLeidas() > 0">{{ noLeidas() }} sin leer</span>
+    </div>
+
+    <div class="estado-pagina" *ngIf="cargando()" role="status">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Cargando tus notificaciones...</span>
+    </div>
+
+    <div class="estado-pagina error" *ngIf="!cargando() && error() as e" role="alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ e.mensaje }}</span>
+      <a *ngIf="e.sesion" routerLink="/login" class="boton-estado">Iniciar sesión</a>
+      <button *ngIf="!e.sesion" type="button" class="boton-estado" (click)="cargar()">
+        Reintentar
+      </button>
+    </div>
+
+    <ng-container *ngIf="!cargando() && !error()">
+      <div class="estado-pagina" *ngIf="lista().length === 0">
+        <i class="pi pi-bell"></i>
+        <h2 class="titulo-estado">No tienes notificaciones</h2>
+        <p class="texto-estado">Te avisaremos aquí cuando haya novedades en tus reservas.</p>
+        <a routerLink="/inicio" class="boton-estado dorado">Explorar alojamientos</a>
+      </div>
+
+      <ng-container *ngIf="lista().length > 0">
+        <div class="filtros-notificaciones" role="tablist" aria-label="Filtrar notificaciones">
+          <button
+            *ngFor="let filtro of filtros"
+            type="button"
+            role="tab"
+            class="filtro"
+            [class.activo]="filtroActivo() === filtro.valor"
+            [attr.aria-selected]="filtroActivo() === filtro.valor"
+            (click)="seleccionarFiltro(filtro.valor)"
+          >
+            {{ filtro.etiqueta }}
+          </button>
+        </div>
+
+        <div class="estado-pagina" *ngIf="visibles().length === 0">
+          <i class="pi pi-check-circle"></i>
+          <h2 class="titulo-estado">No tienes notificaciones sin leer</h2>
+          <button type="button" class="boton-estado" (click)="seleccionarFiltro('TODAS')">
+            Ver todas
+          </button>
+        </div>
+
+        <ul class="lista-notificaciones" *ngIf="visibles().length > 0">
+          <li *ngFor="let notificacion of visibles()">
+            <button
+              type="button"
+              class="tarjeta-notificacion"
+              [class.sin-leer]="!notificacion.estaLeida"
+              [attr.aria-label]="
+                (notificacion.estaLeida ? '' : 'Sin leer. ') + notificacion.mensaje
+              "
+              (click)="marcarComoLeida(notificacion)"
+            >
+              <div
+                class="icono-tipo"
+                [ngClass]="'tipo-' + notificacion.tipoNotificacion.toLowerCase()"
+              >
+                <i class="pi" [ngClass]="iconosTipo[notificacion.tipoNotificacion]"></i>
+              </div>
+
+              <div class="info-notificacion">
+                <div class="fila-superior">
+                  <span
+                    class="insignia-tipo"
+                    [ngClass]="'tipo-' + notificacion.tipoNotificacion.toLowerCase()"
+                    >{{ etiquetasTipo[notificacion.tipoNotificacion] }}</span
+                  >
+                  <span class="fecha">
+                    {{ notificacion.fecha | date: 'd MMM, h:mm a' : '' : 'es-CO' }}
+                  </span>
+                </div>
+                <p class="mensaje">{{ notificacion.mensaje }}</p>
+              </div>
+
+              <span class="punto-sin-leer" *ngIf="!notificacion.estaLeida"></span>
+            </button>
+          </li>
+        </ul>
+      </ng-container>
+    </ng-container>
+  </main>
+</div>

@@ -1,0 +1,92 @@
+<div class="modal-overlay-cancelacion" (click)="cerrar()">
+  <div
+    class="contenedor-formulario-cancelacion"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-cancelacion"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="encabezado-modal-cancelacion">
+      <h2 id="titulo-cancelacion">Cancelar reserva #{{ idReserva }}</h2>
+      <p class="subtitulo-alojamiento">
+        <strong>{{ titulo }}</strong> · llegada
+        {{ fechaLlegada | date: 'd MMM, yyyy' : '' : 'es-CO' }}
+      </p>
+      <button class="boton-cerrar" (click)="cerrar()" type="button" aria-label="Cerrar">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <hr class="divisor-cancelacion" />
+
+    <div class="aviso-bloqueo" *ngIf="!puedeCancelar()" role="alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>La estadía ya comenzó, por eso esta reserva ya no se puede cancelar.</span>
+    </div>
+
+    <div class="cuerpo-formulario" *ngIf="puedeCancelar()">
+      <div class="bloque-politica">
+        <h3 class="titulo-bloque">Política {{ politica.nombre }}</h3>
+        <p class="texto-politica">{{ politica.condiciones }}</p>
+      </div>
+
+      <dl class="resumen-devolucion">
+        <div class="fila">
+          <dt>Total pagado</dt>
+          <dd>${{ total | number: '1.0-0' }}</dd>
+        </div>
+        <div class="fila destacada" [class.sin-devolucion]="!aplicaDevolucion()">
+          <dt>Devolución estimada</dt>
+          <dd>${{ valorDevolucion() | number: '1.0-0' }}</dd>
+        </div>
+      </dl>
+      <p class="nota-devolucion" *ngIf="!aplicaDevolucion()">
+        Faltan {{ diasParaLlegada() }} {{ diasParaLlegada() === 1 ? 'día' : 'días' }} para tu
+        llegada y esta política pide al menos {{ politica.plazoCancelacion }}, así que no
+        corresponde devolución.
+      </p>
+      <p class="nota-devolucion" *ngIf="aplicaDevolucion()">
+        Es una devolución simulada: no se hace ningún movimiento de dinero real.
+      </p>
+
+      <div class="campo-motivo">
+        <label for="motivo-cancelacion">Motivo de la cancelación</label>
+        <textarea
+          id="motivo-cancelacion"
+          rows="3"
+          [maxlength]="longitudMaxMotivo"
+          [(ngModel)]="motivo"
+          [disabled]="enviando"
+          placeholder="Cuéntanos por qué cancelas tu reserva."
+        ></textarea>
+        <span class="contador-motivo">{{ motivo.length }}/{{ longitudMaxMotivo }}</span>
+      </div>
+
+      <label class="campo-aceptacion">
+        <input type="checkbox" [(ngModel)]="aceptaCondiciones" [disabled]="enviando" />
+        <span>Entiendo que esta acción libera las fechas y no se puede deshacer.</span>
+      </label>
+
+      <div class="alerta-error" *ngIf="mensajeError" role="alert">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ mensajeError }}</span>
+      </div>
+    </div>
+
+    <div class="pie-acciones-cancelacion">
+      <button class="boton-secundario" (click)="cerrar()" [disabled]="enviando" type="button">
+        {{ puedeCancelar() ? 'Mantener reserva' : 'Cerrar' }}
+      </button>
+      <button
+        *ngIf="puedeCancelar()"
+        class="boton-peligro"
+        [disabled]="!motivoValido() || !aceptaCondiciones || enviando"
+        (click)="confirmar()"
+        type="button"
+      >
+        <i class="pi" [ngClass]="enviando ? 'pi-spin pi-spinner' : 'pi-times-circle'"></i>
+        {{ enviando ? 'Cancelando...' : 'Cancelar reserva' }}
+      </button>
+    </div>
+  </div>
+</div>
