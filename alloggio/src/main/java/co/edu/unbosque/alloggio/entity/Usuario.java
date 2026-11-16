@@ -7,7 +7,6 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,7 +42,7 @@ public class Usuario implements UserDetails {
     @Column(name = "CorreoUsuario", length = 50, nullable = false, unique = true)
     private String correoUsuario;
 
-    @Column(name = "NombreUsuario", length = 60, nullable = false)
+    @Column(name = "NombreUsuario", length = 60, nullable = false, unique = true)
     private String nombreUsuario;
 
     @Column(name = "Clave_Usuario", length = 255, nullable = false)
@@ -164,6 +163,34 @@ public class Usuario implements UserDetails {
         this.role = role;
     }
 
+
+	/**
+	 * Constructor con nombre de usuario, contraseña y rol específico.
+	 * 
+	 * @param username Nombre de usuario
+	 * @param password Contraseña del usuario
+	 * @param rol      Rol asignado al usuario
+	 */
+	public Usuario(String nombreUsuario, String password, Role role, String documentoIdentidad, String correoUsuario) {
+		super();
+		this.nombreUsuario = nombreUsuario;
+		this.claveUsuario = password;
+		this.role = role;
+		this.accountNonExpired = true;
+		this.accountNonLocked = true;
+		this.credentialsNonExpired = true;
+		this.enabled = true;
+		this.correoUsuario = correoUsuario; 
+		this.documentoIdentidad= documentoIdentidad; 
+		this.numeroTelefono=""; 
+		this.estaActivo = true; 
+		this.isVerified = true;
+		this.estadoCuenta = "";
+		this.primerApellido = "";
+		this.primerNombre ="";
+		this.fechaNacimiento = LocalDate.now();
+	}
+    
     public static long getSerialversionuid() {
         return serialVersionUID;
     }

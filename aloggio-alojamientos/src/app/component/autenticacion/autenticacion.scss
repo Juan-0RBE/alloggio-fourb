@@ -1,0 +1,304 @@
+@use 'styles' as *;
+
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contenedor-principal {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background-color: $fondo-principal;
+}
+
+.columna-formulario {
+  flex: 1;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: $fondo-principal;
+  overflow-y: auto;
+
+  @media (max-width: 992px) {
+    width: 100%;
+  }
+}
+
+.contenido-interno {
+  max-width: 440px;
+  width: 100%;
+  margin: auto;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100%;
+}
+
+.columna-decorativa {
+  flex: 1;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #171b22 0%, #121417 100%);
+  border-left: 1px solid $borde-contenedor;
+  padding: 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 992px) {
+    display: none;
+  }
+}
+
+.ilustracion-viaje {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+
+  .linea-trayectoria {
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    top: -10%;
+    left: -10%;
+    opacity: 0.6;
+  }
+
+  .icono-vehiculo {
+    position: absolute;
+    color: #4a515d;
+    font-size: 1.6rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    transition: transform 0.3s ease;
+
+    &.carro {
+      bottom: 12%;
+      left: 18%;
+      transform: rotate(-12deg);
+    }
+
+    &.avion {
+      top: 14%;
+      right: 18%;
+      transform: rotate(35deg);
+      color: #636c7a;
+    }
+  }
+}
+
+.contenido-decorativo {
+  max-width: 480px;
+  position: relative;
+  z-index: 2;
+}
+
+.cabecera-auth {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 2rem;
+
+  .logotipo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: $texto-principal;
+  }
+}
+
+.titulo-principal {
+  color: $texto-principal;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.titulo-decorativo {
+  color: $texto-principal;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.campo-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.etiqueta-campo {
+  color: $texto-principal;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.grupo-input {
+  display: flex;
+  align-items: center;
+  background-color: $fondo-entrada;
+  border: 1px solid $borde-contenedor;
+  border-radius: 8px;
+  overflow: hidden;
+
+  &:focus-within {
+    border-color: $dorado-acento;
+    box-shadow: 0 0 0 3px rgba(229, 184, 105, 0.2);
+  }
+
+  .icono-input {
+    padding: 0 0.75rem;
+    color: $texto-secundario;
+    display: flex;
+    align-items: center;
+  }
+
+  .entrada-control {
+    background: transparent !important;
+    border: none !important;
+    color: $texto-principal;
+    padding: 0.65rem 0.75rem 0.65rem 0;
+    outline: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+
+    &:focus {
+      outline: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+
+    &::placeholder {
+      color: $texto-secundario;
+      opacity: 0.5;
+    }
+  }
+}
+
+.boton-peek {
+  background: transparent;
+  border: none;
+  color: $texto-secundario;
+  padding: 0 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $dorado-acento;
+  }
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.opcion-recopilar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+
+.boton-dorado {
+  background-color: $dorado-acento;
+  border: 1px solid $dorado-acento;
+  color: #121417;
+  font-weight: 600;
+  padding: 0.75rem;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: $dorado-hover;
+  }
+}
+
+.enlace-dorado {
+  color: $dorado-acento;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.texto-secundario {
+  color: $texto-secundario;
+  font-size: 0.85rem;
+}
+
+.badge-decorativo {
+  background-color: rgba(229, 184, 105, 0.1);
+  color: $dorado-acento;
+  border: 1px solid rgba(229, 184, 105, 0.2);
+  padding: 0.35rem 1rem;
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.pie-pagina {
+  margin-top: 2rem;
+}
+
+.mensaje-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem; /* Espacio entre el icono y el texto */
+  color: #ff6b6b; /* Un rojo/coral suave que se ve bien en fondos oscuros */
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  animation: fadeIn 0.3s ease-in-out;
+
+  i {
+    font-size: 0.9rem; /* Tamaño del icono */
+    color: #ff6b6b;
+  }
+}
+.mensaje-exito {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4ade80; /* Un verde menta brillante, muy legible en fondo oscuro */
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  animation: fadeIn 0.3s ease-in-out;
+
+  i {
+    font-size: 1rem;
+    color: #4ade80;
+  }
+}

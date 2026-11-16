@@ -67,7 +67,7 @@ public class AuthController {
      *         autenticación es exitosa, o un mensaje de error si falla
      */
     @Operation(summary = "Iniciar sesión de usuario", description = """
-                Este endpoint permite a los usuarios de virus total iniciar sesión en el sistema proporcionando sus credenciales.
+                Este endpoint permite a los usuarios de iniciar sesión en el sistema proporcionando sus credenciales.
 
                 **¿Qué hace?** Verifica las credenciales del usuario y, si son correctas, genera un token JWT
                 que se utilizará para autenticar solicitudes posteriores.
@@ -99,7 +99,14 @@ public class AuthController {
                         }
                     """)) @RequestBody UsuarioDTO loginRequest) {
         try {
-            UsuarioDTO found = userService.getByNombreUsuario(loginRequest.getNombreUsuario());
+        	
+        	// En tu controlador Java
+        	UsuarioDTO found = null;
+        	if (loginRequest.getCorreoUsuario() != null && !loginRequest.getCorreoUsuario().isEmpty()) {
+        	    found = userService.getByCorreo(loginRequest.getCorreoUsuario());
+        	} else if (loginRequest.getNombreUsuario() != null && !loginRequest.getNombreUsuario().isEmpty()) {
+        	    found = userService.getByNombreUsuario(loginRequest.getNombreUsuario());
+        	}
 
             if (found == null || found.getIsVerified() == null || !found.getIsVerified()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
@@ -108,7 +115,7 @@ public class AuthController {
 
             // Lanza AuthenticationException si la contraseña es incorrecta
             Authentication authentication = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getNombreUsuario(),
+                    .authenticate(new UsernamePasswordAuthenticationToken(found.getNombreUsuario(),
                             loginRequest.getClaveUsuario()));
 
             // Las credenciales son correctas: ahora se revisa el estado de la cuenta

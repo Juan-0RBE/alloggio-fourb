@@ -1,0 +1,122 @@
+<div class="contenedor-principal">
+  <div class="columna-formulario">
+    <div class="contenido-interno">
+      <div class="cabecera-auth">
+        <div class="logotipo">
+          <i class="pi pi-building text-dorado"></i>
+          <span>Aloggio</span>
+        </div>
+      </div>
+
+      <div class="caja-formulario">
+        <div class="mb-4">
+          <h1 class="titulo-principal">Te damos la bienvenida</h1>
+          <p class="texto-secundario">
+            Ingresa a tu cuenta para gestionar tus reservas y alojamientos.
+          </p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" class="formulario" #loginForm="ngForm">
+          <div class="campo-formulario">
+            <label for="correo" class="etiqueta-campo">Usuario o correo Electrónico</label>
+            <div class="grupo-input">
+              <span class="icono-input"><i class="pi pi-envelope"></i></span>
+              <input
+                id="correo"
+                type="email"
+                name="correo"
+                [(ngModel)]="loginData.correo"
+                class="entrada-control"
+                placeholder="nombre@correo.com"
+                required
+                #correo="ngModel"
+              />
+            </div>
+            <div *ngIf="correo.invalid && correo.touched" class="mensaje-error">
+              El correo es obligatorio
+            </div>
+          </div>
+
+          <div class="campo-formulario">
+            <div class="d-flex justify-content-between align-items-center">
+              <label for="clave" class="etiqueta-campo">Contraseña</label>
+              <a routerLink="/recuperacion" class="enlace-dorado small"
+                >¿Olvidaste tu contraseña?</a
+              >
+            </div>
+            <div class="grupo-input">
+              <span class="icono-input"><i class="pi pi-lock"></i></span>
+              <input
+                id="clave"
+                name="password"
+                [type]="mostrarClave ? 'text' : 'password'"
+                class="entrada-control flex-grow-1"
+                placeholder="••••••••"
+                [(ngModel)]="loginData.password"
+                required
+                #password="ngModel"
+              />
+              <button type="button" class="boton-peek" (click)="mostrarClave = !mostrarClave">
+                <i class="pi" [ngClass]="mostrarClave ? 'pi-eye-slash' : 'pi-eye'"></i>
+              </button>
+            </div>
+            <div *ngIf="password.invalid && password.touched" class="mensaje-error">
+              <div *ngIf="password.errors?.['required']">La contraseña es obligatoria</div>
+            </div>
+          </div>
+
+          <div class="opcion-recopilar">
+            <input type="checkbox" id="recordar" class="form-check-input" />
+            <label for="recordar" class="texto-secundario">Recordar en este equipo</label>
+          </div>
+
+          <button type="submit" class="boton-dorado" [disabled]="loginForm.invalid">Iniciar Sesión</button>
+          <div *ngIf="errorMessage" class="mensaje-error">
+            {{ errorMessage }}
+          </div>
+          <div *ngIf="successMessage" class="mensaje-exito">
+            {{ successMessage }}
+          </div>
+        </form>
+      </div>
+
+      <div class="pie-pagina" align="center">
+        <span class="texto-secundario">¿No tienes cuenta?</span>
+        <a routerLink="/registro" class="enlace-dorado"> Regístrate aquí &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="columna-decorativa">
+    <div class="ilustracion-viaje" aria-hidden="true">
+      <svg
+        class="linea-trayectoria"
+        viewBox="0 0 500 600"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M -50,550 C 150,500 100,250 300,200 C 400,170 450,80 550,50"
+          stroke="#31363e"
+          stroke-width="2"
+          stroke-dasharray="6 6"
+        />
+      </svg>
+
+      <div class="icono-vehiculo carro">
+        <i class="pi pi-car"></i>
+      </div>
+
+      <div class="icono-vehiculo avion">
+        <i class="pi pi-send"></i>
+      </div>
+    </div>
+
+    <div class="contenido-decorativo">
+      <h2 class="titulo-decorativo">Encuentra tu próximo destino lejos de casa</h2>
+      <p class="texto-secundario">
+        Explora miles de alojamientos verificados y vive viajes inolvidables.
+      </p>
+    </div>
+  </div>
+</div>
