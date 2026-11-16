@@ -1,0 +1,56 @@
+@use '../autenticacion.scss' as *;
+@use '../../../styles.scss' as *;
+
+$exito: #5fc788;
+$peligro: #e74c3c;
+
+.alerta-auth {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: $peligro;
+  background-color: rgba($peligro, 0.1);
+  border: 1px solid rgba($peligro, 0.3);
+
+  i {
+    margin-top: 0.1rem;
+  }
+}
+
+.boton-dorado:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.panel-exito {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+
+  .icono-exito {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.6rem;
+    color: $exito;
+    background-color: rgba($exito, 0.1);
+    border: 1px solid rgba($exito, 0.3);
+  }
+
+  .enlace-boton {
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    text-align: center;
+    text-decoration: none;
+  }
+}
