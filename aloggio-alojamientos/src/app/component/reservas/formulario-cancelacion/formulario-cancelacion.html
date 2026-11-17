@@ -25,10 +25,18 @@
     </div>
 
     <div class="cuerpo-formulario" *ngIf="puedeCancelar()">
-      <div class="bloque-politica">
+      <div class="bloque-politica" *ngIf="politica; else sinPolitica">
         <h3 class="titulo-bloque">Política {{ politica.nombre }}</h3>
         <p class="texto-politica">{{ politica.condiciones }}</p>
       </div>
+      <ng-template #sinPolitica>
+        <div class="bloque-politica">
+          <h3 class="titulo-bloque">Sin política de cancelación</h3>
+          <p class="texto-politica">
+            Este alojamiento no tiene una política definida, así que no corresponde devolución.
+          </p>
+        </div>
+      </ng-template>
 
       <dl class="resumen-devolucion">
         <div class="fila">
@@ -40,13 +48,14 @@
           <dd>${{ valorDevolucion() | number: '1.0-0' }}</dd>
         </div>
       </dl>
-      <p class="nota-devolucion" *ngIf="!aplicaDevolucion()">
+      <p class="nota-devolucion" *ngIf="!aplicaDevolucion() && politica">
         Faltan {{ diasParaLlegada() }} {{ diasParaLlegada() === 1 ? 'día' : 'días' }} para tu
         llegada y esta política pide al menos {{ politica.plazoCancelacion }}, así que no
         corresponde devolución.
       </p>
       <p class="nota-devolucion" *ngIf="aplicaDevolucion()">
-        Es una devolución simulada: no se hace ningún movimiento de dinero real.
+        La devolución se hace a la misma tarjeta con la que pagaste (Stripe, modo de pruebas). El
+        valor final lo confirma el servidor al cancelar.
       </p>
 
       <div class="campo-motivo">
@@ -57,9 +66,18 @@
           [maxlength]="longitudMaxMotivo"
           [(ngModel)]="motivo"
           [disabled]="enviando"
+          [class.invalido]="motivoTocado && !motivoValido()"
+          [attr.aria-invalid]="motivoTocado && !motivoValido()"
+          aria-describedby="error-motivo"
+          (blur)="motivoTocado = true"
           placeholder="Cuéntanos por qué cancelas tu reserva."
         ></textarea>
-        <span class="contador-motivo">{{ motivo.length }}/{{ longitudMaxMotivo }}</span>
+        <div class="pie-motivo">
+          <span class="error-motivo" id="error-motivo" *ngIf="motivoTocado && !motivoValido()">{{
+            errorMotivo()
+          }}</span>
+          <span class="contador-motivo">{{ longitudMotivo() }}/{{ longitudMaxMotivo }}</span>
+        </div>
       </div>
 
       <label class="campo-aceptacion">
