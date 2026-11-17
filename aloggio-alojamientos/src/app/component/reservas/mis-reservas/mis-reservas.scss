@@ -240,6 +240,23 @@ $peligro: #e74c3c;
         color: $texto-secundario;
         font-variant-numeric: tabular-nums;
       }
+
+      .aviso-resena {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-left: auto;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        background-color: rgba($dorado-acento, 0.12);
+        color: $dorado-acento;
+        font-size: 0.7rem;
+        font-weight: 600;
+
+        i {
+          font-size: 0.7rem;
+        }
+      }
     }
 
     .titulo-reserva {

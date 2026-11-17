@@ -80,6 +80,12 @@
                     >{{ etiquetasEstado[reserva.estado] }}</span
                   >
                   <span class="codigo">#{{ reserva.idReserva }}</span>
+                  <span
+                    class="aviso-resena"
+                    *ngIf="reserva.estado === 'COMPLETADA' && !reserva.tieneResena"
+                  >
+                    <i class="pi pi-star"></i> Pendiente de reseña
+                  </span>
                 </div>
                 <h2 class="titulo-reserva">{{ reserva.titulo }}</h2>
                 <p class="ciudad-reserva" *ngIf="reserva.ciudad">

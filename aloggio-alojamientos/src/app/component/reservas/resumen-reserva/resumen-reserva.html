@@ -23,17 +23,66 @@
       <h1 class="titulo-pagina">Confirmar y pagar</h1>
     </div>
 
-    <div class="grid-resumen-compra">
+    <div class="estado-resumen" *ngIf="cargando()" role="status">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Calculando tu cotización...</span>
+    </div>
+
+    <div class="estado-resumen error" *ngIf="!cargando() && errorCarga() as mensaje" role="alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ mensaje }}</span>
+      <button type="button" class="boton-estado" (click)="volver()">Volver al alojamiento</button>
+    </div>
+
+    <div
+      class="grid-resumen-compra"
+      *ngIf="!cargando() && !errorCarga() && cotizacion() && alojamiento()"
+    >
       <section class="columna-formulario-pago">
         <div class="bloque-informacion-viaje">
           <h2 class="subtitulo-seccion">Tu viaje</h2>
           <div class="fila-dato-viaje">
             <div class="textos-dato">
               <span class="etiqueta-dato">Fechas</span>
-              <span class="valor-dato">10 Dic – 15 Dic, 2026 ({{ noches }} noches)</span>
+              <span class="valor-dato">
+                {{ aFecha(cotizacion()!.fechaLlegada) | date: 'd MMM' : '' : 'es-CO' }} –
+                {{ aFecha(cotizacion()!.fechaSalida) | date: 'd MMM, yyyy' : '' : 'es-CO' }}
+                ({{ cotizacion()!.noches }} {{ cotizacion()!.noches === 1 ? 'noche' : 'noches' }})
+              </span>
             </div>
             <button class="boton-editar-dato" type="button" (click)="volver()">Editar</button>
           </div>
+          <div class="fila-dato-viaje">
+            <div class="textos-dato">
+              <span class="etiqueta-dato">Huéspedes</span>
+              <span class="valor-dato">
+                {{ solicitud()!.huespedes }}
+                {{ solicitud()!.huespedes === 1 ? 'huésped' : 'huéspedes' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="aviso-vigencia"
+          [class.vencida]="cotizacionVencida()"
+          role="status"
+          aria-live="polite"
+        >
+          <i class="pi" [ngClass]="cotizacionVencida() ? 'pi-history' : 'pi-clock'"></i>
+          <span *ngIf="!cotizacionVencida()">
+            Este precio se mantiene por <strong>{{ tiempoRestante() }}</strong> minutos.
+          </span>
+          <span *ngIf="cotizacionVencida()">La cotización venció. Actualízala para continuar.</span>
+          <button
+            *ngIf="cotizacionVencida()"
+            type="button"
+            class="boton-estado"
+            [disabled]="recotizando()"
+            (click)="recotizar()"
+          >
+            {{ recotizando() ? 'Actualizando...' : 'Actualizar cotización' }}
+          </button>
         </div>
 
         <hr class="divisor-seccion" />
@@ -50,25 +99,37 @@
                 type="text"
                 autocomplete="cc-name"
                 placeholder="Como aparece en la tarjeta"
+                maxlength="60"
+                [class.invalido]="errorTitular()"
+                [attr.aria-invalid]="!!errorTitular()"
+                aria-describedby="error-titular"
                 [(ngModel)]="nombreTitular"
+                (blur)="validarTitular()"
+                (ngModelChange)="errorTitular() && validarTitular()"
               />
+              <span class="error-campo" id="error-titular" *ngIf="errorTitular()">{{
+                errorTitular()
+              }}</span>
             </div>
 
             <div class="campo-input-full">
-              <label>Información de la tarjeta (Stripe)</label>
+              <label>Información de la tarjeta</label>
 
-              <div #contenedorTarjeta class="stripe-elemento-contenedor"></div>
+              <div
+                #contenedorTarjeta
+                class="stripe-elemento-contenedor"
+                [class.invalido]="errorTarjeta()"
+              ></div>
+              <span class="error-campo" *ngIf="errorTarjeta()" role="alert">{{
+                errorTarjeta()
+              }}</span>
+              <span class="ayuda-campo"
+                >Los datos de tu tarjeta van directo a Stripe; Aloggio no los guarda.</span
+              >
             </div>
 
-            <div class="alerta-error-stripe" *ngIf="mensajeErrorTarjeta" role="alert">
+            <div class="alerta-error-stripe" *ngIf="stripeNoDisponible()" role="alert">
               <i class="pi pi-exclamation-circle"></i>
-
-              <span>{{ mensajeErrorTarjeta }}</span>
-            </div>
-
-            <div class="alerta-error-stripe" *ngIf="stripeNoDisponible" role="alert">
-              <i class="pi pi-exclamation-circle"></i>
-
               <span>No pudimos cargar el formulario seguro de Stripe. Revisa tu conexión.</span>
             </div>
           </div>
@@ -78,96 +139,126 @@
 
         <div class="bloque-politicas-confirmacion">
           <h2 class="subtitulo-seccion">Política de cancelación</h2>
-          <p class="texto-politica-resumen">
-            Mínimo 5 días antes del periodo de reserva y con devolución del 20% del monto pagado
-            inicialmente.
+          <p class="texto-politica-resumen" *ngIf="alojamiento()!.politicaCancelacion as politica">
+            <strong>{{ politica.nombre }}.</strong> {{ politica.condiciones }}
+          </p>
+          <p class="texto-politica-resumen" *ngIf="!alojamiento()!.politicaCancelacion">
+            Este alojamiento no tiene una política de cancelación definida.
           </p>
 
           <label class="checkbox-acepta-terminos">
-            <input type="checkbox" [(ngModel)]="aceptaTerminos" />
+            <input
+              type="checkbox"
+              [(ngModel)]="aceptaTerminos"
+              (ngModelChange)="$event && errorTerminos.set('')"
+            />
             <span>
-              Acepto las reglas de la casa y los términos del servicio de pagos seguros de Stripe.
+              Acepto las reglas de la casa, la política de cancelación y los términos del servicio
+              de pagos seguros de Stripe.
             </span>
           </label>
+          <span class="error-campo" *ngIf="errorTerminos()">{{ errorTerminos() }}</span>
+
+          <div
+            class="alerta-error-stripe"
+            *ngIf="avisoPago() as aviso"
+            [class.aviso-pasarela]="aviso.tipo === 'pasarela'"
+            role="alert"
+          >
+            <i
+              class="pi"
+              [ngClass]="aviso.tipo === 'pasarela' ? 'pi-exclamation-triangle' : 'pi-times-circle'"
+            ></i>
+            <span>{{ aviso.texto }}</span>
+          </div>
 
           <button
             class="boton-confirmar-pago"
-            [disabled]="!aceptaTerminos || procesandoPago || stripeNoDisponible"
+            [disabled]="!puedePagar()"
             (click)="confirmarYPagar()"
             type="button"
           >
-            <i class="pi" [ngClass]="procesandoPago ? 'pi-spin pi-spinner' : 'pi-check-circle'"></i>
+            <i
+              class="pi"
+              [ngClass]="procesandoPago() ? 'pi-spin pi-spinner' : 'pi-check-circle'"
+            ></i>
             {{
-              procesandoPago
+              procesandoPago()
                 ? 'Procesando pago seguro...'
-                : 'Confirmar y Pagar $' + (totalFinal | number: '1.0-0')
+                : 'Confirmar y Pagar $' + (cotizacion()!.total | number: '1.0-0')
             }}
           </button>
         </div>
       </section>
 
       <aside class="columna-preview-publicacion">
-        <div class="tarjeta-resumen-alojamiento">
+        <div class="tarjeta-resumen-alojamiento" *ngIf="alojamiento() as aloj">
           <div class="encabezado-mini-alojamiento">
             <img
-              *ngIf="alojamiento.imagenes && alojamiento.imagenes.length > 0"
-              [src]="alojamiento.imagenes[0].urlImagen"
-              [alt]="alojamiento.titulo"
+              *ngIf="aloj.imagenes.length > 0"
+              [src]="aloj.imagenes[0].urlImagen"
+              [alt]="aloj.titulo"
               class="imagen-mini-alojamiento"
             />
             <div class="info-mini-textos">
-              <span class="tipo-mini">{{ alojamiento.tipo }} en {{ alojamiento.ubicacion }}</span>
-              <h3 class="titulo-mini">{{ alojamiento.titulo }}</h3>
-              <div class="calificacion-mini">
+              <span class="tipo-mini">{{ aloj.ciudad }} · {{ aloj.ubicacion }}</span>
+              <h3 class="titulo-mini">{{ aloj.titulo }}</h3>
+              <div class="calificacion-mini" *ngIf="aloj.totalResenas > 0">
                 <i class="pi pi-star-fill"></i>
-                <span>4.95 (42 reseñas)</span>
+                <span
+                  >{{ aloj.promedioCalificacion | number: '1.1-2' }} ({{ aloj.totalResenas }}
+                  {{ aloj.totalResenas === 1 ? 'reseña' : 'reseñas' }})</span
+                >
               </div>
             </div>
           </div>
 
           <hr class="divisor-desglose" />
 
-          <div class="seccion-desglose-precio">
+          <div class="seccion-desglose-precio" *ngIf="cotizacion() as cot">
             <h3 class="titulo-desglose">Detalle del precio</h3>
 
-            <!-- Desglose por noches -->
             <div class="fila-precio">
-              <span>${{ alojamiento.precioNoche | number: '1.0-0' }} x {{ noches }} noches</span>
-              <span>${{ subtotalNoches | number: '1.0-0' }}</span>
+              <span
+                >${{ aloj.precioNoche | number: '1.0-0' }} x {{ cot.noches }}
+                {{ cot.noches === 1 ? 'noche' : 'noches' }}</span
+              >
+              <span>${{ cot.precioBase | number: '1.0-0' }}</span>
             </div>
 
-            <!-- Tarifa de limpieza -->
-            <!-- Tarifa de limpieza -->
-            <div class="fila-precio">
+            <div class="fila-precio" *ngIf="(cot.limpieza ?? 0) > 0">
               <span>Tarifa de limpieza</span>
-              <span>${{ cotizacion.limpieza | number: '1.0-0' }}</span>
+              <span>${{ cot.limpieza | number: '1.0-0' }}</span>
             </div>
 
-            <!-- Servicios adicionales fijos de la propiedad -->
+            <div class="fila-precio">
+              <span>Tarifa de servicio</span>
+              <span>${{ cot.servicio | number: '1.0-0' }}</span>
+            </div>
+
             <div
               class="seccion-servicios-incluidos"
-              *ngIf="
-                alojamiento.serviciosAdicionales && alojamiento.serviciosAdicionales.length > 0
-              "
+              *ngIf="cot.servicios && cot.servicios.length > 0"
             >
-              <span class="subtitulo-incluidos">Servicios adicionales incluidos:</span>
-              <div
-                class="fila-precio servicio-fijo"
-                *ngFor="let servicio of alojamiento.serviciosAdicionales"
-              >
+              <span class="subtitulo-incluidos">Servicios adicionales:</span>
+              <div class="fila-precio servicio-fijo" *ngFor="let servicio of cot.servicios">
                 <span class="nombre-servicio">
                   <i class="pi pi-check-circle"></i> {{ servicio.nombre }}
                 </span>
-                <span>${{ servicio.precio | number: '1.0-0' }}</span>
+                <span>${{ servicio.costoAplicado | number: '1.0-0' }}</span>
               </div>
+            </div>
+
+            <div class="fila-precio descuento" *ngIf="(cot.descuento ?? 0) > 0">
+              <span>Descuento por estadía larga</span>
+              <span>-${{ cot.descuento | number: '1.0-0' }}</span>
             </div>
 
             <hr class="divisor-desglose" />
 
-            <!-- Total Final -->
             <div class="fila-precio total-final">
               <span>Total (COP)</span>
-              <span class="valor-total">${{ totalFinal | number: '1.0-0' }}</span>
+              <span class="valor-total">${{ cot.total | number: '1.0-0' }}</span>
             </div>
           </div>
         </div>

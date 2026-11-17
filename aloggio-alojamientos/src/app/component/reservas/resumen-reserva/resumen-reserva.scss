@@ -379,3 +379,113 @@
     }
   }
 }
+
+// Estados de carga y error, vigencia y validación de campos
+
+.estado-resumen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 4rem 1rem;
+  text-align: center;
+  color: $texto-secundario;
+
+  i {
+    font-size: 2rem;
+  }
+
+  &.error i {
+    color: #e74c3c;
+  }
+}
+
+.boton-estado {
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid $dorado-acento;
+  background: transparent;
+  color: $dorado-acento;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba($dorado-acento, 0.12);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.aviso-vigencia {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid $borde-contenedor;
+  background: $fondo-entrada;
+  font-size: 0.85rem;
+  color: $texto-secundario;
+
+  i {
+    color: $dorado-acento;
+  }
+
+  strong {
+    color: $texto-principal;
+  }
+
+  &.vencida {
+    border-color: rgba(#e74c3c, 0.5);
+
+    i {
+      color: #e74c3c;
+    }
+  }
+}
+
+.error-campo {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: #e74c3c;
+}
+
+.ayuda-campo {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: $texto-secundario;
+}
+
+input.invalido,
+.stripe-elemento-contenedor.invalido {
+  border-color: #e74c3c !important;
+}
+
+.bloque-politicas-confirmacion .alerta-error-stripe {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.8rem 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: rgba(#e74c3c, 0.1);
+  font-size: 0.85rem;
+  color: #e74c3c;
+
+  &.aviso-pasarela {
+    background: rgba($dorado-acento, 0.1);
+    color: $dorado-acento;
+  }
+}
+
+.fila-precio.descuento {
+  color: #2ecc71;
+}
