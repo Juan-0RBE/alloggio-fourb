@@ -769,3 +769,17 @@ a:focus-visible {
   outline: 2px solid $dorado-acento;
   outline-offset: 2px;
 }
+
+.ayuda-servicio {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: $texto-secundario;
+}
+
+.error-servicio {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: #e74c3c;
+}
