@@ -1,6 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { ReservaService } from '../../../service/reserva.service';
+import { AlojamientoService } from '../../../service/alojamiento.service';
+import { ReservaDTO } from '../../../model/reserva.model';
+import { AlojamientoDetalleDTO } from '../../../model/alojamiento.model';
+
+const TIPOS_VALIDOS: TipoResultado[] = ['exito', 'rechazado', 'no-disponible', 'pasarela', 'conflicto'];
 
 type TipoResultado = 'exito' | 'rechazado' | 'no-disponible' | 'pasarela' | 'conflicto';
 
@@ -52,30 +60,79 @@ const RESULTADOS: Record<TipoResultado, ConfigResultado> = {
   styleUrl: './resultado-reserva.scss',
 })
 export class ResultadoReserva implements OnInit {
-  tipo: TipoResultado = 'exito';
-  config: ConfigResultado = RESULTADOS['exito'];
+  private ruta = inject(ActivatedRoute);
+  private reservaService = inject(ReservaService);
+  private alojamientoService = inject(AlojamientoService);
 
-  reserva = {
-    idReserva: 1042,
-    fechaLlegada: '10 de Diciembre, 2026',
-    fechaSalida: '15 de Diciembre, 2026',
-    noches: 5,
-    total: 2835000,
-  };
+  tipo = signal<TipoResultado>('exito');
+  config = signal<ConfigResultado>(RESULTADOS['exito']);
+  mensaje = signal<string | null>(null);
+  /** Alojamiento al que volver (por ejemplo, para elegir otras fechas). */
+  idPublicacion = signal<number | null>(null);
 
-  alojamiento = {
-    titulo: 'Villa Moderna Vista al Valle y Montaña',
-    ubicacion: 'Medellín, Antioquia',
-    imagenes: [
-      {
-        urlImagen:
-          'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80',
-      },
-    ],
-  };
+  cargando = signal(false);
+  errorCarga = signal<string | null>(null);
+  reserva = signal<ReservaDTO | null>(null);
+  alojamiento = signal<AlojamientoDetalleDTO | null>(null);
 
   ngOnInit(): void {
-    this.tipo = 'exito';
-    this.config = RESULTADOS[this.tipo];
+    const q = this.ruta.snapshot.queryParamMap;
+    const tipoParam = q.get('tipo') as TipoResultado;
+    const tipo = TIPOS_VALIDOS.includes(tipoParam) ? tipoParam : 'conflicto';
+    this.tipo.set(tipo);
+    this.config.set(RESULTADOS[tipo]);
+
+    const mensaje = q.get('mensaje');
+    if (mensaje) this.mensaje.set(mensaje.slice(0, 300));
+
+    const id = Number(q.get('id'));
+    if (tipo === 'exito') {
+      if (Number.isInteger(id) && id > 0) {
+        this.cargarReserva(id);
+      } else {
+        this.errorCarga.set('No encontramos el código de la reserva. Revisa tu historial.');
+      }
+    } else if (Number.isInteger(id) && id > 0) {
+      this.idPublicacion.set(id);
+    }
+  }
+
+  private cargarReserva(idReserva: number): void {
+    this.cargando.set(true);
+    this.reservaService.consultarEstado(idReserva).subscribe({
+      next: (reserva) => {
+        this.reserva.set(reserva);
+        if (reserva.idPublicacion) {
+          this.idPublicacion.set(reserva.idPublicacion);
+          this.alojamientoService.obtenerDetalle(reserva.idPublicacion).subscribe({
+            next: (aloj) => this.alojamiento.set(aloj),
+            // El resumen se puede mostrar sin la foto ni el título
+            error: () => this.alojamiento.set(null),
+          });
+        }
+        this.cargando.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cargando.set(false);
+        this.errorCarga.set(
+          err.status === 404 || err.status === 403
+            ? 'No encontramos esta reserva en tu cuenta.'
+            : 'No pudimos cargar los datos de la reserva. Revisa tu historial.',
+        );
+      },
+    });
+  }
+
+  aFecha(iso: string | undefined): Date | null {
+    if (!iso) return null;
+    const [a, m, d] = iso.split('-').map(Number);
+    return new Date(a, m - 1, d);
+  }
+
+  noches(reserva: ReservaDTO): number {
+    const inicio = this.aFecha(reserva.fechaLlegada);
+    const fin = this.aFecha(reserva.fechaSalida);
+    if (!inicio || !fin) return 0;
+    return Math.round((fin.getTime() - inicio.getTime()) / 86400000);
   }
 }

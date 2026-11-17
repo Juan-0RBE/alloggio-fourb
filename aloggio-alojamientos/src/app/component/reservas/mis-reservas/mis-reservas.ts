@@ -1,13 +1,17 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { ReservaService } from '../../../service/reserva.service';
+import { EstadoReserva, ReservaDTO } from '../../../model/reserva.model';
 
 type Filtro = 'TODAS' | 'CONFIRMADA' | 'COMPLETADA' | 'CANCELADA';
 
 export interface ReservaVista {
   idReserva: number;
   idPublicacion: number;
-  estado: 'CONFIRMADA' | 'COMPLETADA' | 'CANCELADA';
+  estado: EstadoReserva;
   fechaCreacion: string;
   fechaLlegada: string;
   fechaSalida: string;
@@ -16,6 +20,37 @@ export interface ReservaVista {
   ciudad: string;
   imagen: string | null;
   noches: number;
+  tieneResena: boolean;
+}
+
+/** Convierte el DTO del back en lo que muestran las pantallas; descarta filas incompletas. */
+export function aReservaVista(r: ReservaDTO): ReservaVista | null {
+  if (!r.idReserva || !r.fechaLlegada || !r.fechaSalida) return null;
+  const estados: EstadoReserva[] = ['CONFIRMADA', 'COMPLETADA', 'CANCELADA'];
+  const estado = estados.includes(r.estado as EstadoReserva)
+    ? (r.estado as EstadoReserva)
+    : 'CONFIRMADA';
+  return {
+    idReserva: r.idReserva,
+    idPublicacion: r.idPublicacion ?? 0,
+    estado,
+    fechaCreacion: r.fechaCreacion ?? '',
+    fechaLlegada: r.fechaLlegada,
+    fechaSalida: r.fechaSalida,
+    total: Number(r.total ?? 0),
+    titulo: r.tituloPublicacion || `Alojamiento #${r.idPublicacion ?? ''}`,
+    ciudad: r.ciudadPublicacion ?? '',
+    imagen: r.urlImagenPrincipal ?? null,
+    noches: nochesEntre(r.fechaLlegada, r.fechaSalida),
+    tieneResena: !!r.tieneResena,
+  };
+}
+
+function nochesEntre(llegada: string, salida: string): number {
+  const [a1, m1, d1] = llegada.split('-').map(Number);
+  const [a2, m2, d2] = salida.split('-').map(Number);
+  const ms = new Date(a2, m2 - 1, d2).getTime() - new Date(a1, m1 - 1, d1).getTime();
+  return Math.max(0, Math.round(ms / 86400000));
 }
 
 export const ETIQUETAS_ESTADO: Record<string, string> = {
@@ -32,6 +67,8 @@ export const ETIQUETAS_ESTADO: Record<string, string> = {
   styleUrl: './mis-reservas.scss',
 })
 export class MisReservas implements OnInit {
+  private reservaService = inject(ReservaService);
+
   readonly filtros: { valor: Filtro; etiqueta: string }[] = [
     { valor: 'TODAS', etiqueta: 'Todas' },
     { valor: 'CONFIRMADA', etiqueta: 'Confirmadas' },
@@ -42,51 +79,9 @@ export class MisReservas implements OnInit {
 
   filtroActivo = signal<Filtro>('TODAS');
   cargando = signal(false);
-  error = signal<any | null>(null);
+  error = signal<{ mensaje: string; sesion: boolean } | null>(null);
 
-  lista = signal<ReservaVista[]>([
-    {
-      idReserva: 1042,
-      idPublicacion: 1,
-      estado: 'CONFIRMADA',
-      fechaCreacion: '2026-11-01',
-      fechaLlegada: '2026-12-10',
-      fechaSalida: '2026-12-15',
-      total: 2835000,
-      titulo: 'Villa Moderna Vista al Valle y Montaña',
-      ciudad: 'Medellín',
-      imagen:
-        'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80',
-      noches: 5,
-    },
-    {
-      idReserva: 1035,
-      idPublicacion: 2,
-      estado: 'COMPLETADA',
-      fechaCreacion: '2026-09-15',
-      fechaLlegada: '2026-10-01',
-      fechaSalida: '2026-10-05',
-      total: 1450000,
-      titulo: 'Cabaña Alpina en el Bosque',
-      ciudad: 'Guatapé',
-      imagen:
-        'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80',
-      noches: 4,
-    },
-    {
-      idReserva: 1010,
-      idPublicacion: 3,
-      estado: 'CANCELADA',
-      fechaCreacion: '2026-08-10',
-      fechaLlegada: '2026-08-20',
-      fechaSalida: '2026-08-22',
-      total: 800000,
-      titulo: 'Loft Urbano Minimalista',
-      ciudad: 'Bogotá',
-      imagen: null,
-      noches: 2,
-    },
-  ]);
+  lista = signal<ReservaVista[]>([]);
 
   visibles = computed(() => {
     const filtro = this.filtroActivo();
@@ -102,13 +97,29 @@ export class MisReservas implements OnInit {
     return total;
   });
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.cargar();
+  }
 
   cargar(): void {
+    this.error.set(null);
     this.cargando.set(true);
-    setTimeout(() => {
-      this.cargando.set(false);
-    }, 400);
+    this.reservaService.obtenerHistorial().subscribe({
+      next: (reservas) => {
+        this.lista.set(reservas.map(aReservaVista).filter((r): r is ReservaVista => !!r));
+        this.cargando.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cargando.set(false);
+        if (err.status === 401 || err.status === 403) {
+          this.error.set({ mensaje: 'Tu sesión expiró. Inicia sesión de nuevo.', sesion: true });
+        } else if (err.status === 0) {
+          this.error.set({ mensaje: 'No hay conexión con el servidor.', sesion: false });
+        } else {
+          this.error.set({ mensaje: 'No pudimos cargar tus reservas.', sesion: false });
+        }
+      },
+    });
   }
 
   seleccionarFiltro(filtro: Filtro): void {
