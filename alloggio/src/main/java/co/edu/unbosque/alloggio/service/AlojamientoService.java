@@ -213,9 +213,11 @@ public class AlojamientoService {
 
         // La política es LAZY: se arma el DTO a mano dentro de la transacción
         PoliticaCancelacion politica = pub.getPoliticaCancelacion();
-        PoliticaCancelacionDTO politicaDto = new PoliticaCancelacionDTO(politica.getIdPolitica(),
-                politica.getNombre(), politica.getPorcentajeDevolucion(), politica.getCondiciones(),
-                politica.getPlazoCancelacion());
+        PoliticaCancelacionDTO politicaDto = null;
+        if (politica != null) {
+            politicaDto = new PoliticaCancelacionDTO(politica.getIdPolitica(), politica.getNombre(),
+                    politica.getPorcentajeDevolucion(), politica.getCondiciones(), politica.getPlazoCancelacion());
+        }
 
         List<ServicioAlojamientoDTO> servicios = new ArrayList<>();
         for (ServicioAlojamiento s : servicioRepo.findByPublicacionIdPublicacion(idPublicacion)) {
@@ -242,12 +244,15 @@ public class AlojamientoService {
             calendario.add(new RangoOcupadoDTO(p.getFechaInicio(), p.getFechaFin()));
         }
 
-        return new AlojamientoDetalleDTO(pub.getIdPublicacion(), pub.getTitulo(), pub.getDescripcion(),
+        AlojamientoDetalleDTO detalle = new AlojamientoDetalleDTO(pub.getIdPublicacion(), pub.getTitulo(),
+                pub.getDescripcion(),
                 pub.getUbicacion(), pub.getCiudad(), pub.getTipo(), pub.getCapacidad(), pub.getPrecioNoche(),
                 politicaDto, servicios, reglas, imagenes, calendario,
                 resenaService.calcularPromedio(idPublicacion),
                 resenaService.contarVisibles(idPublicacion),
                 resenaService.obtenerVisiblesRecientes(idPublicacion));
+        detalle.setTarifaLimpieza(pub.getTarifaLimpieza() != null ? pub.getTarifaLimpieza() : 0.0);
+        return detalle;
     }
 
     /**
