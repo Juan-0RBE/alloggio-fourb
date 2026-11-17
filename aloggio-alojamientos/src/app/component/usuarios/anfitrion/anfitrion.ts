@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { PublicacionService } from '../../../service/publicacion.service';
+import { SERVICIOS_CATALOGO, claveTexto, normalizarServicio } from '../../../model/servicios-catalogo';
 import {
   EstadoPublicacion,
   PoliticaCancelacionDTO,
@@ -81,6 +82,8 @@ export class Anfitrion implements OnInit {
 
   readonly etiquetasEstado = ETIQUETAS_ESTADO;
   readonly tiposAlojamiento = TIPOS_ALOJAMIENTO;
+  readonly serviciosCatalogo = SERVICIOS_CATALOGO;
+  errorServicio = signal('');
 
   mostrandoModal = signal(false);
   editandoId = signal<number | null>(null);
@@ -205,6 +208,7 @@ export class Anfitrion implements OnInit {
 
   abrirModalCrear(): void {
     this.editandoId.set(null);
+    this.errorServicio.set('');
     this.errorFormulario.set('');
     this.formTitulo = '';
     this.formDescripcion = '';
@@ -233,6 +237,7 @@ export class Anfitrion implements OnInit {
     if (!this.puedeEditar(aloj)) return;
 
     this.editandoId.set(aloj.id);
+    this.errorServicio.set('');
     this.errorFormulario.set('');
     this.formTitulo = aloj.titulo;
     this.formDescripcion = aloj.descripcion;
@@ -276,14 +281,29 @@ export class Anfitrion implements OnInit {
   }
 
   agregarServicioForm(): void {
-    if (this.nuevoServicioNombre.trim()) {
-      this.formServicios.push({
-        nombre: this.nuevoServicioNombre.trim(),
-        costo: Number(this.nuevoServicioCosto) || 0,
-      });
-      this.nuevoServicioNombre = '';
-      this.nuevoServicioCosto = 50000;
+    // Se guarda con el nombre del catálogo para que coincida con el filtro de búsqueda
+    const nombre = normalizarServicio(this.nuevoServicioNombre);
+    const costo = Number(this.nuevoServicioCosto);
+    if (!nombre) {
+      this.errorServicio.set('Escribe el nombre del servicio.');
+      return;
     }
+    if (nombre.length > 50) {
+      this.errorServicio.set('El nombre del servicio puede tener máximo 50 caracteres.');
+      return;
+    }
+    if (!Number.isFinite(costo) || costo < 0) {
+      this.errorServicio.set('El costo debe ser un valor de cero o mayor.');
+      return;
+    }
+    if (this.formServicios.some((s) => claveTexto(s.nombre) === claveTexto(nombre))) {
+      this.errorServicio.set(`El servicio "${nombre}" ya está en la lista.`);
+      return;
+    }
+    this.errorServicio.set('');
+    this.formServicios.push({ nombre, costo });
+    this.nuevoServicioNombre = '';
+    this.nuevoServicioCosto = 50000;
   }
 
   eliminarServicioForm(index: number): void {
