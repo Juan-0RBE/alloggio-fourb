@@ -69,9 +69,10 @@ $peligro: #e74c3c;
 
   .encabezado-pagina {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
 
     .titulo-pagina {
       margin: 0;
@@ -79,10 +80,87 @@ $peligro: #e74c3c;
       font-weight: 700;
     }
 
+    .acciones-encabezado {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+
     .resumen-no-leidas {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
       font-size: 0.85rem;
       font-weight: 600;
       color: $dorado-acento;
+
+      .punto-indicador {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: $dorado-acento;
+        box-shadow: 0 0 0 3px rgba($dorado-acento, 0.18);
+      }
+    }
+
+    .boton-marcar-todas {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba($dorado-acento, 0.55);
+      background-color: rgba($dorado-acento, 0.08);
+      color: $dorado-acento;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.15s ease;
+
+      i {
+        font-size: 0.9rem;
+      }
+
+      &:hover {
+        background-color: $dorado-acento;
+        border-color: $dorado-acento;
+        color: #121417;
+      }
+
+      &:active {
+        transform: scale(0.97);
+      }
+
+      &:focus-visible {
+        outline: 2px solid $dorado-acento;
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  .alerta-accion {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid rgba($peligro, 0.35);
+    background-color: rgba($peligro, 0.1);
+    color: $peligro;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 480px) {
+    .encabezado-pagina .acciones-encabezado {
+      width: 100%;
+      justify-content: space-between;
     }
   }
 }
