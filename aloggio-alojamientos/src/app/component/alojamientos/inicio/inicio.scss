@@ -111,6 +111,7 @@
   gap: 0.75rem;
 
   .boton-icono {
+    position: relative;
     background: transparent;
     border: none;
     color: $texto-secundario;
@@ -707,5 +708,107 @@
     position: static;
     border-right: none;
     border-bottom: 1px solid $borde-contenedor;
+  }
+}
+
+.contador-notificaciones {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+// Filtros: rango de precio, contador de huéspedes y lista de servicios
+
+.rango-precio {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  .contenedor-input-precio {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .separador-rango {
+    color: $texto-secundario;
+    font-size: 0.85rem;
+  }
+}
+
+.contador-huespedes {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.1rem;
+
+  .boton-contador {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid $borde-contenedor;
+    background: transparent;
+    color: $texto-principal;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease;
+
+    i {
+      font-size: 0.6rem;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: $dorado-acento;
+      color: $dorado-acento;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+  }
+
+  .valor-contador {
+    min-width: 64px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: $texto-principal;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.boton-ver-mas-servicios {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: $dorado-acento;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  i {
+    font-size: 0.7rem;
+  }
+
+  &:hover {
+    text-decoration: underline;
   }
 }

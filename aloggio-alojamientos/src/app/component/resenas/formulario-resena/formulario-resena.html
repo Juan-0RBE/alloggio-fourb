@@ -1,11 +1,23 @@
 <div class="modal-overlay-resena" (click)="cancelarFormulario()">
-  <div class="contenedor-formulario-resena" (click)="$event.stopPropagation()">
+  <div
+    class="contenedor-formulario-resena"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-resena"
+    (click)="$event.stopPropagation()"
+  >
     <div class="encabezado-modal-resena">
-      <h2>Escribe tu reseña</h2>
+      <h2 id="titulo-resena">Escribe tu reseña</h2>
       <p class="subtitulo-alojamiento">
         Comparte tu experiencia en <strong>{{ alojamientoTitulo }}</strong>
       </p>
-      <button class="boton-cerrar" (click)="cancelarFormulario()" type="button">
+      <button
+        class="boton-cerrar"
+        (click)="cancelarFormulario()"
+        [disabled]="enviando"
+        type="button"
+        aria-label="Cerrar"
+      >
         <i class="pi pi-times"></i>
       </button>
     </div>
@@ -14,43 +26,21 @@
 
     <div class="cuerpo-formulario">
       <div class="fila-calificacion-principal">
-        <span>Calificación general</span>
+        <div class="textos-calificacion">
+          <span>Calificación general</span>
+          <span class="texto-valor-calificacion" [class.sin-elegir]="calificacion === 0">{{
+            textoCalificacion()
+          }}</span>
+        </div>
         <app-estrella
-          [calificacion]="calificacionGeneral"
-          [interactivo]="true"
-          (calificacionCambiada)="calificacionGeneral = $event"
-        >
-        </app-estrella>
+          [calificacion]="calificacion"
+          [interactivo]="!enviando"
+          (calificacionCambiada)="elegirCalificacion($event)"
+        ></app-estrella>
       </div>
-
-      <hr class="divisor-claro" />
-
-      <div class="grid-categorias-calificacion">
-        <div class="item-categoria">
-          <span>Limpieza</span>
-          <app-estrella
-            [calificacion]="limpieza"
-            [interactivo]="true"
-            (calificacionCambiada)="limpieza = $event"
-          ></app-estrella>
-        </div>
-        <div class="item-categoria">
-          <span>Comunicación</span>
-          <app-estrella
-            [calificacion]="comunicacion"
-            [interactivo]="true"
-            (calificacionCambiada)="comunicacion = $event"
-          ></app-estrella>
-        </div>
-        <div class="item-categoria">
-          <span>Exactitud del lugar</span>
-          <app-estrella
-            [calificacion]="exactitud"
-            [interactivo]="true"
-            (calificacionCambiada)="exactitud = $event"
-          ></app-estrella>
-        </div>
-      </div>
+      <span class="error-campo" *ngIf="intentoEnviar && errorCalificacion()" role="alert">{{
+        errorCalificacion()
+      }}</span>
 
       <hr class="divisor-claro" />
 
@@ -58,25 +48,50 @@
         <label for="comentario">Tu comentario</label>
         <textarea
           id="comentario"
-          rows="4"
+          rows="5"
+          [maxlength]="comentarioMax"
           [(ngModel)]="comentario"
+          [disabled]="enviando"
+          [class.invalido]="comentarioTocado && errorComentario()"
+          [attr.aria-invalid]="comentarioTocado && !!errorComentario()"
+          aria-describedby="error-comentario"
+          (blur)="comentarioTocado = true"
           placeholder="¿Cómo fue tu estancia? ¿Qué te gustó más del alojamiento y del anfitrión?"
-        >
-        </textarea>
+        ></textarea>
+        <div class="pie-comentario">
+          <span
+            class="error-campo"
+            id="error-comentario"
+            *ngIf="comentarioTocado && errorComentario()"
+            >{{ errorComentario() }}</span
+          >
+          <span class="contador-comentario">{{ longitudComentario() }}/{{ comentarioMax }}</span>
+        </div>
+      </div>
+
+      <div class="alerta-error" *ngIf="mensajeError" role="alert">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ mensajeError }}</span>
       </div>
     </div>
 
     <div class="pie-acciones-resena">
-      <button class="boton-secundario" (click)="cancelarFormulario()" type="button">
+      <button
+        class="boton-secundario"
+        (click)="cancelarFormulario()"
+        [disabled]="enviando"
+        type="button"
+      >
         Cancelar
       </button>
       <button
         class="boton-primario"
-        [disabled]="!comentario.trim()"
+        [disabled]="enviando || (intentoEnviar && !esValido())"
         (click)="enviar()"
         type="button"
       >
-        Publicar reseña
+        <i class="pi" [ngClass]="enviando ? 'pi-spin pi-spinner' : 'pi-send'"></i>
+        {{ enviando ? 'Publicando...' : 'Publicar reseña' }}
       </button>
     </div>
   </div>
