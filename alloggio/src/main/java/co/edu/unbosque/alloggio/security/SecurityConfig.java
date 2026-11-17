@@ -1,7 +1,9 @@
 package co.edu.unbosque.alloggio.security;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,6 +29,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+
+    @Value("${app.cors.origenes:http://localhost:4200}")
+    private String origenesPermitidos;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
@@ -139,8 +144,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
 
-        // URL de tu frontend
-        cfg.setAllowedOrigins(List.of("http://localhost:4200"));
+        // URLs del frontend, separadas por comas. Por defecto, el front local; en el
+        // servidor se agrega la del front desplegado con la variable APP_CORS_ORIGENES
+        cfg.setAllowedOrigins(Arrays.stream(origenesPermitidos.split(","))
+                .map(String::trim)
+                .filter(origen -> !origen.isEmpty())
+                .toList());
 
         // Métodos permitidos
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
