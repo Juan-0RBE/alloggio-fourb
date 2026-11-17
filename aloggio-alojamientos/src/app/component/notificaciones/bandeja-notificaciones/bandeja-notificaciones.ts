@@ -1,17 +1,14 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { NotificacionService } from '../../../service/notificacion.service';
+import { NotificacionDTO, TipoNotificacion } from '../../../model/notificacion.model';
 
 type Filtro = 'TODAS' | 'NO_LEIDAS';
-type TipoNotificacion = 'RESERVA' | 'PAGO' | 'SISTEMA' | 'ALERTA';
 
-export interface NotificacionVista {
-  idNotificacion: number;
-  tipoNotificacion: TipoNotificacion;
-  mensaje: string;
-  fecha: string;
-  estaLeida: boolean;
-}
+export type NotificacionVista = NotificacionDTO;
 
 export const ETIQUETAS_TIPO: Record<TipoNotificacion, string> = {
   RESERVA: 'Reserva',
@@ -35,6 +32,8 @@ export const ICONOS_TIPO: Record<TipoNotificacion, string> = {
   styleUrl: './bandeja-notificaciones.scss',
 })
 export class BandejaNotificaciones implements OnInit {
+  private notificacionService = inject(NotificacionService);
+
   readonly filtros: { valor: Filtro; etiqueta: string }[] = [
     { valor: 'TODAS', etiqueta: 'Todas' },
     { valor: 'NO_LEIDAS', etiqueta: 'Sin leer' },
@@ -44,38 +43,12 @@ export class BandejaNotificaciones implements OnInit {
 
   filtroActivo = signal<Filtro>('TODAS');
   cargando = signal(false);
-  error = signal<any | null>(null);
+  error = signal<{ mensaje: string; sesion: boolean } | null>(null);
 
-  lista = signal<NotificacionVista[]>([
-    {
-      idNotificacion: 305,
-      tipoNotificacion: 'RESERVA',
-      mensaje: 'Tu reserva #1042 en Villa Moderna Vista al Valle y Montaña fue confirmada.',
-      fecha: '2026-11-14T16:20:00',
-      estaLeida: false,
-    },
-    {
-      idNotificacion: 304,
-      tipoNotificacion: 'PAGO',
-      mensaje: 'Recibimos tu pago de $2.835.000 (modo de pruebas).',
-      fecha: '2026-11-14T16:19:00',
-      estaLeida: false,
-    },
-    {
-      idNotificacion: 290,
-      tipoNotificacion: 'ALERTA',
-      mensaje: 'Tu publicación "Apartamento con fiesta permitida 24/7" fue bloqueada.',
-      fecha: '2026-11-11T09:05:00',
-      estaLeida: true,
-    },
-    {
-      idNotificacion: 281,
-      tipoNotificacion: 'SISTEMA',
-      mensaje: 'Bienvenido a Aloggio. Ya puedes explorar alojamientos.',
-      fecha: '2026-11-01T10:00:00',
-      estaLeida: true,
-    },
-  ]);
+  lista = signal<NotificacionVista[]>([]);
+  /** Ids que se están marcando como leídas, para no repetir la petición. */
+  private marcando = new Set<number>();
+  errorAccion = signal('');
 
   ordenadas = computed(() =>
     [...this.lista()].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
@@ -89,25 +62,62 @@ export class BandejaNotificaciones implements OnInit {
 
   noLeidas = computed(() => this.lista().filter((n) => !n.estaLeida).length);
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.cargar();
+  }
 
   cargar(): void {
+    this.error.set(null);
     this.cargando.set(true);
-    setTimeout(() => {
-      this.cargando.set(false);
-    }, 400);
+    this.notificacionService.obtenerMisNotificaciones().subscribe({
+      next: (lista) => {
+        this.lista.set(lista.filter((n) => n.idNotificacion != null));
+        this.cargando.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cargando.set(false);
+        if (err.status === 401 || err.status === 403) {
+          this.error.set({ mensaje: 'Tu sesión expiró. Inicia sesión de nuevo.', sesion: true });
+        } else if (err.status === 0) {
+          this.error.set({ mensaje: 'No hay conexión con el servidor.', sesion: false });
+        } else {
+          this.error.set({ mensaje: 'No pudimos cargar tus notificaciones.', sesion: false });
+        }
+      },
+    });
   }
 
   seleccionarFiltro(filtro: Filtro): void {
     this.filtroActivo.set(filtro);
   }
 
+  /** Se marca en pantalla de inmediato y se revierte si el back falla. */
   marcarComoLeida(notificacion: NotificacionVista): void {
-    if (notificacion.estaLeida) return;
+    const id = notificacion.idNotificacion;
+    if (notificacion.estaLeida || this.marcando.has(id)) return;
+    this.marcando.add(id);
+    this.errorAccion.set('');
+    this.cambiarLeida(id, true);
+
+    this.notificacionService.marcarComoLeida(id).subscribe({
+      next: () => this.marcando.delete(id),
+      error: () => {
+        this.marcando.delete(id);
+        this.cambiarLeida(id, false);
+        this.errorAccion.set('No se pudo marcar la notificación como leída. Intenta de nuevo.');
+      },
+    });
+  }
+
+  marcarTodasComoLeidas(): void {
+    for (const n of this.lista()) {
+      if (!n.estaLeida) this.marcarComoLeida(n);
+    }
+  }
+
+  private cambiarLeida(id: number, leida: boolean): void {
     this.lista.update((lista) =>
-      lista.map((n) =>
-        n.idNotificacion === notificacion.idNotificacion ? { ...n, estaLeida: true } : n,
-      ),
+      lista.map((n) => (n.idNotificacion === id ? { ...n, estaLeida: leida } : n)),
     );
   }
 }

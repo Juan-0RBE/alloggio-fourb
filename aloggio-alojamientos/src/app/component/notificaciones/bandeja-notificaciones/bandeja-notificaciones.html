@@ -14,7 +14,22 @@
   <main class="cuerpo-notificaciones">
     <div class="encabezado-pagina">
       <h1 class="titulo-pagina">Notificaciones</h1>
-      <span class="resumen-no-leidas" *ngIf="noLeidas() > 0">{{ noLeidas() }} sin leer</span>
+
+      <div class="acciones-encabezado" *ngIf="!cargando() && noLeidas() > 0">
+        <span class="resumen-no-leidas">
+          <span class="punto-indicador" aria-hidden="true"></span>
+          {{ noLeidas() }} sin leer
+        </span>
+        <button type="button" class="boton-marcar-todas" (click)="marcarTodasComoLeidas()">
+          <i class="pi pi-check-circle"></i>
+          <span>Marcar todas como leídas</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="alerta-accion" *ngIf="errorAccion()" role="alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ errorAccion() }}</span>
     </div>
 
     <div class="estado-pagina" *ngIf="cargando()" role="status">
