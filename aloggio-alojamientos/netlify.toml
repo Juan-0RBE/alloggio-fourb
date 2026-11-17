@@ -1,0 +1,10 @@
+# Despliegue del front en Netlify conectado a GitHub (Base directory: aloggio-alojamientos)
+[build]
+  command = "npx ng build"
+  publish = "dist/aloggio-alojamientos/browser"
+
+# Angular maneja las rutas en el navegador: cualquier ruta devuelve index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

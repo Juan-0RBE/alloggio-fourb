@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ActualizarPerfilDTO, PerfilDTO } from '../model/usuario.model';
+import { API_URL } from './auth.service';
 
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
-  private readonly api = 'http://localhost:8081/usuario'; // o tu environment.apiUrl
+  private readonly api = `${API_URL}/usuario`;
 
   constructor(private http: HttpClient) {}
 

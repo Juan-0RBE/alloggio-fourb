@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { AuthResponse, UsuarioDTO } from '../model/usuario.model';
+import { environment } from '../../environments/environment';
 
-export const API_URL = 'http://localhost:8081';
+export const API_URL = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL } from './auth.service';
 
 export interface CodigoRestablecimientoDTO {
   correoUsuario: string;
@@ -11,7 +12,7 @@ export interface CodigoRestablecimientoDTO {
 @Injectable({ providedIn: 'root' })
 export class RestablecimientoService {
   private http = inject(HttpClient);
-  private readonly api = 'http://localhost:8081/restablecimiento'; // o tu environment.apiUrl
+  private readonly api = `${API_URL}/restablecimiento`;
 
   solicitarCodigo(correoUsuario: string): Observable<string> {
     return this.http.post(

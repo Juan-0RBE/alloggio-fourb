@@ -15,7 +15,12 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    /**
+     * Dirección que aparece como remitente. Por defecto es el usuario SMTP (Gmail en
+     * local); con proveedores como Brevo el usuario SMTP es otro, así que se define
+     * aparte con la variable MAIL_FROM.
+     */
+    @Value("${app.correo.remitente:${spring.mail.username}}")
     private String from;
 
     /**
