@@ -212,8 +212,24 @@ $peligro: #e74c3c;
         }
       }
 
+      textarea.invalido {
+        border-color: $peligro;
+      }
+
+      .pie-motivo {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .error-motivo {
+        font-size: 0.78rem;
+        color: $peligro;
+      }
+
       .contador-motivo {
-        align-self: flex-end;
+        margin-left: auto;
         font-size: 0.75rem;
         color: $texto-secundario;
         font-variant-numeric: tabular-nums;

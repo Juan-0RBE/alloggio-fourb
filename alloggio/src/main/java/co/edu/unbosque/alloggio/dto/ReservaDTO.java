@@ -32,6 +32,20 @@ public class ReservaDTO {
 
     private String motivoRechazo;
 
+    // Datos de la publicación para mostrar el historial sin consultas adicionales
+    private String tituloPublicacion;
+    private String ciudadPublicacion;
+    private String urlImagenPrincipal;
+
+    // Política de cancelación vigente de la publicación (para estimar la devolución)
+    private String nombrePolitica;
+    private Double porcentajeDevolucion;
+    private Integer plazoCancelacion;
+    private String condicionesPolitica;
+
+    /** true si la reserva ya tiene una reseña (visible u oculta). */
+    private Boolean tieneResena;
+
     public ReservaDTO() {
     }
 
@@ -156,10 +170,74 @@ public class ReservaDTO {
         this.motivoRechazo = motivoRechazo;
     }
 
+    public String getTituloPublicacion() {
+        return tituloPublicacion;
+    }
+
+    public void setTituloPublicacion(String tituloPublicacion) {
+        this.tituloPublicacion = tituloPublicacion;
+    }
+
+    public String getCiudadPublicacion() {
+        return ciudadPublicacion;
+    }
+
+    public void setCiudadPublicacion(String ciudadPublicacion) {
+        this.ciudadPublicacion = ciudadPublicacion;
+    }
+
+    public String getUrlImagenPrincipal() {
+        return urlImagenPrincipal;
+    }
+
+    public void setUrlImagenPrincipal(String urlImagenPrincipal) {
+        this.urlImagenPrincipal = urlImagenPrincipal;
+    }
+
     /** No incluye el método de pago ni la clave de idempotencia. */
     @Override
     public String toString() {
         return "ReservaDTO [idReserva=" + idReserva + ", idCotizacion=" + idCotizacion + ", idPublicacion="
                 + idPublicacion + ", total=" + total + ", estado=" + estado + "]";
+    }
+
+    public String getNombrePolitica() {
+        return nombrePolitica;
+    }
+
+    public void setNombrePolitica(String nombrePolitica) {
+        this.nombrePolitica = nombrePolitica;
+    }
+
+    public Double getPorcentajeDevolucion() {
+        return porcentajeDevolucion;
+    }
+
+    public void setPorcentajeDevolucion(Double porcentajeDevolucion) {
+        this.porcentajeDevolucion = porcentajeDevolucion;
+    }
+
+    public Integer getPlazoCancelacion() {
+        return plazoCancelacion;
+    }
+
+    public void setPlazoCancelacion(Integer plazoCancelacion) {
+        this.plazoCancelacion = plazoCancelacion;
+    }
+
+    public String getCondicionesPolitica() {
+        return condicionesPolitica;
+    }
+
+    public void setCondicionesPolitica(String condicionesPolitica) {
+        this.condicionesPolitica = condicionesPolitica;
+    }
+
+    public Boolean getTieneResena() {
+        return tieneResena;
+    }
+
+    public void setTieneResena(Boolean tieneResena) {
+        this.tieneResena = tieneResena;
     }
 }

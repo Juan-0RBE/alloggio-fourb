@@ -194,6 +194,11 @@ public class CancelacionService {
      */
     private BigDecimal calcularDevolucion(BigDecimal total, PoliticaCancelacion politica, LocalDate hoy,
             LocalDate llegada) {
+        // Sin política (o incompleta) no corresponde devolución
+        if (politica == null || politica.getPlazoCancelacion() == null
+                || politica.getPorcentajeDevolucion() == null) {
+            return BigDecimal.ZERO.setScale(2);
+        }
         long diasAnticipacion = ChronoUnit.DAYS.between(hoy, llegada);
         if (diasAnticipacion < politica.getPlazoCancelacion()) {
             return BigDecimal.ZERO.setScale(2);

@@ -27,8 +27,10 @@ import co.edu.unbosque.alloggio.entity.Reserva;
 import co.edu.unbosque.alloggio.entity.Reserva.EstadoReserva;
 import co.edu.unbosque.alloggio.entity.Usuario;
 import co.edu.unbosque.alloggio.repository.CotizacionRepository;
+import co.edu.unbosque.alloggio.repository.ImagenAlojamientoRepository;
 import co.edu.unbosque.alloggio.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.alloggio.repository.PublicacionRepository;
+import co.edu.unbosque.alloggio.repository.ResenaRepository;
 import co.edu.unbosque.alloggio.repository.ReservaRepository;
 import co.edu.unbosque.alloggio.repository.UsuarioRepository;
 import co.edu.unbosque.alloggio.util.exception.PasarelaException;
@@ -52,6 +54,12 @@ public class ReservaService {
 
     @Autowired
     private PublicacionRepository publicacionRepo;
+
+    @Autowired
+    private ImagenAlojamientoRepository imagenRepo;
+
+    @Autowired
+    private ResenaRepository resenaRepo;
 
     @Autowired
     private PeriodoDisponibilidadRepository periodoRepo;
@@ -240,6 +248,8 @@ public class ReservaService {
         dto.setTotal(reserva.getTotal());
         dto.setEstado(reserva.getEstado().name());
         dto.setFechaCreacion(reserva.getFechaCreacion());
+        completarDatosPublicacion(dto, reserva.getPublicacion());
+        dto.setTieneResena(resenaRepo != null && resenaRepo.existsByReservaIdReserva(reserva.getIdReserva()));
         return dto;
     }
 
@@ -308,6 +318,30 @@ public class ReservaService {
         dto.setTotal(reserva.getTotal());
         dto.setEstado(reserva.getEstado().name());
         dto.setFechaCreacion(reserva.getFechaCreacion());
+        completarDatosPublicacion(dto, reserva.getPublicacion());
+        dto.setTieneResena(resenaRepo != null && resenaRepo.existsByReservaIdReserva(reserva.getIdReserva()));
         return dto;
+    }
+
+    /**
+     * Agrega el título, la ciudad y la imagen principal de la publicación al DTO
+     * para que el historial se muestre sin consultas adicionales desde el front.
+     */
+    private void completarDatosPublicacion(ReservaDTO dto, Publicacion pub) {
+        if (pub == null) {
+            return;
+        }
+        dto.setTituloPublicacion(pub.getTitulo());
+        dto.setCiudadPublicacion(pub.getCiudad());
+        if (pub.getPoliticaCancelacion() != null) {
+            dto.setNombrePolitica(pub.getPoliticaCancelacion().getNombre());
+            dto.setPorcentajeDevolucion(pub.getPoliticaCancelacion().getPorcentajeDevolucion());
+            dto.setPlazoCancelacion(pub.getPoliticaCancelacion().getPlazoCancelacion());
+            dto.setCondicionesPolitica(pub.getPoliticaCancelacion().getCondiciones());
+        }
+        if (imagenRepo != null) {
+            imagenRepo.findFirstByPublicacionIdPublicacionOrderByOrdenAsc(pub.getIdPublicacion())
+                    .ifPresent(img -> dto.setUrlImagenPrincipal(img.getUrlImagen()));
+        }
     }
 }

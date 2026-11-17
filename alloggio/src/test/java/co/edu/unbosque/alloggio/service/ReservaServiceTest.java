@@ -31,7 +31,9 @@ import co.edu.unbosque.alloggio.entity.Reserva;
 import co.edu.unbosque.alloggio.entity.Usuario;
 import co.edu.unbosque.alloggio.repository.CotizacionRepository;
 import co.edu.unbosque.alloggio.repository.PeriodoDisponibilidadRepository;
+import co.edu.unbosque.alloggio.repository.ImagenAlojamientoRepository;
 import co.edu.unbosque.alloggio.repository.PublicacionRepository;
+import co.edu.unbosque.alloggio.repository.ResenaRepository;
 import co.edu.unbosque.alloggio.repository.ReservaRepository;
 import co.edu.unbosque.alloggio.repository.UsuarioRepository;
 
@@ -47,6 +49,12 @@ class ReservaServiceTest {
 
     @Mock
     private PublicacionRepository publicacionRepo;
+
+    @Mock
+    private ImagenAlojamientoRepository imagenRepo;
+
+    @Mock
+    private ResenaRepository resenaRepo;
 
     @Mock
     private PeriodoDisponibilidadRepository periodoRepo;
