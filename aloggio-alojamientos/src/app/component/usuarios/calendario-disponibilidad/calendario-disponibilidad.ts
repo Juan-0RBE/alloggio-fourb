@@ -1,9 +1,13 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 
-type TipoPeriodo = 'BLOQUEADO' | 'RESERVADO';
+import { DisponibilidadService } from '../../../service/disponibilidad.service';
+import { PublicacionService } from '../../../service/publicacion.service';
+import { TipoPeriodo } from '../../../model/disponibilidad.model';
+
 type EstadoDia = 'LIBRE' | 'BLOQUEADO' | 'RESERVADO' | 'PASADO';
 
 export interface PeriodoVista {
@@ -20,6 +24,11 @@ interface DiaCalendario {
   estado: EstadoDia;
 }
 
+interface ErrorPagina {
+  mensaje: string;
+  sesion: boolean;
+}
+
 export const ETIQUETAS_PERIODO: Record<TipoPeriodo, string> = {
   BLOQUEADO: 'Bloqueado',
   RESERVADO: 'Reservado',
@@ -33,15 +42,20 @@ export const ETIQUETAS_PERIODO: Record<TipoPeriodo, string> = {
   styleUrl: './calendario-disponibilidad.scss',
 })
 export class CalendarioDisponibilidad implements OnInit {
+  private ruta = inject(ActivatedRoute);
+  private disponibilidadService = inject(DisponibilidadService);
+  private publicacionService = inject(PublicacionService);
+
   readonly etiquetasPeriodo = ETIQUETAS_PERIODO;
   readonly diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   readonly hoy = this.aIso(new Date());
 
   idPublicacion = 0;
-  titulo = 'Villa Moderna Vista al Valle y Montaña';
+  titulo = signal('');
 
   cargando = signal(false);
-  error = signal<any | null>(null);
+  guardando = signal(false);
+  error = signal<ErrorPagina | null>(null);
   mensajeConfirmacion = signal('');
   errorFormulario = signal('');
 
@@ -50,29 +64,7 @@ export class CalendarioDisponibilidad implements OnInit {
 
   mesVisible = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
-  periodos = signal<PeriodoVista[]>([
-    {
-      idPeriodoDisponibilidad: 12,
-      fechaInicio: '2026-11-25',
-      fechaFin: '2026-11-28',
-      tipo: 'BLOQUEADO',
-      idReserva: null,
-    },
-    {
-      idPeriodoDisponibilidad: 13,
-      fechaInicio: '2026-12-10',
-      fechaFin: '2026-12-15',
-      tipo: 'RESERVADO',
-      idReserva: 1042,
-    },
-    {
-      idPeriodoDisponibilidad: 14,
-      fechaInicio: '2027-01-05',
-      fechaFin: '2027-01-08',
-      tipo: 'BLOQUEADO',
-      idReserva: null,
-    },
-  ]);
+  periodos = signal<PeriodoVista[]>([]);
 
   periodosOrdenados = computed(() =>
     [...this.periodos()].sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio)),
@@ -90,8 +82,6 @@ export class CalendarioDisponibilidad implements OnInit {
     return celdas;
   });
 
-  constructor(private ruta: ActivatedRoute) {}
-
   ngOnInit(): void {
     const id = Number(this.ruta.snapshot.paramMap.get('id'));
     if (!id) {
@@ -99,14 +89,43 @@ export class CalendarioDisponibilidad implements OnInit {
       return;
     }
     this.idPublicacion = id;
+    this.cargarTitulo();
+    this.cargar();
   }
 
+  /** Trae del back los periodos bloqueados y reservados de la publicación. */
   cargar(): void {
     this.error.set(null);
     this.cargando.set(true);
-    setTimeout(() => {
-      this.cargando.set(false);
-    }, 400);
+    this.disponibilidadService.consultarCalendario(this.idPublicacion).subscribe({
+      next: (lista) => {
+        this.periodos.set(
+          lista.map((p) => ({
+            idPeriodoDisponibilidad: p.idPeriodoDisponibilidad!,
+            fechaInicio: p.fechaInicio,
+            fechaFin: p.fechaFin,
+            tipo: p.tipo ?? 'BLOQUEADO',
+            idReserva: p.idReserva ?? null,
+          })),
+        );
+        this.cargando.set(false);
+      },
+      error: (err) => {
+        this.cargando.set(false);
+        this.error.set(this.errorDeCarga(err));
+      },
+    });
+  }
+
+  /** El título no viene en el calendario, se busca entre las publicaciones del anfitrión. */
+  private cargarTitulo(): void {
+    this.publicacionService.obtenerMisPublicaciones().subscribe({
+      next: (lista) => {
+        const pub = lista.find((p) => p.idPublicacion === this.idPublicacion);
+        this.titulo.set(pub?.titulo ?? '');
+      },
+      error: () => this.titulo.set(''),
+    });
   }
 
   mesAnterior(): void {
@@ -120,33 +139,53 @@ export class CalendarioDisponibilidad implements OnInit {
   }
 
   bloquearRango(): void {
+    if (this.guardando()) return;
     this.mensajeConfirmacion.set('');
+
+    // Validación rápida en el front; el back vuelve a validar
     const mensaje = this.validarRango();
     this.errorFormulario.set(mensaje);
     if (mensaje) return;
 
-    const siguienteId = Math.max(0, ...this.periodos().map((p) => p.idPeriodoDisponibilidad)) + 1;
-    this.periodos.update((lista) => [
-      ...lista,
-      {
-        idPeriodoDisponibilidad: siguienteId,
-        fechaInicio: this.fechaInicio,
-        fechaFin: this.fechaFin,
-        tipo: 'BLOQUEADO',
-        idReserva: null,
-      },
-    ]);
-    this.fechaInicio = '';
-    this.fechaFin = '';
-    this.mensajeConfirmacion.set('Rango bloqueado. Ya no aparece disponible para los huéspedes.');
+    this.guardando.set(true);
+    this.disponibilidadService
+      .bloquearRango(this.idPublicacion, this.fechaInicio, this.fechaFin)
+      .subscribe({
+        next: () => {
+          this.guardando.set(false);
+          this.fechaInicio = '';
+          this.fechaFin = '';
+          this.mensajeConfirmacion.set(
+            'Rango bloqueado. Ya no aparece disponible para los huéspedes.',
+          );
+          this.cargar();
+        },
+        error: (err) => {
+          this.guardando.set(false);
+          this.errorFormulario.set(this.textoError(err, 'No se pudo bloquear el rango.'));
+        },
+      });
   }
 
   desbloquear(periodo: PeriodoVista): void {
-    if (periodo.tipo !== 'BLOQUEADO') return;
-    this.periodos.update((lista) =>
-      lista.filter((p) => p.idPeriodoDisponibilidad !== periodo.idPeriodoDisponibilidad),
-    );
-    this.mensajeConfirmacion.set('Rango desbloqueado. Las fechas vuelven a estar disponibles.');
+    if (periodo.tipo !== 'BLOQUEADO' || this.guardando()) return;
+    this.mensajeConfirmacion.set('');
+    this.errorFormulario.set('');
+
+    this.guardando.set(true);
+    this.disponibilidadService.desbloquearRango(periodo.idPeriodoDisponibilidad).subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.periodos.update((lista) =>
+          lista.filter((p) => p.idPeriodoDisponibilidad !== periodo.idPeriodoDisponibilidad),
+        );
+        this.mensajeConfirmacion.set('Rango desbloqueado. Las fechas vuelven a estar disponibles.');
+      },
+      error: (err) => {
+        this.guardando.set(false);
+        this.errorFormulario.set(this.textoError(err, 'No se pudo desbloquear el rango.'));
+      },
+    });
   }
 
   noches(periodo: PeriodoVista): number {
@@ -183,5 +222,26 @@ export class CalendarioDisponibilidad implements OnInit {
   private aIso(fecha: Date): string {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}`;
+  }
+
+  // Manejo de errores
+
+  private errorDeCarga(err: unknown): ErrorPagina {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 401) return { mensaje: 'Tu sesión expiró. Inicia sesión de nuevo.', sesion: true };
+      if (err.status === 403)
+        return { mensaje: 'Este alojamiento no pertenece a tu cuenta.', sesion: false };
+      if (err.status === 404) return { mensaje: 'No encontramos este alojamiento.', sesion: false };
+    }
+    return { mensaje: this.textoError(err, 'No se pudo cargar el calendario.'), sesion: false };
+  }
+
+  private textoError(err: unknown, porDefecto: string): string {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 0) return 'No hay conexión con el servidor.';
+      if (typeof err.error === 'string' && err.error.trim()) return err.error;
+      if (err.error?.message) return err.error.message;
+    }
+    return porDefecto;
   }
 }

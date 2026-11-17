@@ -14,7 +14,7 @@
   <main class="cuerpo-calendario">
     <div class="encabezado-pagina">
       <h1 class="titulo-pagina">Calendario de disponibilidad</h1>
-      <p class="subtitulo-pagina">{{ titulo }}</p>
+      <p class="subtitulo-pagina" *ngIf="titulo()">{{ titulo() }}</p>
     </div>
 
     <div class="estado-pagina" *ngIf="cargando()" role="status">
@@ -104,9 +104,9 @@
             <span>{{ errorFormulario() }}</span>
           </div>
 
-          <button type="button" class="boton-dorado" (click)="bloquearRango()">
+          <button type="button" class="boton-dorado" [disabled]="guardando()" (click)="bloquearRango()">
             <i class="pi pi-lock"></i>
-            Bloquear fechas
+            {{ guardando() ? 'Guardando...' : 'Bloquear fechas' }}
           </button>
         </section>
       </div>
@@ -138,6 +138,7 @@
               *ngIf="periodo.tipo === 'BLOQUEADO'"
               type="button"
               class="boton-secundario"
+              [disabled]="guardando()"
               (click)="desbloquear(periodo)"
             >
               <i class="pi pi-lock-open"></i>
