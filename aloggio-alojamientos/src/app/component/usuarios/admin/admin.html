@@ -469,6 +469,7 @@
             <input
               type="text"
               placeholder="Buscar por nombre, usuario o ID..."
+              maxlength="60"
               [ngModel]="busquedaUsuario()"
               (ngModelChange)="busquedaUsuario.set($event)"
             />
@@ -593,6 +594,8 @@
               id="filtroCorreo"
               type="text"
               placeholder="Correo del usuario"
+              maxlength="100"
+              autocomplete="off"
               [(ngModel)]="filtroCorreo"
             />
           </div>

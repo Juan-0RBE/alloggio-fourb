@@ -24,12 +24,12 @@
       <div class="separador-vertical"></div>
       <div class="campo-busqueda">
         <span class="etiqueta-busqueda">Llegada</span>
-        <input type="date" [min]="hoy" [(ngModel)]="fechaLlegada" />
+        <input type="date" [min]="hoy" [max]="fechaMaxima" [(ngModel)]="fechaLlegada" />
       </div>
       <div class="separador-vertical"></div>
       <div class="campo-busqueda">
         <span class="etiqueta-busqueda">Salida</span>
-        <input type="date" [min]="fechaLlegada || hoy" [(ngModel)]="fechaSalida" />
+        <input type="date" [min]="fechaLlegada || hoy" [max]="fechaMaxima" [(ngModel)]="fechaSalida" />
       </div>
       <div class="separador-vertical"></div>
       <div class="campo-busqueda campo-huespedes">
@@ -166,8 +166,8 @@
             <span>$</span>
             <input
               type="number"
-              min="0"
-              step="10000"
+              appFiltroEntrada="enteros"
+              [maxDigitos]="9"
               placeholder="Mín."
               aria-label="Precio mínimo por noche"
               [(ngModel)]="precioMin"
@@ -179,8 +179,8 @@
             <span>$</span>
             <input
               type="number"
-              [min]="precioMin ?? 0"
-              step="10000"
+              appFiltroEntrada="enteros"
+              [maxDigitos]="9"
               placeholder="Máx."
               aria-label="Precio máximo por noche"
               [(ngModel)]="precioMax"

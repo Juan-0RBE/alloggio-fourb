@@ -137,17 +137,19 @@
       <div class="formulario-modal">
         <div class="campo">
           <label for="titulo">Título de la publicación *</label>
-          <input id="titulo" type="text" [(ngModel)]="formTitulo" placeholder="Ej: Loft moderno con vista panorámica" />
+          <input id="titulo" type="text" [(ngModel)]="formTitulo" appFiltroEntrada="texto" maxlength="100"
+            placeholder="Ej: Loft moderno con vista panorámica" />
         </div>
 
         <div class="fila-doble">
           <div class="campo">
             <label for="ciudad">Ciudad *</label>
-            <input id="ciudad" type="text" [(ngModel)]="formCiudad" placeholder="Ej: Medellín" />
+            <input id="ciudad" type="text" [(ngModel)]="formCiudad" appFiltroEntrada="ciudad" maxlength="50"
+              placeholder="Ej: Medellín" />
           </div>
           <div class="campo">
             <label for="ubicacion">Ubicación *</label>
-            <input id="ubicacion" type="text" [(ngModel)]="formUbicacion"
+            <input id="ubicacion" type="text" [(ngModel)]="formUbicacion" appFiltroEntrada="texto" maxlength="100"
               placeholder="Ej: Barrio El Poblado, cerca al parque" />
           </div>
         </div>
@@ -163,18 +165,21 @@
           </div>
           <div class="campo">
             <label for="capacidad">Capacidad (huéspedes) *</label>
-            <input id="capacidad" type="number" [(ngModel)]="formCapacidad" min="1" max="20" />
+            <input id="capacidad" type="number" [(ngModel)]="formCapacidad" appFiltroEntrada="enteros" [maxDigitos]="2"
+              placeholder="1 a 20" />
           </div>
         </div>
 
         <div class="fila-doble">
           <div class="campo">
             <label for="precio">Precio por noche (COP) *</label>
-            <input id="precio" type="number" [(ngModel)]="formPrecioNoche" min="1" step="10000" />
+            <input id="precio" type="number" [(ngModel)]="formPrecioNoche" appFiltroEntrada="enteros" [maxDigitos]="9"
+              placeholder="Ej: 250000" />
           </div>
           <div class="campo">
             <label for="limpieza">Tarifa de limpieza (COP) *</label>
-            <input id="limpieza" type="number" [(ngModel)]="formTarifaLimpieza" min="0" step="5000" />
+            <input id="limpieza" type="number" [(ngModel)]="formTarifaLimpieza" appFiltroEntrada="enteros" [maxDigitos]="9"
+              placeholder="0 si no aplica" />
           </div>
         </div>
 
@@ -199,7 +204,7 @@
             <datalist id="catalogo-servicios">
               <option *ngFor="let servicio of serviciosCatalogo" [value]="servicio"></option>
             </datalist>
-            <input type="number" [(ngModel)]="nuevoServicioCosto" placeholder="Costo COP" min="0" step="5000"
+            <input type="number" [(ngModel)]="nuevoServicioCosto" placeholder="Costo COP" appFiltroEntrada="enteros" [maxDigitos]="9"
               style="max-width: 130px" name="costoServicio" />
             <button type="button" class="boton-secundario" (click)="agregarServicioForm()">
               Añadir
@@ -246,11 +251,14 @@
           <label>Reglas del alojamiento ({{ formReglas.length }})</label>
           <div class="grupo-agregar-servicio">
             <input type="text" [(ngModel)]="nuevaReglaTexto" placeholder="Ej: No se permiten mascotas" name="textoRegla"
+              appFiltroEntrada="texto" maxlength="255"
               (keydown.enter)="agregarReglaForm()" />
             <button type="button" class="boton-secundario" (click)="agregarReglaForm()">
               Añadir
             </button>
           </div>
+
+          <small class="error-servicio" *ngIf="errorRegla()" role="alert">{{ errorRegla() }}</small>
 
           <div class="lista-servicios-form" *ngIf="formReglas.length > 0">
             <div class="item-servicio-form" *ngFor="let regla of formReglas; let i = index">
@@ -266,11 +274,14 @@
           <label>Galería de Imágenes ({{ formImagenes.length }})</label>
           <span class="ayuda-campo">Necesitas al menos una imagen para activar la publicación.</span>
           <div class="grupo-agregar-imagen">
-            <input type="text" [(ngModel)]="nuevaImagenUrl" placeholder="Pega la URL de la imagen y presiona Agregar" />
+            <input type="url" [(ngModel)]="nuevaImagenUrl" maxlength="500" autocomplete="off"
+              placeholder="Pega la URL de la imagen (https://...) y presiona Agregar" />
             <button type="button" class="boton-secundario" (click)="agregarImagenForm()">
               Agregar
             </button>
           </div>
+
+          <small class="error-servicio" *ngIf="errorImagen()" role="alert">{{ errorImagen() }}</small>
 
           <div class="lista-mini-imagenes" *ngIf="formImagenes.length > 0">
             <div class="item-mini-imagen" *ngFor="let img of formImagenes; let i = index">
@@ -284,7 +295,7 @@
 
         <div class="campo">
           <label for="descripcion">Descripción del espacio *</label>
-          <textarea id="descripcion" rows="3" [(ngModel)]="formDescripcion"
+          <textarea id="descripcion" rows="3" [(ngModel)]="formDescripcion" maxlength="500"
             placeholder="Describe las comodidades, vista y características principales..."></textarea>
         </div>
 

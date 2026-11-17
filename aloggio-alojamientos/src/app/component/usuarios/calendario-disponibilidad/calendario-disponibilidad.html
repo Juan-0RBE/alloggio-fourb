@@ -91,12 +91,12 @@
 
           <div class="campo">
             <label for="fecha-inicio">Desde</label>
-            <input id="fecha-inicio" type="date" [min]="hoy" [(ngModel)]="fechaInicio" />
+            <input id="fecha-inicio" type="date" [min]="hoy" [max]="fechaMaxima" [(ngModel)]="fechaInicio" />
           </div>
 
           <div class="campo">
             <label for="fecha-fin">Hasta (sin incluir)</label>
-            <input id="fecha-fin" type="date" [min]="fechaInicio || hoy" [(ngModel)]="fechaFin" />
+            <input id="fecha-fin" type="date" [min]="fechaInicio || hoy" [max]="fechaMaxima" [(ngModel)]="fechaFin" />
           </div>
 
           <div class="alerta-error" *ngIf="errorFormulario()" role="alert">

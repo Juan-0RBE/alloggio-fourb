@@ -215,6 +215,7 @@
                   id="fecha-llegada"
                   type="date"
                   [min]="fechaMinimaHoy"
+                  [max]="fechaMaxima"
                   [(ngModel)]="fechaLlegada"
                 />
               </div>
@@ -224,6 +225,7 @@
                   id="fecha-salida"
                   type="date"
                   [min]="fechaMinimaSalida"
+                  [max]="fechaMaxima"
                   [(ngModel)]="fechaSalida"
                 />
               </div>
@@ -233,8 +235,8 @@
               <input
                 id="cantidad-huespedes"
                 type="number"
-                min="1"
-                [max]="alojamiento.capacidad"
+                appFiltroEntrada="enteros"
+                [maxDigitos]="2"
                 [(ngModel)]="cantidadHuespedes"
               />
             </div>
@@ -258,6 +260,11 @@
             <span
               >El alojamiento no está disponible en las fechas elegidas. Revisa el calendario.</span
             >
+          </div>
+
+          <div class="alerta-disponibilidad" *ngIf="fechasFueraDeRango" role="alert">
+            <i class="pi pi-exclamation-circle"></i>
+            <span>La llegada debe ser desde hoy y las fechas, como máximo dentro de dos años.</span>
           </div>
 
           <div class="alerta-disponibilidad" *ngIf="huespedesInvalidos" role="alert">

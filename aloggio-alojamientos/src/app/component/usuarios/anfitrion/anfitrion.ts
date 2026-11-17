@@ -7,6 +7,13 @@ import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { PublicacionService } from '../../../service/publicacion.service';
 import { SERVICIOS_CATALOGO, claveTexto, normalizarServicio } from '../../../model/servicios-catalogo';
+import { FiltroEntrada } from '../../../directive/filtro-entrada.directive';
+
+/** Límites de las columnas de la base de datos y reglas del negocio. */
+const CAPACIDAD_MAX = 20;
+const PRECIO_MAX = 100_000_000;
+const LARGO_REGLA_MAX = 255;
+const LARGO_URL_MAX = 500;
 import {
   EstadoPublicacion,
   PoliticaCancelacionDTO,
@@ -73,7 +80,7 @@ export const TIPOS_ALOJAMIENTO: { valor: TipoAlojamiento; etiqueta: string }[] =
 @Component({
   selector: 'app-gestion-anfitrion',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FiltroEntrada],
   templateUrl: './anfitrion.html',
   styleUrl: './anfitrion.scss',
 })
@@ -84,6 +91,8 @@ export class Anfitrion implements OnInit {
   readonly tiposAlojamiento = TIPOS_ALOJAMIENTO;
   readonly serviciosCatalogo = SERVICIOS_CATALOGO;
   errorServicio = signal('');
+  errorRegla = signal('');
+  errorImagen = signal('');
 
   mostrandoModal = signal(false);
   editandoId = signal<number | null>(null);
@@ -209,6 +218,8 @@ export class Anfitrion implements OnInit {
   abrirModalCrear(): void {
     this.editandoId.set(null);
     this.errorServicio.set('');
+    this.errorRegla.set('');
+    this.errorImagen.set('');
     this.errorFormulario.set('');
     this.formTitulo = '';
     this.formDescripcion = '';
@@ -238,6 +249,8 @@ export class Anfitrion implements OnInit {
 
     this.editandoId.set(aloj.id);
     this.errorServicio.set('');
+    this.errorRegla.set('');
+    this.errorImagen.set('');
     this.errorFormulario.set('');
     this.formTitulo = aloj.titulo;
     this.formDescripcion = aloj.descripcion;
@@ -270,9 +283,34 @@ export class Anfitrion implements OnInit {
   }
 
   agregarImagenForm(): void {
-    if (this.nuevaImagenUrl.trim()) {
-      this.formImagenes.push(this.nuevaImagenUrl.trim());
-      this.nuevaImagenUrl = '';
+    const url = this.nuevaImagenUrl.trim();
+    if (!url) {
+      this.errorImagen.set('Pega la URL de la imagen.');
+      return;
+    }
+    if (url.length > LARGO_URL_MAX) {
+      this.errorImagen.set(`La URL puede tener máximo ${LARGO_URL_MAX} caracteres.`);
+      return;
+    }
+    if (!this.esUrlValida(url)) {
+      this.errorImagen.set('La URL debe ser una dirección web válida que empiece por http:// o https://.');
+      return;
+    }
+    if (this.formImagenes.includes(url)) {
+      this.errorImagen.set('Esa imagen ya está en la galería.');
+      return;
+    }
+    this.errorImagen.set('');
+    this.formImagenes.push(url);
+    this.nuevaImagenUrl = '';
+  }
+
+  private esUrlValida(texto: string): boolean {
+    try {
+      const url = new URL(texto);
+      return (url.protocol === 'http:' || url.protocol === 'https:') && !!url.hostname.includes('.');
+    } catch {
+      return false;
     }
   }
 
@@ -292,8 +330,8 @@ export class Anfitrion implements OnInit {
       this.errorServicio.set('El nombre del servicio puede tener máximo 50 caracteres.');
       return;
     }
-    if (!Number.isFinite(costo) || costo < 0) {
-      this.errorServicio.set('El costo debe ser un valor de cero o mayor.');
+    if (!Number.isInteger(costo) || costo < 0 || costo > PRECIO_MAX) {
+      this.errorServicio.set('El costo debe ser un valor entero entre 0 y 100.000.000.');
       return;
     }
     if (this.formServicios.some((s) => claveTexto(s.nombre) === claveTexto(nombre))) {
@@ -311,10 +349,22 @@ export class Anfitrion implements OnInit {
   }
 
   agregarReglaForm(): void {
-    if (this.nuevaReglaTexto.trim()) {
-      this.formReglas.push(this.nuevaReglaTexto.trim());
-      this.nuevaReglaTexto = '';
+    const texto = this.nuevaReglaTexto.trim().replace(/\s+/g, ' ');
+    if (texto.length < 3) {
+      this.errorRegla.set('Escribe la regla (mínimo 3 caracteres).');
+      return;
     }
+    if (texto.length > LARGO_REGLA_MAX) {
+      this.errorRegla.set(`La regla puede tener máximo ${LARGO_REGLA_MAX} caracteres.`);
+      return;
+    }
+    if (this.formReglas.some((r) => r.toLowerCase() === texto.toLowerCase())) {
+      this.errorRegla.set('Esa regla ya está en la lista.');
+      return;
+    }
+    this.errorRegla.set('');
+    this.formReglas.push(texto);
+    this.nuevaReglaTexto = '';
   }
 
   eliminarReglaForm(index: number): void {
@@ -328,10 +378,26 @@ export class Anfitrion implements OnInit {
     if (!this.formCiudad.trim()) invalidos.push('ciudad');
     if (!this.formUbicacion.trim()) invalidos.push('ubicación');
     if (!this.formTipo) invalidos.push('tipo de alojamiento');
-    if (!(Number(this.formCapacidad) > 0)) invalidos.push('capacidad (mayor que cero)');
-    if (!(Number(this.formPrecioNoche) > 0)) invalidos.push('precio por noche (positivo)');
-    if (!(Number(this.formTarifaLimpieza) >= 0))
-      invalidos.push('tarifa de limpieza (cero o mayor)');
+    const capacidad = Number(this.formCapacidad);
+    const precio = Number(this.formPrecioNoche);
+    const limpieza = Number(this.formTarifaLimpieza);
+    if (!Number.isInteger(capacidad) || capacidad < 1 || capacidad > CAPACIDAD_MAX)
+      invalidos.push(`capacidad (entero de 1 a ${CAPACIDAD_MAX})`);
+    if (!Number.isInteger(precio) || precio < 1 || precio > PRECIO_MAX)
+      invalidos.push('precio por noche (entero positivo)');
+    if (
+      this.formTarifaLimpieza === null ||
+      (this.formTarifaLimpieza as unknown) === '' ||
+      !Number.isInteger(limpieza) ||
+      limpieza < 0 ||
+      limpieza > PRECIO_MAX
+    )
+      invalidos.push('tarifa de limpieza (entero de cero o mayor)');
+    if (this.formTitulo.trim().length > 100) invalidos.push('título (máximo 100 caracteres)');
+    if (this.formCiudad.trim().length > 50) invalidos.push('ciudad (máximo 50 caracteres)');
+    if (/[0-9]/.test(this.formCiudad)) invalidos.push('ciudad (solo letras)');
+    if (this.formUbicacion.trim().length > 100) invalidos.push('ubicación (máximo 100 caracteres)');
+    if (this.formDescripcion.trim().length > 500) invalidos.push('descripción (máximo 500 caracteres)');
     if (this.formIdPolitica === null) invalidos.push('política de cancelación');
     return invalidos;
   }
