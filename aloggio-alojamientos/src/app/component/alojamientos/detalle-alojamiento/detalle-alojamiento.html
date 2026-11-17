@@ -6,7 +6,7 @@
     </div>
 
     <div class="acciones-usuario">
-      <button class="boton-anfitrion" type="button">Modo Anfitrión</button>
+      <button class="boton-anfitrion" type="button" routerLink="/anfitrion">Modo Anfitrión</button>
       <div class="menu-perfil-contenedor">
         <i class="pi pi-bars icono-menu"></i>
         <div class="avatar-usuario">
@@ -16,7 +16,21 @@
     </div>
   </header>
 
-  <main class="cuerpo-detalle" *ngIf="alojamiento">
+  <div class="estado-detalle" *ngIf="cargando" role="status">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Cargando alojamiento...</span>
+  </div>
+
+  <div class="estado-detalle error" *ngIf="!cargando && error" role="alert">
+    <i class="pi pi-exclamation-circle"></i>
+    <span>{{ error }}</span>
+    <div class="acciones-estado">
+      <button type="button" class="boton-estado" (click)="reintentar()">Reintentar</button>
+      <a routerLink="/inicio" class="boton-estado">Volver al inicio</a>
+    </div>
+  </div>
+
+  <main class="cuerpo-detalle" *ngIf="!cargando && alojamiento">
     <div class="seccion-titulo-principal">
       <h1 class="titulo-alojamiento">{{ alojamiento.titulo }}</h1>
     </div>
@@ -171,14 +185,14 @@
 
         <hr class="divisor-seccion" *ngIf="alojamiento.reglas.length > 0" />
 
-        <div class="bloque-reglas-politicas">
+        <div class="bloque-reglas-politicas" *ngIf="alojamiento.politicaCancelacion as politica">
           <div class="columna-politica">
             <h3 class="titulo-bloque">
-              Política de cancelación · {{ alojamiento.politicaCancelacion.nombre }}
+              Política de cancelación · {{ politica.nombre }}
             </h3>
             <p class="texto-politica">
               <i class="pi pi-shield"></i>
-              <span>{{ alojamiento.politicaCancelacion.condiciones }}</span>
+              <span>{{ politica.condiciones }}</span>
             </p>
           </div>
         </div>
@@ -339,7 +353,7 @@
         <article class="tarjeta-reseña-usuario" *ngFor="let resena of alojamiento.resenas">
           <div class="encabezado-usuario-reseña">
             <span class="avatar-inicial" aria-hidden="true">{{
-              resena.autor.charAt(0) | uppercase
+              (resena.autor || '?').charAt(0) | uppercase
             }}</span>
             <div class="info-usuario-texto">
               <h3 class="nombre-usuario">{{ resena.autor }}</h3>
@@ -393,10 +407,10 @@
       </button>
 
       <div class="contenedor-imagen-visor">
-        <img [src]="imagenSeleccionada.urlImagen" [alt]="alojamiento.titulo" />
+        <img [src]="imagenSeleccionada.urlImagen" [alt]="alojamiento?.titulo" />
         <div class="pie-info-visor">
           <span class="contador-fotos"
-            >{{ indiceImagenSeleccionada! + 1 }} / {{ alojamiento.imagenes.length }}</span
+            >{{ indiceImagenSeleccionada! + 1 }} / {{ alojamiento?.imagenes?.length }}</span
           >
         </div>
       </div>
