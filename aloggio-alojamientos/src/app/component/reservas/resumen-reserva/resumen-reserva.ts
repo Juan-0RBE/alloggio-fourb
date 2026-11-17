@@ -18,6 +18,7 @@ import { AlojamientoService } from '../../../service/alojamiento.service';
 import { ReservaService } from '../../../service/reserva.service';
 import { AlojamientoDetalleDTO } from '../../../model/alojamiento.model';
 import { CotizacionDTO } from '../../../model/reserva.model';
+import { FiltroEntrada } from '../../../directive/filtro-entrada.directive';
 
 declare var Stripe: any;
 
@@ -51,7 +52,7 @@ interface AvisoPago {
 @Component({
   selector: 'app-resumen-reserva',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FiltroEntrada],
   templateUrl: './resumen-reserva.html',
   styleUrl: './resumen-reserva.scss',
 })

@@ -8,6 +8,7 @@ import { AlojamientoService } from '../../../service/alojamiento.service';
 import { AuthService } from '../../../service/auth.service';
 import { AlojamientoDetalleDTO } from '../../../model/alojamiento.model';
 import { ServicioAlojamientoDTO, TipoAlojamiento } from '../../../model/publicacion.model';
+import { FiltroEntrada } from '../../../directive/filtro-entrada.directive';
 
 type EstadoDia = 'LIBRE' | 'OCUPADO' | 'PASADO';
 
@@ -32,7 +33,7 @@ const NOCHES_MINIMAS_DESCUENTO = 7;
 @Component({
   selector: 'app-detalle-alojamiento',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FiltroEntrada],
   templateUrl: './detalle-alojamiento.html',
   styleUrl: './detalle-alojamiento.scss',
 })
@@ -186,8 +187,27 @@ export class DetalleAlojamiento implements OnInit {
     return !(Number.isInteger(cantidad) && cantidad >= 1 && cantidad <= (this.alojamiento?.capacidad ?? 0));
   }
 
+  /** Reservas hasta dos años adelante: evita años de 5 o 6 cifras escritos a mano. */
+  get fechaMaxima(): string {
+    const d = new Date();
+    return this.formatearFecha(new Date(d.getFullYear() + 2, d.getMonth(), d.getDate()));
+  }
+
+  /** El campo de fecha permite escribir valores fuera de [min, max]; se validan aquí. */
+  get fechasFueraDeRango(): boolean {
+    const fueraLlegada =
+      !!this.fechaLlegada && (this.fechaLlegada < this.fechaMinimaHoy || this.fechaLlegada > this.fechaMaxima);
+    const fueraSalida = !!this.fechaSalida && this.fechaSalida > this.fechaMaxima;
+    return fueraLlegada || fueraSalida;
+  }
+
   get puedeReservar(): boolean {
-    return this.numeroNoches > 0 && !this.rangoNoDisponible && !this.huespedesInvalidos;
+    return (
+      this.numeroNoches > 0 &&
+      !this.fechasFueraDeRango &&
+      !this.rangoNoDisponible &&
+      !this.huespedesInvalidos
+    );
   }
 
   get puedeIrMesAnterior(): boolean {

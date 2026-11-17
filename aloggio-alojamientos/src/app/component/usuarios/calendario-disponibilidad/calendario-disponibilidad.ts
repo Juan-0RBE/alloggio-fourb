@@ -49,6 +49,10 @@ export class CalendarioDisponibilidad implements OnInit {
   readonly etiquetasPeriodo = ETIQUETAS_PERIODO;
   readonly diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   readonly hoy = this.aIso(new Date());
+  /** Bloqueos hasta dos años adelante (evita años de 5 cifras escritos a mano). */
+  readonly fechaMaxima = this.aIso(
+    new Date(new Date().getFullYear() + 2, new Date().getMonth(), new Date().getDate()),
+  );
 
   idPublicacion = 0;
   titulo = signal('');
@@ -197,6 +201,9 @@ export class CalendarioDisponibilidad implements OnInit {
   private validarRango(): string {
     if (!this.fechaInicio || !this.fechaFin || this.fechaFin <= this.fechaInicio) {
       return 'Elige las dos fechas. La de fin debe ser posterior a la de inicio.';
+    }
+    if (this.fechaInicio > this.fechaMaxima || this.fechaFin > this.fechaMaxima) {
+      return 'Solo puedes bloquear fechas dentro de los próximos dos años.';
     }
     if (this.fechaInicio < this.hoy) {
       return 'No puedes bloquear un rango que empieza en el pasado.';

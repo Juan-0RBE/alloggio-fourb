@@ -10,6 +10,7 @@ import { AlojamientoResumenDTO } from '../../../model/alojamiento.model';
 import { TipoAlojamiento } from '../../../model/publicacion.model';
 import { SERVICIOS_CATALOGO, claveTexto } from '../../../model/servicios-catalogo';
 import { forkJoin, of } from 'rxjs';
+import { FiltroEntrada } from '../../../directive/filtro-entrada.directive';
 
 /** Límite razonable para el contador de huéspedes. */
 const HUESPEDES_MAX = 20;
@@ -17,7 +18,7 @@ const HUESPEDES_MAX = 20;
 const PAGINAS_CIUDADES = 4;
 
 @Component({
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FiltroEntrada],
   selector: 'app-inicio.component',
   styleUrl: './inicio.scss',
   templateUrl: './inicio.html',
@@ -62,6 +63,8 @@ export class Inicio implements OnInit {
   serviciosSeleccionados: string[] = [];
 
   hoy = this.fechaHoy();
+  /** Búsquedas hasta dos años adelante (evita años de 5 cifras escritos a mano). */
+  fechaMaxima = this.fechaEnAnios(2);
 
   // Resultados y estado de la pantalla
   alojamientos = signal<AlojamientoResumenDTO[]>([]);
@@ -232,6 +235,9 @@ export class Inicio implements OnInit {
     }
     if (this.fechaLlegada && this.fechaSalida) {
       if (this.fechaLlegada < this.hoy) return 'La fecha de llegada no puede ser anterior a hoy.';
+      if (this.fechaLlegada > this.fechaMaxima || this.fechaSalida > this.fechaMaxima) {
+        return 'Las fechas pueden estar como máximo dentro de dos años.';
+      }
       if (this.fechaSalida <= this.fechaLlegada) {
         return 'La fecha de salida debe ser posterior a la de llegada.';
       }
@@ -255,6 +261,12 @@ export class Inicio implements OnInit {
     if (err.status === 0) return 'No fue posible conectar con el servidor. Intenta de nuevo.';
     if (typeof err.error === 'string' && err.error) return err.error;
     return 'Ocurrió un error al buscar alojamientos. Intenta de nuevo.';
+  }
+
+  private fechaEnAnios(anios: number): string {
+    const d = new Date();
+    const f = new Date(d.getFullYear() + anios, d.getMonth(), d.getDate());
+    return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`;
   }
 
   private fechaHoy(): string {

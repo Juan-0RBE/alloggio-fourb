@@ -24,12 +24,12 @@ export const routes: Routes = [
   { path: 'recuperacion', component: Recuperacion },
   { path: 'inicio', component: Inicio },
   { path: 'reactivar-cuenta', component: ReactivarCuenta },
+  { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
 
   {
     path: '',
     canActivate: [userGuard],
     children: [
-      { path: 'detalle-alojamiento/:id', component: DetalleAlojamiento },
       { path: 'resumen-reserva', component: ResumenReserva },
       { path: 'resultado-reserva', component: ResultadoReserva },
       { path: 'mis-reservas', component: MisReservas },
