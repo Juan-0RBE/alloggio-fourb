@@ -17,6 +17,7 @@ public class AlojamientoDetalleDTO {
     private TipoAlojamiento tipo;
     private Integer capacidad;
     private Double precioNoche;
+    private Double tarifaLimpieza;
     private PoliticaCancelacionDTO politicaCancelacion;
     private List<ServicioAlojamientoDTO> servicios;
     private List<ReglaAlojamientoDTO> reglas;
@@ -138,6 +139,14 @@ public class AlojamientoDetalleDTO {
 
     public void setPrecioNoche(Double precioNoche) {
         this.precioNoche = precioNoche;
+    }
+
+    public Double getTarifaLimpieza() {
+        return tarifaLimpieza;
+    }
+
+    public void setTarifaLimpieza(Double tarifaLimpieza) {
+        this.tarifaLimpieza = tarifaLimpieza;
     }
 
     public PoliticaCancelacionDTO getPoliticaCancelacion() {

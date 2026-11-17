@@ -1,41 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 
-type TipoAlojamiento = 'CASA' | 'APARTAMENTO' | 'HABITACION' | 'CABAÑA';
+import { AlojamientoService } from '../../../service/alojamiento.service';
+import { AuthService } from '../../../service/auth.service';
+import { AlojamientoDetalleDTO } from '../../../model/alojamiento.model';
+import { ServicioAlojamientoDTO, TipoAlojamiento } from '../../../model/publicacion.model';
+
 type EstadoDia = 'LIBRE' | 'OCUPADO' | 'PASADO';
-
-interface ServicioVista {
-  idServicio: number;
-  nombre: string;
-  costo: number;
-  esAdicional: boolean;
-}
-
-interface ReglaVista {
-  idRegla: number;
-  descripcion: string;
-}
-
-interface ImagenVista {
-  idImagen: number;
-  urlImagen: string;
-  orden: number;
-}
-
-interface RangoOcupado {
-  fechaInicio: string;
-  fechaFin: string;
-}
-
-interface ResenaVista {
-  idResena: number;
-  autor: string;
-  calificacion: number;
-  comentario: string;
-  fecha: string;
-}
 
 interface DiaCalendario {
   fecha: string;
@@ -62,105 +36,21 @@ const NOCHES_MINIMAS_DESCUENTO = 7;
   templateUrl: './detalle-alojamiento.html',
   styleUrl: './detalle-alojamiento.scss',
 })
-export class DetalleAlojamiento {
+export class DetalleAlojamiento implements OnInit {
   readonly etiquetasTipo = ETIQUETAS_TIPO;
   readonly estrellas = [1, 2, 3, 4, 5];
   readonly diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-  alojamiento = {
-    idPublicacion: 1,
-    titulo: 'Villa Moderna Vista al Valle y Montaña',
-    descripcion:
-      'Hermosa villa privada con vista panorámica, ideal para descansar y disfrutar de la naturaleza con todas las comodidades modernas.',
-    ubicacion: 'Vereda El Retiro, km 3',
-    ciudad: 'Medellín',
-    tipo: 'CASA' as TipoAlojamiento,
-    capacidad: 6,
-    precioNoche: 550000,
-    tarifaLimpieza: 85000,
-    politicaCancelacion: {
-      idPolitica: 1,
-      nombre: 'Flexible',
-      porcentajeDevolucion: 80,
-      plazoCancelacion: 2,
-      condiciones: 'Devolución del 80% si cancelas con al menos 2 días de anticipación.',
-    },
-    servicios: [
-      { idServicio: 1, nombre: 'Piscina climatizada', costo: 100000, esAdicional: true },
-      { idServicio: 2, nombre: 'WiFi de alta velocidad', costo: 40000, esAdicional: true },
-      { idServicio: 3, nombre: 'Parqueadero gratuito', costo: 0, esAdicional: false },
-      { idServicio: 4, nombre: 'Cocina equipada', costo: 0, esAdicional: false },
-    ] as ServicioVista[],
-    reglas: [
-      { idRegla: 1, descripcion: 'No se permiten fiestas ni eventos.' },
-      { idRegla: 2, descripcion: 'Silencio después de las 10 p. m.' },
-      { idRegla: 3, descripcion: 'No se admiten mascotas.' },
-    ] as ReglaVista[],
-    imagenes: [
-      {
-        idImagen: 1,
-        urlImagen:
-          'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80',
-        orden: 1,
-      },
-      {
-        idImagen: 2,
-        urlImagen:
-          'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80',
-        orden: 2,
-      },
-      {
-        idImagen: 3,
-        urlImagen:
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
-        orden: 3,
-      },
-      {
-        idImagen: 4,
-        urlImagen:
-          'https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&w=800&q=80',
-        orden: 4,
-      },
-      {
-        idImagen: 5,
-        urlImagen:
-          'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80',
-        orden: 5,
-      },
-    ] as ImagenVista[],
-    calendarioOcupado: [
-      { fechaInicio: '2026-12-10', fechaFin: '2026-12-15' },
-      { fechaInicio: '2027-01-05', fechaFin: '2027-01-08' },
-    ] as RangoOcupado[],
-    promedioCalificacion: 4.7,
-    totalResenas: 3,
-    resenas: [
-      {
-        idResena: 88,
-        autor: 'sofia.martinez',
-        calificacion: 5,
-        comentario: 'Excelente estadía, la vista es espectacular y todo estaba impecable.',
-        fecha: '2026-11-05',
-      },
-      {
-        idResena: 85,
-        autor: 'camilo.duarte',
-        calificacion: 5,
-        comentario: 'La piscina y la cocina estaban perfectas para ir en familia.',
-        fecha: '2026-10-18',
-      },
-      {
-        idResena: 80,
-        autor: 'laura.gomez',
-        calificacion: 4,
-        comentario: 'Muy bonita y tranquila. El acceso en carro es un poco empinado.',
-        fecha: '2026-09-30',
-      },
-    ] as ResenaVista[],
-  };
+  private ruta = inject(ActivatedRoute);
+  private alojamientoService = inject(AlojamientoService);
+  auth = inject(AuthService);
 
-  readonly serviciosIncluidos = this.alojamiento.servicios.filter((s) => !s.esAdicional);
-  readonly serviciosAdicionales = this.alojamiento.servicios.filter((s) => s.esAdicional);
+  alojamiento: AlojamientoDetalleDTO | null = null;
+  cargando = false;
+  error: string | null = null;
+
+  serviciosIncluidos: ServicioAlojamientoDTO[] = [];
+  serviciosAdicionales: ServicioAlojamientoDTO[] = [];
 
   private _fechaLlegada: string = '';
 
@@ -186,8 +76,50 @@ export class DetalleAlojamiento {
   mesVisible: Date = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   celdasCalendario: (DiaCalendario | null)[] = [];
 
-  constructor() {
-    this.construirCalendario();
+  ngOnInit(): void {
+    // Se escucha el parámetro para recargar si se navega de un detalle a otro
+    this.ruta.paramMap.subscribe((params) => {
+      const id = Number(params.get('id'));
+      if (!id) {
+        this.alojamiento = null;
+        this.error = 'No encontramos este alojamiento.';
+        return;
+      }
+      this.cargar(id);
+    });
+  }
+
+  cargar(id: number): void {
+    this.cargando = true;
+    this.error = null;
+    this.alojamientoService.obtenerDetalle(id).subscribe({
+      next: (detalle) => {
+        this.alojamiento = detalle;
+        this.serviciosIncluidos = detalle.servicios.filter((s) => !s.esAdicional);
+        this.serviciosAdicionales = detalle.servicios.filter((s) => s.esAdicional);
+        this.idsServiciosSeleccionados = [];
+        this.indiceImagenSeleccionada = null;
+        this.construirCalendario();
+        this.cargando = false;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.alojamiento = null;
+        this.cargando = false;
+        this.error = this.mensajeDeError(err);
+      },
+    });
+  }
+
+  reintentar(): void {
+    const id = Number(this.ruta.snapshot.paramMap.get('id'));
+    if (id) this.cargar(id);
+  }
+
+  private mensajeDeError(err: HttpErrorResponse): string {
+    if (err.status === 0) return 'No fue posible conectar con el servidor. Intenta de nuevo.';
+    if (err.status === 404) return 'El alojamiento no existe o no está disponible.';
+    if (typeof err.error === 'string' && err.error.trim()) return err.error;
+    return 'Ocurrió un error al cargar el alojamiento. Intenta de nuevo.';
   }
 
   get fechaMinimaHoy(): string {
@@ -210,7 +142,7 @@ export class DetalleAlojamiento {
 
   get imagenSeleccionada() {
     if (this.indiceImagenSeleccionada !== null) {
-      return this.alojamiento.imagenes[this.indiceImagenSeleccionada];
+      return this.alojamiento?.imagenes[this.indiceImagenSeleccionada] ?? null;
     }
     return null;
   }
@@ -218,7 +150,7 @@ export class DetalleAlojamiento {
   // Reseñas (CA43, CA44)
 
   get hayResenas(): boolean {
-    return this.alojamiento.totalResenas > 0;
+    return (this.alojamiento?.totalResenas ?? 0) > 0;
   }
 
   irAResenas(): void {
@@ -228,7 +160,7 @@ export class DetalleAlojamiento {
   // Disponibilidad
 
   get rangoNoDisponible(): boolean {
-    if (!this.fechaLlegada || !this.fechaSalida) return false;
+    if (!this.alojamiento || !this.fechaLlegada || !this.fechaSalida) return false;
     return this.alojamiento.calendarioOcupado.some(
       (r) => this.fechaLlegada < r.fechaFin && this.fechaSalida > r.fechaInicio,
     );
@@ -236,7 +168,7 @@ export class DetalleAlojamiento {
 
   get huespedesInvalidos(): boolean {
     const cantidad = Number(this.cantidadHuespedes);
-    return !(cantidad >= 1 && cantidad <= this.alojamiento.capacidad);
+    return !(cantidad >= 1 && cantidad <= (this.alojamiento?.capacidad ?? 0));
   }
 
   get puedeReservar(): boolean {
@@ -278,7 +210,7 @@ export class DetalleAlojamiento {
 
   private estadoDelDia(fecha: string): EstadoDia {
     if (fecha < this.fechaMinimaHoy) return 'PASADO';
-    const ocupado = this.alojamiento.calendarioOcupado.some(
+    const ocupado = (this.alojamiento?.calendarioOcupado ?? []).some(
       (r) => fecha >= r.fechaInicio && fecha < r.fechaFin,
     );
     return ocupado ? 'OCUPADO' : 'LIBRE';
@@ -296,11 +228,11 @@ export class DetalleAlojamiento {
   }
 
   get subtotalHospedaje(): number {
-    return this.numeroNoches * this.alojamiento.precioNoche;
+    return this.numeroNoches * (this.alojamiento?.precioNoche ?? 0);
   }
 
   get tarifaLimpieza(): number {
-    return this.numeroNoches > 0 ? this.alojamiento.tarifaLimpieza : 0;
+    return this.numeroNoches > 0 ? (this.alojamiento?.tarifaLimpieza ?? 0) : 0;
   }
 
   get tarifaServicio(): number {
@@ -312,9 +244,9 @@ export class DetalleAlojamiento {
     return Math.round((this.subtotalHospedaje * PORCENTAJE_DESCUENTO) / 100);
   }
 
-  get serviciosSeleccionados(): ServicioVista[] {
+  get serviciosSeleccionados(): ServicioAlojamientoDTO[] {
     return this.serviciosAdicionales.filter((s) =>
-      this.idsServiciosSeleccionados.includes(s.idServicio),
+      this.idsServiciosSeleccionados.includes(s.idServicio!),
     );
   }
 
@@ -334,15 +266,17 @@ export class DetalleAlojamiento {
   }
 
   // El costo de cada servicio adicional es por noche.
-  costoServicio(servicio: ServicioVista): number {
-    return servicio.costo * this.numeroNoches;
+  costoServicio(servicio: ServicioAlojamientoDTO): number {
+    return (servicio.costo ?? 0) * this.numeroNoches;
   }
 
-  servicioSeleccionado(idServicio: number): boolean {
+  servicioSeleccionado(idServicio: number | undefined): boolean {
+    if (idServicio == null) return false;
     return this.idsServiciosSeleccionados.includes(idServicio);
   }
 
-  alternarServicio(idServicio: number): void {
+  alternarServicio(idServicio: number | undefined): void {
+    if (idServicio == null) return;
     if (this.servicioSeleccionado(idServicio)) {
       this.idsServiciosSeleccionados = this.idsServiciosSeleccionados.filter(
         (id) => id !== idServicio,
@@ -364,7 +298,7 @@ export class DetalleAlojamiento {
 
   imagenAnterior(event: Event) {
     event.stopPropagation();
-    if (this.indiceImagenSeleccionada !== null) {
+    if (this.indiceImagenSeleccionada !== null && this.alojamiento) {
       this.indiceImagenSeleccionada =
         this.indiceImagenSeleccionada === 0
           ? this.alojamiento.imagenes.length - 1
@@ -374,7 +308,7 @@ export class DetalleAlojamiento {
 
   imagenSiguiente(event: Event) {
     event.stopPropagation();
-    if (this.indiceImagenSeleccionada !== null) {
+    if (this.indiceImagenSeleccionada !== null && this.alojamiento) {
       this.indiceImagenSeleccionada =
         (this.indiceImagenSeleccionada + 1) % this.alojamiento.imagenes.length;
     }

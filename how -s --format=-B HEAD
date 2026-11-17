@@ -1,0 +1,13 @@
+[33mcommit 03e78111f337ae9c04b99af03670730b4be3c284[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mAccommodationDetailUnion[m[33m, [m[1;31morigin/AccommodationDetailUnion[m[33m)[m
+Author:     Isabella Rodriguez <irodriguezme@unbosque.edu.co>
+AuthorDate: Mon Nov 16 19:24:13 2026 -0500
+Commit:     Isabella Rodriguez <irodriguezme@unbosque.edu.co>
+CommitDate: Mon Nov 16 19:24:13 2026 -0500
+
+    feat: conectar ver detalle del alojamiento desde inicio con el back
+    
+    - AlojamientoService con buscar y obtenerDetalle; inicio lo usa
+    - Detalle carga el alojamiento real segun el id de la ruta
+    - El back incluye tarifaLimpieza en el detalle y tolera publicaciones sin politica
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>

@@ -1,27 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
-import { API_URL, AuthService } from '../../../service/auth.service';
-
-interface AlojamientoResumen {
-  idPublicacion: number;
-  titulo: string;
-  ciudad: string;
-  tipo: string;
-  capacidad: number;
-  precioNoche: number;
-  imagenPrincipal: { urlImagen: string } | null;
-}
-
-interface PaginaAlojamientos {
-  contenido: AlojamientoResumen[];
-  paginaActual: number;
-  tamano: number;
-  totalElementos: number;
-  totalPaginas: number;
-}
+import { AuthService } from '../../../service/auth.service';
+import { AlojamientoService } from '../../../service/alojamiento.service';
+import { AlojamientoResumenDTO } from '../../../model/alojamiento.model';
+import { TipoAlojamiento } from '../../../model/publicacion.model';
 
 @Component({
   imports: [CommonModule, FormsModule, RouterModule],
@@ -30,11 +15,11 @@ interface PaginaAlojamientos {
   templateUrl: './inicio.html',
 })
 export class Inicio implements OnInit {
-  private http = inject(HttpClient);
+  private alojamientoService = inject(AlojamientoService);
   auth = inject(AuthService);
 
   readonly tamanoPagina = 9;
-  readonly tipos = [
+  readonly tipos: { valor: TipoAlojamiento | ''; etiqueta: string }[] = [
     { valor: '', etiqueta: 'Todos' },
     { valor: 'APARTAMENTO', etiqueta: 'Apartamento' },
     { valor: 'CASA', etiqueta: 'Casa' },
@@ -54,14 +39,14 @@ export class Inicio implements OnInit {
   fechaLlegada = '';
   fechaSalida = '';
   capacidad: number | null = null;
-  tipoSeleccionado = '';
+  tipoSeleccionado: TipoAlojamiento | '' = '';
   precioMax: number | null = null;
   serviciosSeleccionados: string[] = [];
 
   hoy = this.fechaHoy();
 
   // Resultados y estado de la pantalla
-  alojamientos = signal<AlojamientoResumen[]>([]);
+  alojamientos = signal<AlojamientoResumenDTO[]>([]);
   totalElementos = signal(0);
   pagina = signal(0);
   totalPaginas = signal(0);
@@ -82,22 +67,22 @@ export class Inicio implements OnInit {
       return;
     }
 
-    let params = new HttpParams().set('pagina', pagina).set('tamano', this.tamanoPagina);
-    if (this.ciudad.trim()) params = params.set('ciudad', this.ciudad.trim());
-    if (this.fechaLlegada && this.fechaSalida) {
-      params = params.set('fechaLlegada', this.fechaLlegada).set('fechaSalida', this.fechaSalida);
-    }
-    if (this.capacidad) params = params.set('capacidad', this.capacidad);
-    if (this.tipoSeleccionado) params = params.set('tipo', this.tipoSeleccionado);
-    if (this.precioMax) params = params.set('precioMax', this.precioMax);
-    for (const servicio of this.serviciosSeleccionados) {
-      params = params.append('servicios', servicio);
-    }
-
     this.cargando.set(true);
     this.error.set(null);
 
-    this.http.get<PaginaAlojamientos>(`${API_URL}/alojamiento/buscar`, { params }).subscribe({
+    this.alojamientoService
+      .buscar({
+        ciudad: this.ciudad,
+        fechaLlegada: this.fechaLlegada,
+        fechaSalida: this.fechaSalida,
+        capacidad: this.capacidad,
+        tipo: this.tipoSeleccionado,
+        precioMax: this.precioMax,
+        servicios: this.serviciosSeleccionados,
+        pagina,
+        tamano: this.tamanoPagina,
+      })
+      .subscribe({
       next: (res) => {
         this.alojamientos.set(res.contenido);
         this.totalElementos.set(res.totalElementos);
