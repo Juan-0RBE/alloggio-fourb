@@ -98,7 +98,7 @@
         </button>
 
         <button
-          *ngIf="r.estado === 'COMPLETADA'"
+          *ngIf="puedeResenar(r)"
           type="button"
           class="boton-dorado"
           (click)="abrirResena()"
@@ -116,7 +116,7 @@
         [titulo]="r.titulo"
         [fechaLlegada]="r.fechaLlegada"
         [total]="r.total"
-        [politica]="politica"
+        [politica]="politica()"
         [enviando]="cancelando()"
         [mensajeError]="errorCancelacion()"
         (confirmarCancelacion)="confirmarCancelacion($event)"
@@ -126,7 +126,9 @@
       <app-formulario-resena
         *ngIf="mostrandoResena()"
         [alojamientoTitulo]="r.titulo"
-        (enviarReseña)="alEnviarResena()"
+        [enviando]="enviandoResena()"
+        [mensajeError]="errorResena()"
+        (enviarReseña)="alEnviarResena($event)"
         (cancelar)="cerrarResena()"
       ></app-formulario-resena>
     </ng-container>

@@ -196,3 +196,76 @@
     }
   }
 }
+
+// Validación y estados del formulario conectado al back
+
+.contenedor-formulario-resena {
+  .textos-calificacion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+
+    .texto-valor-calificacion {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: $dorado-acento;
+
+      &.sin-elegir {
+        color: $texto-secundario;
+        font-weight: 400;
+      }
+    }
+  }
+
+  textarea.invalido {
+    border-color: #e74c3c !important;
+  }
+
+  .pie-comentario {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+  }
+
+  .contador-comentario {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: $texto-secundario;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .error-campo {
+    display: block;
+    font-size: 0.8rem;
+    color: #e74c3c;
+  }
+
+  .alerta-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid rgba(#e74c3c, 0.35);
+    background-color: rgba(#e74c3c, 0.1);
+    color: #e74c3c;
+    font-size: 0.85rem;
+  }
+
+  .boton-primario,
+  .boton-secundario,
+  .boton-cerrar {
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .boton-primario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+}
